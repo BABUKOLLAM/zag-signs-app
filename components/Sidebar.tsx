@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useSidebar } from "@/lib/sidebar-context";
 import { useSession, signOut } from "next-auth/react";
+import { canAccess } from "@/lib/permissions";
 
 const sections = [
   {
@@ -69,6 +70,12 @@ export default function Sidebar() {
   const { data: session } = useSession();
   const user = session?.user;
 
+  // Filter nav by the signed-in role; drop sections that end up empty.
+  const role = user?.role;
+  const visibleSections = sections
+    .map((s) => ({ ...s, items: s.items.filter((i) => canAccess(role, i.href)) }))
+    .filter((s) => s.items.length > 0);
+
   return (
     <aside
       className={`fixed left-0 top-0 h-screen w-64 flex flex-col z-30 transition-transform duration-300 ease-in-out ${
@@ -100,7 +107,7 @@ export default function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5 sidebar-nav">
-        {sections.map(({ label, items }) => (
+        {visibleSections.map(({ label, items }) => (
           <div key={label}>
             <p className="text-xs font-semibold text-slate-500 px-3 mb-1.5 tracking-wider">{label}</p>
             <div className="space-y-0.5">

@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { SessionProvider } from "next-auth/react";
 import Sidebar from "./Sidebar";
+import RouteGuard from "./RouteGuard";
 import { useSidebar } from "@/lib/sidebar-context";
 
 // Inner component can safely call useSidebar (provided by SidebarProvider above in tree)
@@ -35,7 +36,7 @@ function ShellContent({ children }: { children: React.ReactNode }) {
         onClick={close}
       />
       <div className="lg:ml-64 min-h-screen flex flex-col">
-        {children}
+        <RouteGuard>{children}</RouteGuard>
       </div>
     </>
   );
