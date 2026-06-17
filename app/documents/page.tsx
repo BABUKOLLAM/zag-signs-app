@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import TopBar from "@/components/TopBar";
-import { branches } from "@/lib/data";
+const branches = ["TVM", "KTYM", "EKM", "CLT"];
 import { FolderOpen, Upload, Search, Download, Eye, FileText, File, Image, Table, X, Plus } from "lucide-react";
 
 // BRD Phase 4 — Document Management

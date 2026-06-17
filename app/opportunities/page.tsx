@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import TopBar from "@/components/TopBar";
-import { branches } from "@/lib/data";
+const branches = ["TVM", "KTYM", "EKM", "CLT"];
 import { fmt } from "@/lib/utils";
 import { Plus, X, Eye, TrendingUp } from "lucide-react";
 

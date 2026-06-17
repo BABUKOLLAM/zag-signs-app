@@ -1,63 +1,75 @@
 "use client";
 import { useState } from "react";
 import TopBar from "@/components/TopBar";
-import { customers as initialCustomers, branches, Customer } from "@/lib/data";
 import { fmt } from "@/lib/utils";
-import { Plus, Building2 } from "lucide-react";
+import { useApi } from "@/lib/use-api";
+import { api } from "@/lib/api-client";
+import { LoadingState, ErrorState, EmptyState, TableSkeleton } from "@/components/States";
+import { Plus, Building2, RefreshCw } from "lucide-react";
+
+const BRANCHES = ["TVM", "KTYM", "EKM", "CLT"];
+
+interface Customer {
+  id: string; customerNo: string; name: string; company: string;
+  phone: string; email: string; branch: string; gstNo: string; address: string;
+  outstandingBalance: number; creditLimit: number; isActive: boolean; createdAt: string;
+  totalOrders: number; totalValue: number;
+}
 
 const emptyForm = {
   name: "", company: "", phone: "", email: "",
-  branch: branches[0], gst: "", address: "",
+  branch: "TVM", gstNo: "", address: "", creditLimit: "",
 };
 
 export default function CustomersPage() {
-  const [localCustomers, setLocalCustomers] = useState<Customer[]>(initialCustomers);
   const [search, setSearch] = useState("");
-  const [branchFilter, setBranchFilter] = useState("All");
+  const [branchFilter, setBranchFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [saving, setSaving] = useState(false);
 
-  const filtered = localCustomers.filter(
-    (c) =>
-      (branchFilter === "All" || c.branch === branchFilter) &&
-      (c.name.toLowerCase().includes(search.toLowerCase()) ||
-        c.company.toLowerCase().includes(search.toLowerCase()))
-  );
+  const { data, loading, error, refetch } = useApi<Customer[]>("/customers", {
+    branch: branchFilter || undefined,
+    search: search || undefined,
+    limit: 100,
+  });
 
-  const set = (field: keyof typeof emptyForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
-    setForm((f) => ({ ...f, [field]: e.target.value }));
+  const customers = data ?? [];
+  const totalRevenue = customers.reduce((s, c) => s + c.totalValue, 0);
+  const totalOutstanding = customers.reduce((s, c) => s + c.outstandingBalance, 0);
+  const totalOrders = customers.reduce((s, c) => s + c.totalOrders, 0);
 
-  const handleSave = () => {
-    if (!form.name.trim() || !form.company.trim()) return;
-    const newCustomer: Customer = {
-      id: `C${String(localCustomers.length + 1).padStart(3, "0")}`,
-      name: form.name.trim(),
-      company: form.company.trim(),
-      phone: form.phone.trim(),
-      email: form.email.trim(),
-      branch: form.branch as Customer["branch"],
-      gst: form.gst.trim(),
-      address: form.address.trim(),
-      totalOrders: 0,
-      totalValue: 0,
-      outstandingAmount: 0,
-      createdAt: new Date().toISOString().split("T")[0],
-    };
-    setLocalCustomers((prev) => [...prev, newCustomer]);
-    setForm(emptyForm);
-    setShowModal(false);
+  const set = (field: keyof typeof emptyForm) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
+      setForm((f) => ({ ...f, [field]: e.target.value }));
+
+  const handleSave = async () => {
+    if (!form.name.trim() || !form.company.trim() || !form.phone.trim()) return;
+    setSaving(true);
+    try {
+      await api.post("/customers", {
+        ...form,
+        creditLimit: Number(form.creditLimit) || 0,
+      });
+      setForm(emptyForm);
+      setShowModal(false);
+      refetch();
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <div>
       <TopBar title="Customers" />
-      <div className="p-6 space-y-5">
-        <div className="grid grid-cols-4 gap-4">
+      <div className="p-4 md:p-6 space-y-5">
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: "Total Customers", value: localCustomers.length },
-            { label: "Total Revenue", value: `₹${(localCustomers.reduce((s, c) => s + c.totalValue, 0) / 100000).toFixed(1)}L` },
-            { label: "Outstanding", value: fmt(localCustomers.reduce((s, c) => s + c.outstandingAmount, 0)) },
-            { label: "Total Orders", value: localCustomers.reduce((s, c) => s + c.totalOrders, 0) },
+            { label: "Total Customers", value: customers.length },
+            { label: "Total Revenue", value: `₹${(totalRevenue / 100000).toFixed(1)}L` },
+            { label: "Outstanding", value: fmt(totalOutstanding) },
+            { label: "Total Orders", value: totalOrders },
           ].map((s) => (
             <div key={s.label} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
               <p className="text-xs text-gray-500">{s.label}</p>
@@ -66,100 +78,113 @@ export default function CustomersPage() {
           ))}
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex gap-3 items-center justify-between">
-          <div className="flex gap-3">
-            <input type="text" placeholder="Search customers..." value={search}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-wrap gap-3 items-center justify-between">
+          <div className="flex gap-3 flex-wrap">
+            <input type="text" placeholder="Search customers…" value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-44 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             <select value={branchFilter} onChange={(e) => setBranchFilter(e.target.value)}
               className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none">
-              <option value="All">All Branches</option>
-              {branches.map((b) => <option key={b}>{b}</option>)}
+              <option value="">All Branches</option>
+              {BRANCHES.map((b) => <option key={b}>{b}</option>)}
             </select>
+            <button onClick={refetch} title="Refresh"
+              className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">
+              <RefreshCw size={14} />
+            </button>
           </div>
           <button onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg">
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg">
             <Plus size={14} /> Add Customer
           </button>
         </div>
 
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-100">
-              <tr className="text-xs text-gray-500 font-medium">
-                <th className="text-left px-4 py-3">ID</th>
-                <th className="text-left px-4 py-3">Customer</th>
-                <th className="text-left px-4 py-3">Contact</th>
-                <th className="text-left px-4 py-3">Branch</th>
-                <th className="text-right px-4 py-3">Orders</th>
-                <th className="text-right px-4 py-3">Total Value</th>
-                <th className="text-right px-4 py-3">Outstanding</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {filtered.map((c) => (
-                <tr key={c.id} className="hover:bg-gray-50 text-sm">
-                  <td className="px-4 py-3 text-blue-600 font-medium">{c.id}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                        <Building2 size={14} className="text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900">{c.name}</p>
-                        <p className="text-xs text-gray-500">{c.company}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-xs text-gray-600">
-                    <div>{c.phone}</div>
-                    <div>{c.email}</div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="bg-gray-100 text-gray-700 text-xs px-2 py-0.5 rounded">{c.branch}</span>
-                  </td>
-                  <td className="px-4 py-3 text-right text-gray-800">{c.totalOrders}</td>
-                  <td className="px-4 py-3 text-right font-medium text-gray-900">{fmt(c.totalValue)}</td>
-                  <td className={`px-4 py-3 text-right font-medium ${c.outstandingAmount > 0 ? "text-red-600" : "text-green-600"}`}>
-                    {c.outstandingAmount > 0 ? fmt(c.outstandingAmount) : "Nil"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {filtered.length === 0 && (
-            <div className="text-center py-12 text-gray-400 text-sm">No customers found</div>
+          {loading ? (
+            <TableSkeleton rows={6} cols={7} />
+          ) : error ? (
+            <ErrorState message={error} onRetry={refetch} />
+          ) : customers.length === 0 ? (
+            <EmptyState label="No customers found" hint="Add your first customer or adjust the filters." />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-100">
+                  <tr className="text-xs text-gray-500 font-medium">
+                    <th className="text-left px-4 py-3">Cust No</th>
+                    <th className="text-left px-4 py-3">Customer</th>
+                    <th className="text-left px-4 py-3 hidden md:table-cell">Contact</th>
+                    <th className="text-left px-4 py-3">Branch</th>
+                    <th className="text-right px-4 py-3">Orders</th>
+                    <th className="text-right px-4 py-3">Total Value</th>
+                    <th className="text-right px-4 py-3">Outstanding</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {customers.map((c) => (
+                    <tr key={c.id} className="hover:bg-gray-50 text-sm">
+                      <td className="px-4 py-3 text-indigo-600 font-medium">{c.customerNo}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <Building2 size={14} className="text-indigo-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">{c.name}</p>
+                            <p className="text-xs text-gray-500">{c.company}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-gray-600 hidden md:table-cell">
+                        <div>{c.phone}</div>
+                        <div>{c.email}</div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="bg-gray-100 text-gray-700 text-xs px-2 py-0.5 rounded">{c.branch}</span>
+                      </td>
+                      <td className="px-4 py-3 text-right text-gray-800">{c.totalOrders}</td>
+                      <td className="px-4 py-3 text-right font-medium text-gray-900">{fmt(c.totalValue)}</td>
+                      <td className={`px-4 py-3 text-right font-medium ${c.outstandingBalance > 0 ? "text-red-600" : "text-green-600"}`}>
+                        {c.outstandingBalance > 0 ? fmt(c.outstandingBalance) : "Nil"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6">
-            <h2 className="text-base font-semibold text-gray-900 mb-4">Add New Customer</h2>
-            <div className="grid grid-cols-2 gap-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
+            <h2 className="text-base font-semibold text-gray-900 px-6 pt-5 pb-4 border-b">Add New Customer</h2>
+            <div className="px-6 py-5 grid grid-cols-2 gap-4">
               {(["name", "company", "phone", "email"] as const).map((field) => (
                 <div key={field}>
                   <label className="block text-xs font-medium text-gray-600 mb-1">
                     {field.charAt(0).toUpperCase() + field.slice(1)}
                   </label>
-                  <input
-                    value={form[field]}
-                    onChange={set(field)}
-                    className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  <input value={form[field]} onChange={set(field)}
+                    className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                 </div>
               ))}
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Branch</label>
                 <select value={form.branch} onChange={set("branch")}
                   className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full focus:outline-none">
-                  {branches.map((b) => <option key={b}>{b}</option>)}
+                  {BRANCHES.map((b) => <option key={b}>{b}</option>)}
                 </select>
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">GST Number</label>
-                <input value={form.gst} onChange={set("gst")}
+                <input value={form.gstNo} onChange={set("gstNo")}
+                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Credit Limit (₹)</label>
+                <input type="number" value={form.creditLimit} onChange={set("creditLimit")}
                   className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full focus:outline-none" />
               </div>
               <div className="col-span-2">
@@ -168,13 +193,13 @@ export default function CustomersPage() {
                   className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full focus:outline-none" />
               </div>
             </div>
-            <div className="flex justify-end gap-3 mt-5">
+            <div className="flex justify-end gap-3 px-6 pb-5">
               <button onClick={() => { setShowModal(false); setForm(emptyForm); }}
                 className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
               <button onClick={handleSave}
-                disabled={!form.name.trim() || !form.company.trim()}
-                className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                Save Customer
+                disabled={!form.name.trim() || !form.company.trim() || !form.phone.trim() || saving}
+                className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50">
+                {saving ? "Saving…" : "Save Customer"}
               </button>
             </div>
           </div>
