@@ -1,33 +1,32 @@
 "use client";
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
+import { SessionProvider } from "next-auth/react";
 import Sidebar from "./Sidebar";
 import { useSidebar } from "@/lib/sidebar-context";
 
-export default function AppShell({ children }: { children: React.ReactNode }) {
+// Inner component can safely call useSidebar (provided by SidebarProvider above in tree)
+function ShellContent({ children }: { children: React.ReactNode }) {
   const { open, close } = useSidebar();
+  const pathname = usePathname();
 
-  // Register service worker once on mount
   useEffect(() => {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js").catch(() => {});
     }
   }, []);
 
-  // Lock body scroll while mobile sidebar is open
   useEffect(() => {
-    if (open) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    document.body.style.overflow = open ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [open]);
+
+  // Login page renders full-screen — no sidebar / shell
+  if (pathname === "/login") return <>{children}</>;
 
   return (
     <>
       <Sidebar />
-
-      {/* Mobile backdrop — tapping it closes the sidebar */}
       <div
         aria-hidden="true"
         className={`fixed inset-0 bg-black/50 z-20 lg:hidden transition-opacity duration-300 ${
@@ -35,11 +34,17 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         }`}
         onClick={close}
       />
-
-      {/* Main content area — offset by sidebar width on desktop only */}
       <div className="lg:ml-64 min-h-screen flex flex-col">
         {children}
       </div>
     </>
+  );
+}
+
+export default function AppShell({ children }: { children: React.ReactNode }) {
+  return (
+    <SessionProvider>
+      <ShellContent>{children}</ShellContent>
+    </SessionProvider>
   );
 }

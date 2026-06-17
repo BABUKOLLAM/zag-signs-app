@@ -5,9 +5,10 @@ import {
   LayoutDashboard, Users, UserCheck, FileText, ShoppingCart,
   Wrench, Package, Wallet, AlertCircle, BarChart3, UserCircle,
   Building2, ClipboardList, Target, CheckSquare, TrendingUp,
-  MapPin, FolderOpen, Sparkles, ChevronRight, X,
+  MapPin, FolderOpen, Sparkles, ChevronRight, X, LogOut,
 } from "lucide-react";
 import { useSidebar } from "@/lib/sidebar-context";
+import { useSession, signOut } from "next-auth/react";
 
 const sections = [
   {
@@ -65,6 +66,8 @@ const sections = [
 export default function Sidebar() {
   const pathname = usePathname();
   const { open, close } = useSidebar();
+  const { data: session } = useSession();
+  const user = session?.user;
 
   return (
     <aside
@@ -129,18 +132,27 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Footer */}
+      {/* Footer — shows logged-in user + sign-out */}
       <div className="px-4 py-4 border-t border-white/10">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center font-semibold text-xs text-white flex-shrink-0"
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs text-white flex-shrink-0"
             style={{ background: "linear-gradient(135deg, #4F46E5, #7C3AED)" }}>
-            AD
+            {user?.name?.[0]?.toUpperCase() ?? "?"}
           </div>
-          <div className="min-w-0">
-            <p className="text-xs font-semibold text-white truncate">Admin User</p>
-            <p className="text-xs text-slate-500 truncate">All Branches · MD</p>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold text-white truncate">{user?.name ?? "Loading…"}</p>
+            <p className="text-xs text-slate-500 truncate">
+              {user?.role ?? "—"} · {user?.branch ?? "—"}
+            </p>
           </div>
-          <div className="ml-auto w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0 pulse-dot" title="Online" />
+          <button
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="p-1.5 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors flex-shrink-0"
+            title="Sign out"
+            aria-label="Sign out"
+          >
+            <LogOut size={14} />
+          </button>
         </div>
       </div>
     </aside>
