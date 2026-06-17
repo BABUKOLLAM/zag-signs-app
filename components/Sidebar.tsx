@@ -5,83 +5,130 @@ import {
   LayoutDashboard, Users, UserCheck, FileText, ShoppingCart,
   Wrench, Package, Wallet, AlertCircle, BarChart3, UserCircle,
   Building2, ClipboardList, Target, CheckSquare, TrendingUp,
+  MapPin, FolderOpen, Sparkles, ChevronRight,
 } from "lucide-react";
 
-const navItems = [
-  // Strategy
-  { href: "/dashboard",     label: "Dashboard",        icon: LayoutDashboard },
-  { href: "/kpi",           label: "KPI Dashboard",    icon: Target },
-  // Sales pipeline
-  { href: "/leads",         label: "Leads & CRM",      icon: Users },
-  { href: "/opportunities", label: "Opportunities",    icon: TrendingUp },
-  { href: "/customers",     label: "Customers",        icon: UserCheck },
-  { href: "/quotations",    label: "Quotations",       icon: FileText },
-  { href: "/sales-orders",  label: "Sales Orders",     icon: ShoppingCart },
-  // Operations
-  { href: "/work-orders",   label: "Work Orders",      icon: Wrench },
-  { href: "/production",    label: "Production",       icon: Package },
-  { href: "/inventory",     label: "Inventory",        icon: Package },
-  // Finance
-  { href: "/accounts",      label: "Accounts & Billing", icon: Wallet },
-  { href: "/collections",   label: "Collections",      icon: Wallet },
-  // Support & People
-  { href: "/complaints",    label: "Complaints",       icon: AlertCircle },
-  { href: "/tasks",         label: "Tasks",            icon: CheckSquare },
-  { href: "/hr",            label: "HR & Attendance",  icon: UserCircle },
-  // Reporting
-  { href: "/team-reports",  label: "Team Reports",     icon: ClipboardList },
-  { href: "/reports",       label: "Reports & MIS",    icon: BarChart3 },
+const sections = [
+  {
+    label: "OVERVIEW",
+    items: [
+      { href: "/dashboard",     label: "Dashboard",        icon: LayoutDashboard },
+      { href: "/kpi",           label: "KPI Dashboard",    icon: Target },
+    ],
+  },
+  {
+    label: "SALES",
+    items: [
+      { href: "/leads",         label: "Leads & CRM",      icon: Users },
+      { href: "/opportunities", label: "Opportunities",    icon: TrendingUp },
+      { href: "/customers",     label: "Customers",        icon: UserCheck },
+      { href: "/quotations",    label: "Quotations",       icon: FileText },
+      { href: "/sales-orders",  label: "Sales Orders",     icon: ShoppingCart },
+    ],
+  },
+  {
+    label: "OPERATIONS",
+    items: [
+      { href: "/work-orders",   label: "Work Orders",      icon: Wrench },
+      { href: "/production",    label: "Production",       icon: Package },
+      { href: "/inventory",     label: "Inventory",        icon: Package },
+    ],
+  },
+  {
+    label: "FINANCE",
+    items: [
+      { href: "/accounts",      label: "Accounts & Billing", icon: Wallet },
+      { href: "/collections",   label: "Collections",      icon: Wallet },
+    ],
+  },
+  {
+    label: "PEOPLE & FIELD",
+    items: [
+      { href: "/complaints",    label: "Complaints",       icon: AlertCircle },
+      { href: "/tasks",         label: "Tasks",            icon: CheckSquare },
+      { href: "/hr",            label: "HR & Attendance",  icon: UserCircle },
+      { href: "/field-visits",  label: "Field Visits",     icon: MapPin },
+    ],
+  },
+  {
+    label: "REPORTS & AI",
+    items: [
+      { href: "/team-reports",  label: "Team Reports",     icon: ClipboardList },
+      { href: "/reports",       label: "Reports & MIS",    icon: BarChart3 },
+      { href: "/ai-insights",   label: "AI Insights",      icon: Sparkles },
+      { href: "/documents",     label: "Documents",        icon: FolderOpen },
+    ],
+  },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-60 bg-white border-r border-gray-200 flex flex-col z-30">
+    <aside
+      className="fixed left-0 top-0 h-screen w-64 flex flex-col z-30"
+      style={{ background: "linear-gradient(180deg, #0F1629 0%, #111827 100%)" }}
+    >
       {/* Logo */}
-      <div className="px-5 py-4 border-b border-gray-100">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+      <div className="px-5 py-5 border-b border-white/10">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ background: "linear-gradient(135deg, #4F46E5, #7C3AED)" }}>
             <Building2 size={18} className="text-white" />
           </div>
           <div>
-            <p className="font-bold text-gray-900 text-sm leading-tight">ZAG SIGNS</p>
-            <p className="text-xs text-gray-500">Enterprise ERP</p>
+            <p className="font-bold text-white text-sm leading-tight tracking-wide">ZAG SIGNS</p>
+            <p className="text-xs text-slate-400 font-medium">Enterprise ERP</p>
           </div>
         </div>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
-        {navItems.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href || pathname.startsWith(href + "/");
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                active
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-              }`}
-            >
-              <Icon size={16} />
-              {label}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5 sidebar-nav">
+        {sections.map(({ label, items }) => (
+          <div key={label}>
+            <p className="text-xs font-semibold text-slate-500 px-3 mb-1.5 tracking-wider">{label}</p>
+            <div className="space-y-0.5">
+              {items.map(({ href, label: itemLabel, icon: Icon }) => {
+                const active = pathname === href || pathname.startsWith(href + "/");
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all group ${
+                      active
+                        ? "text-white"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                    style={active
+                      ? { background: "linear-gradient(135deg, #4F46E5, #6366F1)" }
+                      : {}}
+                    onMouseEnter={e => { if (!active) (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.06)"; }}
+                    onMouseLeave={e => { if (!active) (e.currentTarget as HTMLAnchorElement).style.background = ""; }}
+                  >
+                    <Icon size={15} className={active ? "text-white" : "text-slate-500 group-hover:text-slate-300"} />
+                    <span className="flex-1">{itemLabel}</span>
+                    {active && <ChevronRight size={12} className="text-indigo-300 opacity-70" />}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* Footer */}
-      <div className="px-4 py-3 border-t border-gray-100">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-blue-100 rounded-full flex items-center justify-center">
-            <UserCircle size={14} className="text-blue-600" />
+      <div className="px-4 py-4 border-t border-white/10">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center font-semibold text-xs text-white flex-shrink-0"
+            style={{ background: "linear-gradient(135deg, #4F46E5, #7C3AED)" }}>
+            AD
           </div>
-          <div>
-            <p className="text-xs font-medium text-gray-800">Admin User</p>
-            <p className="text-xs text-gray-500">All Branches</p>
+          <div className="min-w-0">
+            <p className="text-xs font-semibold text-white truncate">Admin User</p>
+            <p className="text-xs text-slate-500 truncate">All Branches · MD</p>
           </div>
+          <div className="ml-auto w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0 pulse-dot" title="Online" />
         </div>
       </div>
     </aside>
