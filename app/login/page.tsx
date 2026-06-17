@@ -48,7 +48,7 @@ export default function LoginPage() {
     }
   };
 
-  const fillUser = (u: typeof DEMO_CREDENTIALS[0]) => {
+  const fillUser = (u: { email: string; password: string }) => {
     setEmail(u.email);
     setPassword(u.password);
     setShowCreds(false);
@@ -166,7 +166,7 @@ export default function LoginPage() {
           >
             {DEMO_CREDENTIALS.map(u => (
               <button
-                key={u.id}
+                key={u.email}
                 onClick={() => fillUser(u)}
                 className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/10 transition-colors text-left border-b border-white/5 last:border-0"
               >

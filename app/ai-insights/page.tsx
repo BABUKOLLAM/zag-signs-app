@@ -231,7 +231,7 @@ export default function AIInsightsPage() {
                     <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
                     <YAxis tickFormatter={v => `${(v / 100000).toFixed(1)}L`} tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
                     <Tooltip
-                      formatter={(v: number, name: string) => [`₹${(v / 100000).toFixed(2)}L`, name]}
+                      formatter={(v, name) => [`₹${(Number(v) / 100000).toFixed(2)}L`, name]}
                       contentStyle={{ borderRadius: 12, border: "1px solid #E2E8F0", fontSize: 12 }}
                     />
                     <Line type="monotone" dataKey="actual" stroke="#4F46E5" strokeWidth={2.5} dot={{ r: 3, fill: "#4F46E5" }} name="Actual" connectNulls={false} />
@@ -281,7 +281,7 @@ export default function AIInsightsPage() {
                         <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
                         <YAxis tickFormatter={v => `${(v / 1000).toFixed(0)}K`} tick={{ fontSize: 10, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
                         <Tooltip
-                          formatter={(v: number) => `₹${(v / 1000).toFixed(0)}K`}
+                          formatter={(v) => `₹${(Number(v) / 1000).toFixed(0)}K`}
                           contentStyle={{ borderRadius: 12, border: "1px solid #E2E8F0", fontSize: 12 }}
                         />
                         <Bar dataKey="target" fill="#E2E8F0" name="Target" radius={[4, 4, 0, 0]} />
