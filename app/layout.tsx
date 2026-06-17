@@ -14,8 +14,19 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_BASE_URL ?? "https://bprozagcrm.xyz"
+  ),
   title: "ZAG SIGNS — Enterprise ERP",
   description: "ZAG SIGNS Enterprise ERP for managing leads, orders, production, inventory, billing and HR.",
+  openGraph: {
+    title: "ZAG SIGNS — Enterprise ERP",
+    description: "ZAG SIGNS Enterprise ERP for managing leads, orders, production, inventory, billing and HR.",
+    url: "https://bprozagcrm.xyz",
+    siteName: "ZAG SIGNS ERP",
+    locale: "en_IN",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
