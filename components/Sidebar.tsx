@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, UserCheck, FileText, ShoppingCart,
-  Wrench, Package, Wallet, AlertCircle, BarChart3, UserCircle, ChevronRight, Building2
+  Wrench, Package, Wallet, AlertCircle, BarChart3, UserCircle, ChevronRight, Building2, ClipboardList
 } from "lucide-react";
 
 const navItems = [
@@ -19,6 +19,7 @@ const navItems = [
   { href: "/collections", label: "Collections", icon: Wallet },
   { href: "/complaints", label: "Complaints", icon: AlertCircle },
   { href: "/hr", label: "HR & Attendance", icon: UserCircle },
+  { href: "/team-reports", label: "Team Reports", icon: ClipboardList },
   { href: "/reports", label: "Reports & MIS", icon: BarChart3 },
 ];
 
