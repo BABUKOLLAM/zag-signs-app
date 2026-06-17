@@ -5,8 +5,9 @@ import {
   LayoutDashboard, Users, UserCheck, FileText, ShoppingCart,
   Wrench, Package, Wallet, AlertCircle, BarChart3, UserCircle,
   Building2, ClipboardList, Target, CheckSquare, TrendingUp,
-  MapPin, FolderOpen, Sparkles, ChevronRight,
+  MapPin, FolderOpen, Sparkles, ChevronRight, X,
 } from "lucide-react";
+import { useSidebar } from "@/lib/sidebar-context";
 
 const sections = [
   {
@@ -63,10 +64,13 @@ const sections = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { open, close } = useSidebar();
 
   return (
     <aside
-      className="fixed left-0 top-0 h-screen w-64 flex flex-col z-30"
+      className={`fixed left-0 top-0 h-screen w-64 flex flex-col z-30 transition-transform duration-300 ease-in-out ${
+        open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+      }`}
       style={{ background: "linear-gradient(180deg, #0F1629 0%, #111827 100%)" }}
     >
       {/* Logo */}
@@ -76,10 +80,18 @@ export default function Sidebar() {
             style={{ background: "linear-gradient(135deg, #4F46E5, #7C3AED)" }}>
             <Building2 size={18} className="text-white" />
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <p className="font-bold text-white text-sm leading-tight tracking-wide">ZAG SIGNS</p>
             <p className="text-xs text-slate-400 font-medium">Enterprise ERP</p>
           </div>
+          {/* Close button — mobile only */}
+          <button
+            onClick={close}
+            className="lg:hidden p-1.5 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors flex-shrink-0"
+            aria-label="Close menu"
+          >
+            <X size={16} />
+          </button>
         </div>
       </div>
 

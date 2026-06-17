@@ -1,6 +1,7 @@
 "use client";
-import { Bell, Search, ChevronRight, Settings } from "lucide-react";
+import { Bell, Search, ChevronRight, Menu } from "lucide-react";
 import { useState } from "react";
+import { useSidebar } from "@/lib/sidebar-context";
 
 interface TopBarProps {
   title: string;
@@ -10,6 +11,7 @@ interface TopBarProps {
 
 export default function TopBar({ title, subtitle, actions }: TopBarProps) {
   const [notifOpen, setNotifOpen] = useState(false);
+  const { toggle } = useSidebar();
 
   const notifications = [
     { id: 1, text: "Follow-up due: Lulu Mall quotation", time: "10 min ago", type: "warning" },
@@ -21,6 +23,15 @@ export default function TopBar({ title, subtitle, actions }: TopBarProps) {
   return (
     <header className="sticky top-0 z-20 bg-white border-b border-slate-200 h-16 flex items-center px-6 gap-4"
       style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+
+      {/* Hamburger — mobile only */}
+      <button
+        onClick={toggle}
+        className="lg:hidden p-2 rounded-xl hover:bg-slate-100 transition-colors -ml-1 mr-1 flex-shrink-0"
+        aria-label="Open menu"
+      >
+        <Menu size={18} className="text-slate-600" />
+      </button>
 
       {/* Title + breadcrumb */}
       <div className="flex-1 min-w-0">

@@ -1,0 +1,58 @@
+{
+  "name": "ZAG SIGNS ERP",
+  "short_name": "ZAG ERP",
+  "description": "Enterprise CRM & Sales Force Management System for ZAG SIGNS",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0F1629",
+  "theme_color": "#4F46E5",
+  "orientation": "any",
+  "lang": "en-IN",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Executive Dashboard",
+      "url": "/dashboard",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Leads & CRM",
+      "short_name": "Leads",
+      "description": "Leads & CRM",
+      "url": "/leads",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Field Visits",
+      "short_name": "Field",
+      "description": "Log Field Visits",
+      "url": "/field-visits",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Team Reports",
+      "short_name": "Reports",
+      "description": "Daily, Weekly, Monthly Reports",
+      "url": "/team-reports",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "any" }]
+    }
+  ]
+}
