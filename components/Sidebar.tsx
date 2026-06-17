@@ -3,24 +3,34 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, UserCheck, FileText, ShoppingCart,
-  Wrench, Package, Wallet, AlertCircle, BarChart3, UserCircle, ChevronRight, Building2, ClipboardList
+  Wrench, Package, Wallet, AlertCircle, BarChart3, UserCircle,
+  Building2, ClipboardList, Target, CheckSquare, TrendingUp,
 } from "lucide-react";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/leads", label: "Leads & CRM", icon: Users },
-  { href: "/customers", label: "Customers", icon: UserCheck },
-  { href: "/quotations", label: "Quotations", icon: FileText },
-  { href: "/sales-orders", label: "Sales Orders", icon: ShoppingCart },
-  { href: "/work-orders", label: "Work Orders", icon: Wrench },
-  { href: "/production", label: "Production", icon: Package },
-  { href: "/inventory", label: "Inventory", icon: Package },
-  { href: "/accounts", label: "Accounts & Billing", icon: Wallet },
-  { href: "/collections", label: "Collections", icon: Wallet },
-  { href: "/complaints", label: "Complaints", icon: AlertCircle },
-  { href: "/hr", label: "HR & Attendance", icon: UserCircle },
-  { href: "/team-reports", label: "Team Reports", icon: ClipboardList },
-  { href: "/reports", label: "Reports & MIS", icon: BarChart3 },
+  // Strategy
+  { href: "/dashboard",     label: "Dashboard",        icon: LayoutDashboard },
+  { href: "/kpi",           label: "KPI Dashboard",    icon: Target },
+  // Sales pipeline
+  { href: "/leads",         label: "Leads & CRM",      icon: Users },
+  { href: "/opportunities", label: "Opportunities",    icon: TrendingUp },
+  { href: "/customers",     label: "Customers",        icon: UserCheck },
+  { href: "/quotations",    label: "Quotations",       icon: FileText },
+  { href: "/sales-orders",  label: "Sales Orders",     icon: ShoppingCart },
+  // Operations
+  { href: "/work-orders",   label: "Work Orders",      icon: Wrench },
+  { href: "/production",    label: "Production",       icon: Package },
+  { href: "/inventory",     label: "Inventory",        icon: Package },
+  // Finance
+  { href: "/accounts",      label: "Accounts & Billing", icon: Wallet },
+  { href: "/collections",   label: "Collections",      icon: Wallet },
+  // Support & People
+  { href: "/complaints",    label: "Complaints",       icon: AlertCircle },
+  { href: "/tasks",         label: "Tasks",            icon: CheckSquare },
+  { href: "/hr",            label: "HR & Attendance",  icon: UserCircle },
+  // Reporting
+  { href: "/team-reports",  label: "Team Reports",     icon: ClipboardList },
+  { href: "/reports",       label: "Reports & MIS",    icon: BarChart3 },
 ];
 
 export default function Sidebar() {
