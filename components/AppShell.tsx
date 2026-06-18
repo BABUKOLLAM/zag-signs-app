@@ -3,10 +3,10 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { SessionProvider } from "next-auth/react";
 import Sidebar from "./Sidebar";
+import MobileBottomNav from "./MobileBottomNav";
 import RouteGuard from "./RouteGuard";
 import { useSidebar } from "@/lib/sidebar-context";
 
-// Inner component can safely call useSidebar (provided by SidebarProvider above in tree)
 function ShellContent({ children }: { children: React.ReactNode }) {
   const { open, close } = useSidebar();
   const pathname = usePathname();
@@ -22,12 +22,12 @@ function ShellContent({ children }: { children: React.ReactNode }) {
     return () => { document.body.style.overflow = ""; };
   }, [open]);
 
-  // Login page renders full-screen — no sidebar / shell
   if (pathname === "/login") return <>{children}</>;
 
   return (
     <>
       <Sidebar />
+      {/* Mobile overlay backdrop */}
       <div
         aria-hidden="true"
         className={`fixed inset-0 bg-black/50 z-20 lg:hidden transition-opacity duration-300 ${
@@ -35,9 +35,12 @@ function ShellContent({ children }: { children: React.ReactNode }) {
         }`}
         onClick={close}
       />
-      <div className="lg:ml-64 min-h-screen flex flex-col">
+      {/* Main content — extra bottom padding on mobile for bottom nav */}
+      <div className="lg:ml-64 min-h-screen flex flex-col pb-16 lg:pb-0">
         <RouteGuard>{children}</RouteGuard>
       </div>
+      {/* Mobile bottom navigation */}
+      <MobileBottomNav />
     </>
   );
 }

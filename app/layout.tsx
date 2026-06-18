@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { SidebarProvider } from "@/lib/sidebar-context";
+import { ThemeProvider } from "@/lib/theme-context";
 import AppShell from "@/components/AppShell";
 import { ToastProvider } from "@/components/Toaster";
 import "./globals.css";
@@ -39,15 +41,25 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`} suppressHydrationWarning>
+      {/* Inline script prevents flash of wrong theme before React hydrates */}
+      <Script id="theme-init" strategy="beforeInteractive">{`
+        try {
+          var t = localStorage.getItem('zag-theme');
+          var dark = t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (dark) document.documentElement.classList.add('dark');
+        } catch(e){}
+      `}</Script>
       <body className="min-h-screen bg-slate-50 overflow-x-hidden">
-        <SidebarProvider>
-          <ToastProvider>
-            <AppShell>
-              {children}
-            </AppShell>
-          </ToastProvider>
-        </SidebarProvider>
+        <ThemeProvider>
+          <SidebarProvider>
+            <ToastProvider>
+              <AppShell>
+                {children}
+              </AppShell>
+            </ToastProvider>
+          </SidebarProvider>
+        </ThemeProvider>
         <SpeedInsights />
       </body>
     </html>

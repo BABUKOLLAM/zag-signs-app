@@ -3,6 +3,7 @@
 :root {
   --background: #F8FAFC;
   --foreground: #0F172A;
+  --topbar-bg: #FFFFFF;
   --sidebar-bg: #0F1629;
   --sidebar-hover: rgba(255,255,255,0.06);
   --sidebar-active: #4F46E5;
@@ -17,7 +18,105 @@
   --warning: #F59E0B;
   --danger: #EF4444;
   --radius: 12px;
+  --input-bg: #FFFFFF;
+  --input-border: #E2E8F0;
 }
+
+/* ─── Dark Mode Variables ───────────────────────────────────────── */
+.dark {
+  color-scheme: dark;
+  --background: #0B1120;
+  --foreground: #E2E8F0;
+  --topbar-bg: #141E30;
+  --card-bg: #1A2540;
+  --card-border: #2D3A52;
+  --text-primary: #F1F5F9;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  --input-bg: #1A2540;
+  --input-border: #2D3A52;
+}
+
+/* ─── Dark Mode Global Overrides ───────────────────────────────── */
+
+.dark body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* Backgrounds */
+.dark .bg-white          { background-color: #1A2540 !important; }
+.dark .bg-slate-50       { background-color: #0B1120 !important; }
+.dark .bg-slate-100      { background-color: #1A2540 !important; }
+.dark .bg-slate-200      { background-color: #2D3A52 !important; }
+
+/* Hover backgrounds */
+.dark .hover\:bg-slate-50:hover  { background-color: #1E2D45 !important; }
+.dark .hover\:bg-slate-100:hover { background-color: #243356 !important; }
+
+/* Borders */
+.dark .border-slate-100,
+.dark .border-slate-200  { border-color: #2D3A52 !important; }
+.dark .border-slate-300  { border-color: #3D4F6A !important; }
+
+/* Text */
+.dark .text-slate-900,
+.dark .text-slate-800    { color: #F1F5F9 !important; }
+.dark .text-slate-700,
+.dark .text-slate-600    { color: #CBD5E1 !important; }
+.dark .text-slate-500    { color: #94A3B8 !important; }
+.dark .text-slate-400    { color: #64748B !important; }
+
+/* Form elements */
+.dark input:not([type="checkbox"]):not([type="radio"]),
+.dark select,
+.dark textarea {
+  background-color: #1A2540 !important;
+  color: #F1F5F9 !important;
+  border-color: #2D3A52 !important;
+}
+.dark input::placeholder,
+.dark textarea::placeholder { color: #4E617A !important; }
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus { border-color: #4F46E5 !important; }
+
+/* Tables */
+.dark table                        { color: #E2E8F0; }
+.dark thead tr, .dark th           { background-color: #141E30 !important; color: #94A3B8 !important; border-color: #2D3A52 !important; }
+.dark tbody tr                     { border-color: #2D3A52 !important; }
+.dark tbody tr:hover               { background-color: #1E2D45 !important; }
+.dark td                           { color: #E2E8F0 !important; border-color: #2D3A52 !important; }
+
+/* Status / badge pill backgrounds */
+.dark .bg-green-50    { background-color: rgba(16,185,129,0.15) !important; }
+.dark .bg-emerald-50  { background-color: rgba(16,185,129,0.15) !important; }
+.dark .bg-red-50      { background-color: rgba(239,68,68,0.15)  !important; }
+.dark .bg-yellow-50,
+.dark .bg-amber-50    { background-color: rgba(245,158,11,0.15) !important; }
+.dark .bg-blue-50     { background-color: rgba(59,130,246,0.15) !important; }
+.dark .bg-indigo-50   { background-color: rgba(99,102,241,0.15) !important; }
+.dark .bg-purple-50   { background-color: rgba(139,92,246,0.15) !important; }
+.dark .bg-orange-50   { background-color: rgba(249,115,22,0.15) !important; }
+.dark .bg-cyan-50     { background-color: rgba(6,182,212,0.15)  !important; }
+.dark .bg-sky-50      { background-color: rgba(14,165,233,0.15) !important; }
+
+/* TopBar header */
+.dark header.sticky {
+  background-color: #141E30 !important;
+  border-color: #2D3A52 !important;
+}
+
+/* Modals / overlays */
+.dark .fixed.inset-0 > div[class*="bg-white"],
+.dark div[class*="rounded"][class*="bg-white"] {
+  background-color: #1A2540 !important;
+}
+
+/* Scrollbar dark */
+.dark ::-webkit-scrollbar-track  { background: #0B1120; }
+.dark ::-webkit-scrollbar-thumb  { background: #2D3A52; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #3D4F6A; }
 
 @theme inline {
   --color-background: var(--background);

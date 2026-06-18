@@ -6,7 +6,7 @@ import {
   Wrench, Package, Wallet, AlertCircle, BarChart3, UserCircle,
   Building2, ClipboardList, Target, CheckSquare, TrendingUp,
   MapPin, FolderOpen, Sparkles, ChevronRight, X, LogOut,
-  Shield, Database, ScrollText,
+  Shield, Database, ScrollText, BookOpen,
 } from "lucide-react";
 import { useSidebar } from "@/lib/sidebar-context";
 import { useSession, signOut } from "next-auth/react";
@@ -69,6 +69,12 @@ const sections = [
       { href: "/admin/users",    label: "User Management",  icon: Shield },
       { href: "/admin/database", label: "Database Admin",   icon: Database },
       { href: "/admin/audit",    label: "Audit Trail",      icon: ScrollText },
+    ],
+  },
+  {
+    label: "SUPPORT",
+    items: [
+      { href: "/help", label: "Help & Manual", icon: BookOpen },
     ],
   },
 ];

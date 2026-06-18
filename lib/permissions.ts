@@ -17,7 +17,7 @@ export type Role =
   | "IT Admin";
 
 /** Paths every authenticated user can reach regardless of role. */
-const BASE_PATHS = ["/dashboard", "/team-reports", "/documents"];
+const BASE_PATHS = ["/dashboard", "/team-reports", "/documents", "/help"];
 
 /** Full-access roles see every module. */
 const FULL_ACCESS: Role[] = ["MD", "IT Admin"];
@@ -96,6 +96,7 @@ export const ALL_MODULE_PATHS = [
   "/complaints", "/tasks", "/hr", "/field-visits",
   "/team-reports", "/reports", "/ai-insights", "/documents",
   "/admin/users", "/admin/database", "/admin/audit",
+  "/help",
 ];
 
 /** True if a path is a guarded module page (and therefore subject to canAccess). */
