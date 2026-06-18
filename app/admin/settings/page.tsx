@@ -88,8 +88,9 @@ export default function SettingsPage() {
       await api.put("/settings", form);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    } catch {
-      setError("Failed to save settings. Check your permissions.");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to save settings.";
+      setError(msg);
     } finally {
       setSaving(false);
     }

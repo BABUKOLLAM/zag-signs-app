@@ -14,48 +14,48 @@ async function main() {
   const users = await Promise.all([
     prisma.user.upsert({
       where: { email: "md@zagsigns.com" },
-      update: {},
-      create: { name: "Dr. Babu B", email: "md@zagsigns.com", password: await hash("MD@2026"), role: UserRole.MD, branch: null, phone: "9400000001" },
+      update: { status: "ACTIVE", isActive: true },
+      create: { name: "Dr. Babu B", email: "md@zagsigns.com", password: await hash("MD@2026"), role: UserRole.MD, branch: null, phone: "9400000001", status: "ACTIVE", isActive: true },
     }),
     prisma.user.upsert({
       where: { email: "avp@zagsigns.com" },
-      update: {},
-      create: { name: "Rajesh Kumar", email: "avp@zagsigns.com", password: await hash("AVP@2026"), role: UserRole.AVP, branch: null, phone: "9400000002" },
+      update: { status: "ACTIVE", isActive: true },
+      create: { name: "Rajesh Kumar", email: "avp@zagsigns.com", password: await hash("AVP@2026"), role: UserRole.AVP, branch: null, phone: "9400000002", status: "ACTIVE", isActive: true },
     }),
     prisma.user.upsert({
       where: { email: "bm@zagsigns.com" },
-      update: {},
-      create: { name: "Priya Nair", email: "bm@zagsigns.com", password: await hash("BM@2026"), role: UserRole.BUSINESS_MANAGER, branch: Branch.TVM, phone: "9400000003" },
+      update: { status: "ACTIVE", isActive: true },
+      create: { name: "Priya Nair", email: "bm@zagsigns.com", password: await hash("BM@2026"), role: UserRole.BUSINESS_MANAGER, branch: Branch.TVM, phone: "9400000003", status: "ACTIVE", isActive: true },
     }),
     prisma.user.upsert({
       where: { email: "sales@zagsigns.com" },
-      update: {},
-      create: { name: "Arun Kumar", email: "sales@zagsigns.com", password: await hash("Sales@2026"), role: UserRole.SALES_EXECUTIVE, branch: Branch.TVM, phone: "9400000004" },
+      update: { status: "ACTIVE", isActive: true },
+      create: { name: "Arun Kumar", email: "sales@zagsigns.com", password: await hash("Sales@2026"), role: UserRole.SALES_EXECUTIVE, branch: Branch.TVM, phone: "9400000004", status: "ACTIVE", isActive: true },
     }),
     prisma.user.upsert({
       where: { email: "cres@zagsigns.com" },
-      update: {},
-      create: { name: "Vijay CRE", email: "cres@zagsigns.com", password: await hash("CRES@2026"), role: UserRole.CRES, branch: Branch.EKM, phone: "9400000005" },
+      update: { status: "ACTIVE", isActive: true },
+      create: { name: "Vijay CRE", email: "cres@zagsigns.com", password: await hash("CRES@2026"), role: UserRole.CRES, branch: Branch.EKM, phone: "9400000005", status: "ACTIVE", isActive: true },
     }),
     prisma.user.upsert({
       where: { email: "prod@zagsigns.com" },
-      update: {},
-      create: { name: "Kumar Suresh", email: "prod@zagsigns.com", password: await hash("Prod@2026"), role: UserRole.PRODUCTION, branch: Branch.TVM, phone: "9400000006" },
+      update: { status: "ACTIVE", isActive: true },
+      create: { name: "Kumar Suresh", email: "prod@zagsigns.com", password: await hash("Prod@2026"), role: UserRole.PRODUCTION, branch: Branch.TVM, phone: "9400000006", status: "ACTIVE", isActive: true },
     }),
     prisma.user.upsert({
       where: { email: "accounts@zagsigns.com" },
-      update: {},
-      create: { name: "Meera Thomas", email: "accounts@zagsigns.com", password: await hash("Acc@2026"), role: UserRole.ACCOUNTS, branch: Branch.TVM, phone: "9400000007" },
+      update: { status: "ACTIVE", isActive: true },
+      create: { name: "Meera Thomas", email: "accounts@zagsigns.com", password: await hash("Acc@2026"), role: UserRole.ACCOUNTS, branch: Branch.TVM, phone: "9400000007", status: "ACTIVE", isActive: true },
     }),
     prisma.user.upsert({
       where: { email: "hr@zagsigns.com" },
-      update: {},
-      create: { name: "Sonia Mathew", email: "hr@zagsigns.com", password: await hash("HR@2026"), role: UserRole.HR, branch: null, phone: "9400000008" },
+      update: { status: "ACTIVE", isActive: true },
+      create: { name: "Sonia Mathew", email: "hr@zagsigns.com", password: await hash("HR@2026"), role: UserRole.HR, branch: null, phone: "9400000008", status: "ACTIVE", isActive: true },
     }),
     prisma.user.upsert({
       where: { email: "admin@zagsigns.com" },
-      update: {},
-      create: { name: "IT Admin", email: "admin@zagsigns.com", password: await hash("Admin@2026"), role: UserRole.IT_ADMIN, branch: null, phone: "9400000009" },
+      update: { status: "ACTIVE", isActive: true },
+      create: { name: "IT Admin", email: "admin@zagsigns.com", password: await hash("Admin@2026"), role: UserRole.IT_ADMIN, branch: null, phone: "9400000009", status: "ACTIVE", isActive: true },
     }),
   ]);
   console.log(`  ✓ ${users.length} users`);
