@@ -168,7 +168,7 @@ export default function UsersPage() {
           <option value="REJECTED">Rejected</option>
           <option value="INACTIVE">Inactive</option>
         </select>
-        <button onClick={reload} className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500">
+        <button onClick={refetch} className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500">
           <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
         </button>
       </div>

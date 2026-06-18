@@ -48,7 +48,8 @@ export async function POST(request: NextRequest) {
   const log = await prisma.auditLog.create({
     data: {
       action: body.action, tableName: body.tableName, recordId: body.recordId,
-      oldValues: body.oldValues ?? undefined, newValues: body.newValues ?? undefined,
+      oldValues: body.oldValues ? (body.oldValues as never) : undefined,
+      newValues: body.newValues ? (body.newValues as never) : undefined,
       userId: dbUser?.id ?? null,
     },
   });
