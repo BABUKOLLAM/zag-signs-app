@@ -5,6 +5,8 @@ import { fmt } from "@/lib/utils";
 import { useApi } from "@/lib/use-api";
 import { api } from "@/lib/api-client";
 import { LoadingState, ErrorState, EmptyState, TableSkeleton } from "@/components/States";
+import { useToast } from "@/components/Toaster";
+import { leadSchema, parseErrors, type FormErrors } from "@/lib/schemas";
 import { Plus, Phone, Mail, Calendar, RefreshCw } from "lucide-react";
 
 const BRANCHES = ["TVM", "KTYM", "EKM", "CLT"];
@@ -39,12 +41,17 @@ const emptyForm = {
   branch: "TVM", source: "OTHER", value: "", followUpDate: "", notes: "",
 };
 
+const ic = (err?: string) =>
+  `border rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 ${err ? "border-red-400 focus:ring-red-300" : "border-gray-200 focus:ring-indigo-500"}`;
+
 export default function LeadsPage() {
+  const toast = useToast();
   const [search, setSearch] = useState("");
   const [branchFilter, setBranchFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [errors, setErrors] = useState<FormErrors>({});
   const [saving, setSaving] = useState(false);
 
   const { data, loading, error, refetch } = useApi<Lead[]>("/leads", {
@@ -58,21 +65,30 @@ export default function LeadsPage() {
   const totalValue = leads.reduce((s, l) => s + l.value, 0);
 
   const set = (field: keyof typeof emptyForm) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
       setForm((f) => ({ ...f, [field]: e.target.value }));
+      if (errors[field]) setErrors((er) => { const n = { ...er }; delete n[field]; return n; });
+    };
 
   const handleSave = async () => {
-    if (!form.name.trim() || !form.phone.trim()) return;
+    const result = leadSchema.safeParse(form);
+    if (!result.success) { setErrors(parseErrors(result.error)); return; }
+    setErrors({});
     setSaving(true);
     try {
       await api.post("/leads", { ...form, value: Number(form.value) || 0 });
       setForm(emptyForm);
       setShowModal(false);
       refetch();
+      toast.success("Lead saved successfully");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save lead");
     } finally {
       setSaving(false);
     }
   };
+
+  const closeModal = () => { setShowModal(false); setForm(emptyForm); setErrors({}); };
 
   return (
     <div>
@@ -190,22 +206,26 @@ export default function LeadsPage() {
                 <div key={field}>
                   <label className="block text-xs font-medium text-gray-600 mb-1">
                     {field.charAt(0).toUpperCase() + field.slice(1)}
+                    {(field === "name" || field === "phone") && <span className="text-red-500 ml-0.5">*</span>}
                   </label>
-                  <input value={form[field]} onChange={set(field)}
-                    className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                  <input
+                    value={form[field]}
+                    onChange={set(field)}
+                    type={field === "email" ? "email" : "text"}
+                    className={ic(errors[field])}
+                  />
+                  {errors[field] && <p className="text-xs text-red-500 mt-1">{errors[field]}</p>}
                 </div>
               ))}
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Branch</label>
-                <select value={form.branch} onChange={set("branch")}
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full focus:outline-none">
+                <label className="block text-xs font-medium text-gray-600 mb-1">Branch <span className="text-red-500">*</span></label>
+                <select value={form.branch} onChange={set("branch")} className={ic(errors.branch)}>
                   {BRANCHES.map((b) => <option key={b}>{b}</option>)}
                 </select>
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Source</label>
-                <select value={form.source} onChange={set("source")}
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full focus:outline-none">
+                <select value={form.source} onChange={set("source")} className={ic()}>
                   {[["REFERRAL","Referral"],["COLD_CALL","Cold Call"],["WALK_IN","Walk-in"],["WEBSITE","Website"],["EXHIBITION","Exhibition"],["OTHER","Other"]].map(([v,l]) => (
                     <option key={v} value={v}>{l}</option>
                   ))}
@@ -213,24 +233,20 @@ export default function LeadsPage() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Estimated Value (₹)</label>
-                <input type="number" value={form.value} onChange={set("value")}
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full focus:outline-none" />
+                <input type="number" value={form.value} onChange={set("value")} className={ic()} />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Follow Up Date</label>
-                <input type="date" value={form.followUpDate} onChange={set("followUpDate")}
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full focus:outline-none" />
+                <input type="date" value={form.followUpDate} onChange={set("followUpDate")} className={ic()} />
               </div>
               <div className="col-span-2">
                 <label className="block text-xs font-medium text-gray-600 mb-1">Notes</label>
-                <textarea rows={2} value={form.notes} onChange={set("notes")}
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full focus:outline-none" />
+                <textarea rows={2} value={form.notes} onChange={set("notes")} className={ic()} />
               </div>
             </div>
             <div className="flex justify-end gap-3 px-6 pb-5">
-              <button onClick={() => { setShowModal(false); setForm(emptyForm); }}
-                className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
-              <button onClick={handleSave} disabled={!form.name.trim() || !form.phone.trim() || saving}
+              <button onClick={closeModal} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
+              <button onClick={handleSave} disabled={saving}
                 className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50">
                 {saving ? "Saving…" : "Save Lead"}
               </button>

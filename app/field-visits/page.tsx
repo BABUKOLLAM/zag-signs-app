@@ -4,6 +4,8 @@ import TopBar from "@/components/TopBar";
 import { useApi } from "@/lib/use-api";
 import { api } from "@/lib/api-client";
 import { ErrorState, EmptyState, TableSkeleton } from "@/components/States";
+import { useToast } from "@/components/Toaster";
+import { fieldVisitSchema, parseErrors, type FormErrors } from "@/lib/schemas";
 import { Plus, X, MapPin, Eye, Clock, CheckCircle, Navigation, RefreshCw } from "lucide-react";
 
 type VisitType = "SALES_CALL" | "SITE_SURVEY" | "INSTALLATION" | "SERVICE_COMPLAINT" | "COLLECTION" | "FOLLOW_UP";
@@ -59,20 +61,26 @@ const blank = {
 };
 
 export default function FieldVisitsPage() {
+  const toast = useToast();
   const [showModal, setShowModal] = useState(false);
   const [viewVisit, setViewVisit] = useState<FieldVisit | null>(null);
   const [form, setForm] = useState(blank);
+  const [errors, setErrors] = useState<FormErrors>({});
   const [saving, setSaving] = useState(false);
 
   const { data, loading, error, refetch } = useApi<FieldVisit[]>("/field-visits", { limit: 100 });
   const visits = data ?? [];
 
   const set = (f: keyof typeof blank) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
       setForm((p) => ({ ...p, [f]: e.target.value }));
+      if (errors[f]) setErrors((er) => { const n = { ...er }; delete n[f]; return n; });
+    };
 
   const handleSave = async () => {
-    if (!form.customerName || !form.visitType) return;
+    const result = fieldVisitSchema.safeParse(form);
+    if (!result.success) { setErrors(parseErrors(result.error)); return; }
+    setErrors({});
     setSaving(true);
     try {
       await api.post("/field-visits", {
@@ -82,6 +90,9 @@ export default function FieldVisitsPage() {
       setForm(blank);
       setShowModal(false);
       refetch();
+      toast.success("Visit logged successfully");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to log visit");
     } finally {
       setSaving(false);
     }
@@ -97,7 +108,8 @@ export default function FieldVisitsPage() {
   }, 0);
   const ordersExpected = visits.filter((v) => v.outcome === "ORDER_EXPECTED").length;
 
-  const ic = "border border-slate-200 rounded-xl px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50 focus:bg-white transition-all";
+  const ic = (err?: string) =>
+    `border rounded-xl px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 bg-slate-50 focus:bg-white transition-all ${err ? "border-red-400 focus:ring-red-300" : "border-slate-200 focus:ring-indigo-500"}`;
   const lc = "block text-xs font-medium text-slate-600 mb-1.5";
 
   return (
@@ -231,30 +243,38 @@ export default function FieldVisitsPage() {
             </div>
             <div className="px-6 py-5 space-y-4">
               <div className="grid grid-cols-2 gap-3">
-                <div><label className={lc}>Date *</label><input type="date" value={form.date} onChange={set("date")} className={ic} /></div>
                 <div>
-                  <label className={lc}>Visit Type *</label>
-                  <select value={form.visitType} onChange={set("visitType")} className={ic}>
+                  <label className={lc}>Date <span className="text-red-500">*</span></label>
+                  <input type="date" value={form.date} onChange={set("date")} className={ic(errors.date)} />
+                  {errors.date && <p className="text-xs text-red-500 mt-1">{errors.date}</p>}
+                </div>
+                <div>
+                  <label className={lc}>Visit Type <span className="text-red-500">*</span></label>
+                  <select value={form.visitType} onChange={set("visitType")} className={ic(errors.visitType)}>
                     {VISIT_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
                   </select>
                 </div>
-                <div className="col-span-2"><label className={lc}>Customer Name *</label><input type="text" placeholder="Company / person visited" value={form.customerName} onChange={set("customerName")} className={ic} /></div>
-                <div className="col-span-2"><label className={lc}>Location</label><input type="text" placeholder="Area, City" value={form.location} onChange={set("location")} className={ic} /></div>
-                <div><label className={lc}>Start Time</label><input type="time" value={form.startTime} onChange={set("startTime")} className={ic} /></div>
-                <div><label className={lc}>End Time</label><input type="time" value={form.endTime} onChange={set("endTime")} className={ic} /></div>
+                <div className="col-span-2">
+                  <label className={lc}>Customer Name <span className="text-red-500">*</span></label>
+                  <input type="text" placeholder="Company / person visited" value={form.customerName} onChange={set("customerName")} className={ic(errors.customerName)} />
+                  {errors.customerName && <p className="text-xs text-red-500 mt-1">{errors.customerName}</p>}
+                </div>
+                <div className="col-span-2"><label className={lc}>Location</label><input type="text" placeholder="Area, City" value={form.location} onChange={set("location")} className={ic()} /></div>
+                <div><label className={lc}>Start Time</label><input type="time" value={form.startTime} onChange={set("startTime")} className={ic()} /></div>
+                <div><label className={lc}>End Time</label><input type="time" value={form.endTime} onChange={set("endTime")} className={ic()} /></div>
                 <div>
-                  <label className={lc}>Outcome *</label>
-                  <select value={form.outcome} onChange={set("outcome")} className={ic}>
+                  <label className={lc}>Outcome <span className="text-red-500">*</span></label>
+                  <select value={form.outcome} onChange={set("outcome")} className={ic()}>
                     {OUTCOMES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </select>
                 </div>
-                <div><label className={lc}>Order Value (₹)</label><input type="number" min="0" placeholder="0" value={form.orderValue} onChange={set("orderValue")} className={ic} /></div>
-                <div className="col-span-2"><label className={lc}>Next Action</label><input type="text" placeholder="What to do next?" value={form.nextAction} onChange={set("nextAction")} className={ic} /></div>
-                <div className="col-span-2"><label className={lc}>Visit Notes</label><textarea rows={2} placeholder="Key discussion points, observations" value={form.notes} onChange={set("notes")} className={ic} /></div>
+                <div><label className={lc}>Order Value (₹)</label><input type="number" min="0" placeholder="0" value={form.orderValue} onChange={set("orderValue")} className={ic()} /></div>
+                <div className="col-span-2"><label className={lc}>Next Action</label><input type="text" placeholder="What to do next?" value={form.nextAction} onChange={set("nextAction")} className={ic()} /></div>
+                <div className="col-span-2"><label className={lc}>Visit Notes</label><textarea rows={2} placeholder="Key discussion points, observations" value={form.notes} onChange={set("notes")} className={ic()} /></div>
               </div>
               <div className="flex justify-end gap-3">
-                <button onClick={() => setShowModal(false)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-xl">Cancel</button>
-                <button onClick={handleSave} disabled={!form.customerName || saving}
+                <button onClick={() => { setShowModal(false); setForm(blank); setErrors({}); }} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-xl">Cancel</button>
+                <button onClick={handleSave} disabled={saving}
                   className="px-4 py-2 text-sm text-white rounded-xl font-semibold disabled:opacity-50"
                   style={{ background: "linear-gradient(135deg, #4F46E5, #7C3AED)" }}>
                   {saving ? "Saving…" : "Save Visit"}

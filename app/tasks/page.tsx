@@ -4,6 +4,8 @@ import TopBar from "@/components/TopBar";
 import { useApi } from "@/lib/use-api";
 import { api } from "@/lib/api-client";
 import { ErrorState, EmptyState } from "@/components/States";
+import { useToast } from "@/components/Toaster";
+import { taskSchema, parseErrors, type FormErrors } from "@/lib/schemas";
 import { Plus, X, CheckCircle, Circle, Clock, AlertTriangle, RefreshCw } from "lucide-react";
 
 type Priority = "HIGH" | "MEDIUM" | "LOW";
@@ -33,8 +35,10 @@ const today = new Date().toISOString().split("T")[0];
 const blank = { title: "", description: "", priority: "MEDIUM", dueDate: "", relatedTo: "" };
 
 export default function TasksPage() {
+  const toast = useToast();
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(blank);
+  const [errors, setErrors] = useState<FormErrors>({});
   const [filterStatus, setFilterStatus] = useState("");
   const [filterPriority, setFilterPriority] = useState("");
   const [saving, setSaving] = useState(false);
@@ -48,11 +52,15 @@ export default function TasksPage() {
   const tasks = data ?? [];
 
   const set = (f: keyof typeof blank) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
       setForm((p) => ({ ...p, [f]: e.target.value }));
+      if (errors[f]) setErrors((er) => { const n = { ...er }; delete n[f]; return n; });
+    };
 
   const handleSave = async () => {
-    if (!form.title.trim()) return;
+    const result = taskSchema.safeParse(form);
+    if (!result.success) { setErrors(parseErrors(result.error)); return; }
+    setErrors({});
     setSaving(true);
     try {
       await api.post("/tasks", {
@@ -65,6 +73,9 @@ export default function TasksPage() {
       setForm(blank);
       setShowModal(false);
       refetch();
+      toast.success("Task created successfully");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to create task");
     } finally {
       setSaving(false);
     }
@@ -75,8 +86,13 @@ export default function TasksPage() {
     const flow: TaskStatus[] = ["PENDING", "IN_PROGRESS", "COMPLETED"];
     const idx = flow.indexOf(task.status);
     const next = flow[Math.min(idx + 1, flow.length - 1)];
-    await api.put(`/tasks/${task.id}`, { status: next });
-    refetch();
+    try {
+      await api.put(`/tasks/${task.id}`, { status: next });
+      refetch();
+      toast.success(`Task marked as ${next.toLowerCase().replace("_", " ")}`);
+    } catch {
+      toast.error("Failed to update task status");
+    }
   };
 
   const counts = {
@@ -87,7 +103,8 @@ export default function TasksPage() {
     completed: tasks.filter((t) => t.status === "COMPLETED").length,
   };
 
-  const ic = "border border-gray-200 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-500";
+  const ic = (err?: string) =>
+    `border rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 ${err ? "border-red-400 focus:ring-red-300" : "border-gray-200 focus:ring-indigo-500"}`;
   const lc = "block text-xs font-medium text-gray-600 mb-1";
 
   const StatusIcon = ({ task }: { task: Task }) => {
@@ -220,17 +237,18 @@ export default function TasksPage() {
             </div>
             <div className="px-6 py-5 space-y-4">
               <div>
-                <label className={lc}>Task Title *</label>
-                <input type="text" placeholder="What needs to be done?" value={form.title} onChange={set("title")} className={ic} />
+                <label className={lc}>Task Title <span className="text-red-500">*</span></label>
+                <input type="text" placeholder="What needs to be done?" value={form.title} onChange={set("title")} className={ic(errors.title)} />
+                {errors.title && <p className="text-xs text-red-500 mt-1">{errors.title}</p>}
               </div>
               <div>
                 <label className={lc}>Description</label>
-                <textarea rows={2} placeholder="Add details or instructions" value={form.description} onChange={set("description")} className={ic} />
+                <textarea rows={2} placeholder="Add details or instructions" value={form.description} onChange={set("description")} className={ic()} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={lc}>Priority</label>
-                  <select value={form.priority} onChange={set("priority")} className={ic}>
+                  <select value={form.priority} onChange={set("priority")} className={ic()}>
                     <option value="HIGH">High</option>
                     <option value="MEDIUM">Medium</option>
                     <option value="LOW">Low</option>
@@ -238,17 +256,17 @@ export default function TasksPage() {
                 </div>
                 <div>
                   <label className={lc}>Due Date</label>
-                  <input type="date" value={form.dueDate} onChange={set("dueDate")} className={ic} />
+                  <input type="date" value={form.dueDate} onChange={set("dueDate")} className={ic()} />
                 </div>
                 <div className="col-span-2">
                   <label className={lc}>Related To (optional)</label>
-                  <input type="text" placeholder="e.g. Lead L001, Customer C002" value={form.relatedTo} onChange={set("relatedTo")} className={ic} />
+                  <input type="text" placeholder="e.g. Lead L001, Customer C002" value={form.relatedTo} onChange={set("relatedTo")} className={ic()} />
                 </div>
               </div>
               <div className="flex justify-end gap-3">
-                <button onClick={() => setShowModal(false)}
+                <button onClick={() => { setShowModal(false); setForm(blank); setErrors({}); }}
                   className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
-                <button onClick={handleSave} disabled={!form.title.trim() || saving}
+                <button onClick={handleSave} disabled={saving}
                   className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50">
                   {saving ? "Saving…" : "Create Task"}
                 </button>

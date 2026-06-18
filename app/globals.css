@@ -74,3 +74,10 @@ input:focus, select:focus, textarea:focus {
   outline: none;
   ring: 2px solid var(--primary);
 }
+
+/* Toast slide-in animation */
+@keyframes toast-enter {
+  from { opacity: 0; transform: translateX(110%); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.toast-enter { animation: toast-enter 0.22s ease-out; }

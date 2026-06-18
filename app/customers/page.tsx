@@ -5,6 +5,8 @@ import { fmt } from "@/lib/utils";
 import { useApi } from "@/lib/use-api";
 import { api } from "@/lib/api-client";
 import { LoadingState, ErrorState, EmptyState, TableSkeleton } from "@/components/States";
+import { useToast } from "@/components/Toaster";
+import { customerSchema, parseErrors, type FormErrors } from "@/lib/schemas";
 import { Plus, Building2, RefreshCw } from "lucide-react";
 
 const BRANCHES = ["TVM", "KTYM", "EKM", "CLT"];
@@ -21,11 +23,16 @@ const emptyForm = {
   branch: "TVM", gstNo: "", address: "", creditLimit: "",
 };
 
+const ic = (err?: string) =>
+  `border rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 ${err ? "border-red-400 focus:ring-red-300" : "border-gray-200 focus:ring-indigo-500"}`;
+
 export default function CustomersPage() {
+  const toast = useToast();
   const [search, setSearch] = useState("");
   const [branchFilter, setBranchFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [errors, setErrors] = useState<FormErrors>({});
   const [saving, setSaving] = useState(false);
 
   const { data, loading, error, refetch } = useApi<Customer[]>("/customers", {
@@ -40,24 +47,30 @@ export default function CustomersPage() {
   const totalOrders = customers.reduce((s, c) => s + c.totalOrders, 0);
 
   const set = (field: keyof typeof emptyForm) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
       setForm((f) => ({ ...f, [field]: e.target.value }));
+      if (errors[field]) setErrors((er) => { const n = { ...er }; delete n[field]; return n; });
+    };
 
   const handleSave = async () => {
-    if (!form.name.trim() || !form.company.trim() || !form.phone.trim()) return;
+    const result = customerSchema.safeParse(form);
+    if (!result.success) { setErrors(parseErrors(result.error)); return; }
+    setErrors({});
     setSaving(true);
     try {
-      await api.post("/customers", {
-        ...form,
-        creditLimit: Number(form.creditLimit) || 0,
-      });
+      await api.post("/customers", { ...form, creditLimit: Number(form.creditLimit) || 0 });
       setForm(emptyForm);
       setShowModal(false);
       refetch();
+      toast.success("Customer added successfully");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save customer");
     } finally {
       setSaving(false);
     }
   };
+
+  const closeModal = () => { setShowModal(false); setForm(emptyForm); setErrors({}); };
 
   return (
     <div>
@@ -165,39 +178,37 @@ export default function CustomersPage() {
                 <div key={field}>
                   <label className="block text-xs font-medium text-gray-600 mb-1">
                     {field.charAt(0).toUpperCase() + field.slice(1)}
+                    {(field === "name" || field === "company" || field === "phone") && <span className="text-red-500 ml-0.5">*</span>}
                   </label>
                   <input value={form[field]} onChange={set(field)}
-                    className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                    type={field === "email" ? "email" : "text"}
+                    className={ic(errors[field])} />
+                  {errors[field] && <p className="text-xs text-red-500 mt-1">{errors[field]}</p>}
                 </div>
               ))}
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Branch</label>
-                <select value={form.branch} onChange={set("branch")}
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full focus:outline-none">
+                <label className="block text-xs font-medium text-gray-600 mb-1">Branch <span className="text-red-500">*</span></label>
+                <select value={form.branch} onChange={set("branch")} className={ic()}>
                   {BRANCHES.map((b) => <option key={b}>{b}</option>)}
                 </select>
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">GST Number</label>
-                <input value={form.gstNo} onChange={set("gstNo")}
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full focus:outline-none" />
+                <input value={form.gstNo} onChange={set("gstNo")} className={ic()} />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Credit Limit (₹)</label>
-                <input type="number" value={form.creditLimit} onChange={set("creditLimit")}
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full focus:outline-none" />
+                <input type="number" value={form.creditLimit} onChange={set("creditLimit")} className={ic()} />
               </div>
               <div className="col-span-2">
                 <label className="block text-xs font-medium text-gray-600 mb-1">Address</label>
-                <textarea rows={2} value={form.address} onChange={set("address")}
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full focus:outline-none" />
+                <textarea rows={2} value={form.address} onChange={set("address")} className={ic()} />
               </div>
             </div>
             <div className="flex justify-end gap-3 px-6 pb-5">
-              <button onClick={() => { setShowModal(false); setForm(emptyForm); }}
+              <button onClick={closeModal}
                 className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
-              <button onClick={handleSave}
-                disabled={!form.name.trim() || !form.company.trim() || !form.phone.trim() || saving}
+              <button onClick={handleSave} disabled={saving}
                 className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50">
                 {saving ? "Saving…" : "Save Customer"}
               </button>
