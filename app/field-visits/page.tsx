@@ -6,7 +6,8 @@ import { api } from "@/lib/api-client";
 import { ErrorState, EmptyState, TableSkeleton } from "@/components/States";
 import { useToast } from "@/components/Toaster";
 import { fieldVisitSchema, parseErrors, type FormErrors } from "@/lib/schemas";
-import { Plus, X, MapPin, Eye, Clock, CheckCircle, Navigation, RefreshCw } from "lucide-react";
+import { exportExcel } from "@/lib/export";
+import { Plus, X, MapPin, Eye, Clock, CheckCircle, Navigation, RefreshCw, Download } from "lucide-react";
 
 type VisitType = "SALES_CALL" | "SITE_SURVEY" | "INSTALLATION" | "SERVICE_COMPLAINT" | "COLLECTION" | "FOLLOW_UP";
 type VisitOutcome = "POSITIVE" | "ORDER_EXPECTED" | "FOLLOW_UP_NEEDED" | "NOT_INTERESTED" | "COMPLETED";
@@ -98,6 +99,20 @@ export default function FieldVisitsPage() {
     }
   };
 
+  const handleExport = () => exportExcel(`FieldVisits_${new Date().toISOString().slice(0,10)}`, visits.map((v) => ({
+    "Date": v.date,
+    "Customer": v.customerName,
+    "Location": v.location,
+    "Visit Type": v.visitTypeLabel,
+    "Start Time": v.startTime,
+    "End Time": v.endTime,
+    "Outcome": v.outcomeLabel,
+    "Order Value (₹)": v.orderValue || 0,
+    "Next Action": v.nextAction,
+    "Notes": v.notes,
+    "Employee": v.employee,
+  })));
+
   const todayStr = new Date().toISOString().split("T")[0];
   const todayCount = visits.filter((v) => v.date === todayStr).length;
   const totalMins = visits.reduce((s, v) => {
@@ -153,11 +168,17 @@ export default function FieldVisitsPage() {
               <RefreshCw size={14} />
             </button>
           </div>
-          <button onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 text-white text-sm font-semibold px-4 py-2 rounded-xl"
-            style={{ background: "linear-gradient(135deg, #4F46E5, #7C3AED)" }}>
-            <Plus size={14} /> Log Visit
-          </button>
+          <div className="flex gap-2">
+            <button onClick={handleExport} disabled={visits.length === 0}
+              className="flex items-center gap-2 border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-medium px-3 py-2 rounded-xl disabled:opacity-40">
+              <Download size={14} /> Excel
+            </button>
+            <button onClick={() => setShowModal(true)}
+              className="flex items-center gap-2 text-white text-sm font-semibold px-4 py-2 rounded-xl"
+              style={{ background: "linear-gradient(135deg, #4F46E5, #7C3AED)" }}>
+              <Plus size={14} /> Log Visit
+            </button>
+          </div>
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">

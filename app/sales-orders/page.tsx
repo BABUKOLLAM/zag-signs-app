@@ -3,8 +3,9 @@ import TopBar from "@/components/TopBar";
 import { fmt } from "@/lib/utils";
 import { useApi } from "@/lib/use-api";
 import { LoadingState, ErrorState, EmptyState, TableSkeleton } from "@/components/States";
+import { exportExcel } from "@/lib/export";
 import { useState } from "react";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Download } from "lucide-react";
 
 const STATUS_COLORS: Record<string, string> = {
   DRAFT: "bg-gray-100 text-gray-700",
@@ -37,6 +38,19 @@ export default function SalesOrdersPage() {
   const inProduction = orders.filter((o) => o.status === "IN_PRODUCTION").length;
   const totalOutstanding = orders.reduce((s, o) => s + Math.max(0, o.totalAmount - o.paidAmount), 0);
 
+  const handleExport = () => exportExcel(`SalesOrders_${new Date().toISOString().slice(0,10)}`, orders.map((o) => ({
+    "Order No": o.orderNo,
+    "Customer": o.customerName,
+    "Quotation No": o.quotationNo,
+    "Order Date": o.orderDate,
+    "Delivery Date": o.deliveryDate,
+    "Status": o.statusLabel,
+    "Order Value (₹)": o.totalAmount,
+    "Paid (₹)": o.paidAmount,
+    "Outstanding (₹)": Math.max(0, o.totalAmount - o.paidAmount),
+    "Notes": o.notes,
+  })));
+
   return (
     <div>
       <TopBar title="Sales Orders" />
@@ -56,21 +70,27 @@ export default function SalesOrdersPage() {
           ))}
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex gap-3 items-center">
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none">
-            <option value="">All Status</option>
-            <option value="DRAFT">Draft</option>
-            <option value="CONFIRMED">Confirmed</option>
-            <option value="IN_PRODUCTION">In Production</option>
-            <option value="READY">Ready</option>
-            <option value="INSTALLED">Installed</option>
-            <option value="INVOICED">Invoiced</option>
-            <option value="COLLECTED">Collected</option>
-          </select>
-          <button onClick={refetch} title="Refresh"
-            className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">
-            <RefreshCw size={14} />
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex gap-3 items-center justify-between flex-wrap">
+          <div className="flex gap-3">
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
+              className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none">
+              <option value="">All Status</option>
+              <option value="DRAFT">Draft</option>
+              <option value="CONFIRMED">Confirmed</option>
+              <option value="IN_PRODUCTION">In Production</option>
+              <option value="READY">Ready</option>
+              <option value="INSTALLED">Installed</option>
+              <option value="INVOICED">Invoiced</option>
+              <option value="COLLECTED">Collected</option>
+            </select>
+            <button onClick={refetch} title="Refresh"
+              className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">
+              <RefreshCw size={14} />
+            </button>
+          </div>
+          <button onClick={handleExport} disabled={orders.length === 0}
+            className="flex items-center gap-2 border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-medium px-3 py-2 rounded-lg disabled:opacity-40">
+            <Download size={14} /> Export Excel
           </button>
         </div>
 

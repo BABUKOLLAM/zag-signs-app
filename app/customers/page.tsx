@@ -7,7 +7,8 @@ import { api } from "@/lib/api-client";
 import { LoadingState, ErrorState, EmptyState, TableSkeleton } from "@/components/States";
 import { useToast } from "@/components/Toaster";
 import { customerSchema, parseErrors, type FormErrors } from "@/lib/schemas";
-import { Plus, Building2, RefreshCw } from "lucide-react";
+import { exportExcel } from "@/lib/export";
+import { Plus, Building2, RefreshCw, Download } from "lucide-react";
 
 const BRANCHES = ["TVM", "KTYM", "EKM", "CLT"];
 
@@ -72,6 +73,22 @@ export default function CustomersPage() {
 
   const closeModal = () => { setShowModal(false); setForm(emptyForm); setErrors({}); };
 
+  const handleExport = () => exportExcel(`Customers_${new Date().toISOString().slice(0,10)}`, customers.map((c) => ({
+    "Customer No": c.customerNo,
+    "Name": c.name,
+    "Company": c.company,
+    "Phone": c.phone,
+    "Email": c.email,
+    "Branch": c.branch,
+    "GST No": c.gstNo,
+    "Total Orders": c.totalOrders,
+    "Total Value (₹)": c.totalValue,
+    "Outstanding (₹)": c.outstandingBalance,
+    "Credit Limit (₹)": c.creditLimit,
+    "Address": c.address,
+    "Active": c.isActive ? "Yes" : "No",
+  })));
+
   return (
     <div>
       <TopBar title="Customers" />
@@ -106,10 +123,16 @@ export default function CustomersPage() {
               <RefreshCw size={14} />
             </button>
           </div>
-          <button onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg">
-            <Plus size={14} /> Add Customer
-          </button>
+          <div className="flex gap-2">
+            <button onClick={handleExport} disabled={customers.length === 0}
+              className="flex items-center gap-2 border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-medium px-3 py-2 rounded-lg disabled:opacity-40">
+              <Download size={14} /> Excel
+            </button>
+            <button onClick={() => setShowModal(true)}
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg">
+              <Plus size={14} /> Add Customer
+            </button>
+          </div>
         </div>
 
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">

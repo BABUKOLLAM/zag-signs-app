@@ -7,7 +7,8 @@ import { api } from "@/lib/api-client";
 import { LoadingState, ErrorState, EmptyState, TableSkeleton } from "@/components/States";
 import { useToast } from "@/components/Toaster";
 import { leadSchema, parseErrors, type FormErrors } from "@/lib/schemas";
-import { Plus, Phone, Mail, Calendar, RefreshCw } from "lucide-react";
+import { exportExcel } from "@/lib/export";
+import { Plus, Phone, Mail, Calendar, RefreshCw, Download } from "lucide-react";
 
 const BRANCHES = ["TVM", "KTYM", "EKM", "CLT"];
 const STATUSES = [
@@ -90,6 +91,22 @@ export default function LeadsPage() {
 
   const closeModal = () => { setShowModal(false); setForm(emptyForm); setErrors({}); };
 
+  const handleExport = () => exportExcel(`Leads_${new Date().toISOString().slice(0,10)}`, leads.map((l) => ({
+    "Lead No": l.leadNo,
+    "Name": l.name,
+    "Company": l.company,
+    "Phone": l.phone,
+    "Email": l.email,
+    "Branch": l.branch,
+    "Status": l.statusLabel,
+    "Source": l.sourceLabel,
+    "Value (₹)": l.value,
+    "Assigned To": l.assignedTo,
+    "Follow Up Date": l.followUpDate,
+    "Created": l.createdAt,
+    "Notes": l.notes,
+  })));
+
   return (
     <div>
       <TopBar title="Leads & CRM" />
@@ -129,10 +146,16 @@ export default function LeadsPage() {
               <RefreshCw size={14} />
             </button>
           </div>
-          <button onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg">
-            <Plus size={14} /> Add Lead
-          </button>
+          <div className="flex gap-2">
+            <button onClick={handleExport} disabled={leads.length === 0}
+              className="flex items-center gap-2 border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-medium px-3 py-2 rounded-lg disabled:opacity-40">
+              <Download size={14} /> Excel
+            </button>
+            <button onClick={() => setShowModal(true)}
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg">
+              <Plus size={14} /> Add Lead
+            </button>
+          </div>
         </div>
 
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
