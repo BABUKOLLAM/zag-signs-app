@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   const [quotations, orders, invoices] = await Promise.all([
     prisma.quotation.findMany({
       where: { customerId: customer.id },
-      select: { quotationNo: true, amount: true, status: true, createdAt: true },
+      select: { quotationNo: true, total: true, status: true, createdAt: true },
       orderBy: { createdAt: "desc" },
       take: 20,
     }),
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
 
   return ok({
     customer,
-    quotations: quotations.map(q => ({ ...q, amount: q.amount, createdAt: q.createdAt.toISOString() })),
+    quotations: quotations.map(q => ({ ...q, amount: q.total, createdAt: q.createdAt.toISOString() })),
     orders:     orders.map(o     => ({ ...o, createdAt: o.createdAt.toISOString() })),
     invoices:   invoices.map(i   => ({ ...i, dueDate: i.dueDate?.toISOString() ?? null })),
   });
