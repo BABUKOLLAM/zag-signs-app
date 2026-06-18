@@ -271,6 +271,7 @@ async function main() {
       website: "www.zagsigns.com",
       gstNo: "32ATXPK5181A1ZO",
       panNo: "",
+      logoUrl: "https://bprozagcrm.xyz/zagsigns-logo.png",
       bankName: "Dhanlaxmi Bank",
       bankBranch: "Vazhuthakkad",
       accountNo: "003705300009231",
