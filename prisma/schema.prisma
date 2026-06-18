@@ -688,6 +688,31 @@ model LeaveRequest {
   @@map("leave_requests")
 }
 
+// ─── COMPANY SETTINGS ─────────────────────────────────────────────────────────
+
+model CompanySetting {
+  id           String   @id @default("company")
+  name         String   @default("ZAG SIGNS")
+  tagline      String   @default("Excellence in Signage Solutions")
+  address      String   @default("")
+  phone        String   @default("")
+  email        String   @default("")
+  website      String   @default("")
+  gstNo        String   @default("")
+  panNo        String   @default("")
+  logoUrl      String?
+  bankName     String   @default("")
+  bankBranch   String   @default("")
+  accountNo    String   @default("")
+  ifscCode     String   @default("")
+  accountType  String   @default("Current Account")
+  defaultTerms String   @default("")
+  validityDays Int      @default(30)
+  updatedAt    DateTime @updatedAt
+
+  @@map("company_settings")
+}
+
 // ─── SYSTEM ───────────────────────────────────────────────────────────────────
 
 model Notification {

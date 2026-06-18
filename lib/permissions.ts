@@ -23,7 +23,7 @@ const BASE_PATHS = ["/dashboard", "/team-reports", "/documents", "/help"];
 const FULL_ACCESS: Role[] = ["MD", "IT Admin"];
 
 /** Admin-only paths: only MD and IT Admin can access */
-const ADMIN_PATHS = ["/admin/users", "/admin/database", "/admin/audit"];
+const ADMIN_PATHS = ["/admin/users", "/admin/database", "/admin/audit", "/admin/settings"];
 
 /** Per-role allow-lists (in addition to BASE_PATHS). */
 const ROLE_PATHS: Record<Role, string[]> = {
@@ -95,7 +95,7 @@ export const ALL_MODULE_PATHS = [
   "/accounts", "/collections",
   "/complaints", "/tasks", "/hr", "/field-visits",
   "/team-reports", "/reports", "/ai-insights", "/documents",
-  "/admin/users", "/admin/database", "/admin/audit",
+  "/admin/users", "/admin/database", "/admin/audit", "/admin/settings",
   "/help",
 ];
 

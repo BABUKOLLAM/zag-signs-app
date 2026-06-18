@@ -5,7 +5,7 @@ import { fmt } from "@/lib/utils";
 import { useApi } from "@/lib/use-api";
 import { api } from "@/lib/api-client";
 import { LoadingState, ErrorState, EmptyState, TableSkeleton } from "@/components/States";
-import QuotationPrintTemplate, { type QuotationData } from "@/components/QuotationPrintTemplate";
+import QuotationPrintTemplate, { type QuotationData, type CompanyConfig, type BankConfig } from "@/components/QuotationPrintTemplate";
 import DriveButton from "@/components/DriveButton";
 import DocumentsPanel from "@/components/DocumentsPanel";
 import { Eye, Printer, RefreshCw, X } from "lucide-react";
@@ -34,6 +34,7 @@ export default function QuotationsPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [selected, setSelected] = useState<Quotation | null>(null);
   const [printData, setPrintData] = useState<QuotationData | null>(null);
+  const [printSettings, setPrintSettings] = useState<{ company: Partial<CompanyConfig>; bank: Partial<BankConfig> } | null>(null);
   const [loadingPrint, setLoadingPrint] = useState(false);
 
   const { data, loading, error, refetch } = useApi<Quotation[]>("/quotations", {
@@ -46,11 +47,14 @@ export default function QuotationsPage() {
   const handlePrint = useCallback(async (q: Quotation) => {
     setLoadingPrint(true);
     try {
-      // Fetch full quotation data (includes customer object with company name)
-      const full = await api.get<{ data: QuotationData }>(`/quotations/${q.id}`);
-      const qData: QuotationData = { ...full.data, customerName: q.customerName };
+      const [fullRes, settingsRes] = await Promise.all([
+        api.get<{ data: QuotationData }>(`/quotations/${q.id}`),
+        api.get<{ data: CompanyConfig & BankConfig }>("/settings").catch(() => ({ data: null })),
+      ]);
+      const qData: QuotationData = { ...fullRes.data, customerName: q.customerName };
+      const s = settingsRes.data;
       setPrintData(qData);
-      // Small delay so React renders the print zone, then trigger print
+      setPrintSettings(s ? { company: s, bank: s } : null);
       setTimeout(() => { window.print(); }, 300);
     } catch {
       alert("Failed to load quotation data for printing.");
@@ -235,7 +239,13 @@ export default function QuotationsPage() {
 
       {/* ── HIDDEN PRINT ZONE (shown only during window.print()) ─────────── */}
       <div id="zag-print-zone" style={{ display: "none" }}>
-        {printData && <QuotationPrintTemplate q={printData} />}
+        {printData && (
+          <QuotationPrintTemplate
+            q={printData}
+            company={printSettings?.company}
+            bank={printSettings?.bank}
+          />
+        )}
       </div>
     </div>
   );

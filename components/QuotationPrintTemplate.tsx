@@ -1,29 +1,33 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// QUOTATION PRINT TEMPLATE — ZAG SIGNS
+// ─── QUOTATION PRINT TEMPLATE ────────────────────────────────────────────────
+// Company details, bank details and terms are now configured in:
+//   Admin → Company Settings  (/admin/settings)
 //
-// HOW TO CUSTOMISE THIS FORMAT:
-//
-//  1. COMPANY DETAILS  → edit the COMPANY constant below
-//  2. BANK DETAILS     → edit the BANK constant below
-//  3. LOGO             → replace the gradient box with:
-//                        <img src="/logo.png" alt="ZAG SIGNS" className="h-14" />
-//                        (put logo.png in the /public folder)
-//  4. COLORS           → change `accentBg` / `accentText` CSS class pairs
-//  5. COLUMNS          → add/remove <th>/<td> pairs in the items table
-//  6. TERMS            → edit COMPANY.defaultTerms below
-//  7. FOOTER           → edit the footer JSX at the bottom
+// The COMPANY and BANK constants below are fallbacks only — they are used
+// when the settings API hasn't loaded yet or as initial seed values.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ── EDIT YOUR COMPANY DETAILS HERE ──────────────────────────────────────────
-const COMPANY = {
+export interface CompanyConfig {
+  name: string; tagline: string; address: string;
+  phone: string; email: string; website: string;
+  gstNo: string; panNo: string; logoUrl?: string;
+  defaultTerms: string;
+}
+
+export interface BankConfig {
+  bankName: string; bankBranch: string; accountNo: string;
+  ifscCode: string; accountType: string;
+}
+
+// Fallback values (used until Admin saves real settings)
+const DEFAULT_COMPANY: CompanyConfig = {
   name: "ZAG SIGNS",
   tagline: "Excellence in Signage Solutions",
   address: "123 Industrial Area, Thiruvananthapuram, Kerala – 695 001",
   phone: "+91 94470 00000",
   email: "info@zagsigns.com",
   website: "www.zagsigns.com",
-  gst: "32AAAAA0000A1Z5",
-  pan: "AAAAA0000A",
+  gstNo: "32AAAAA0000A1Z5",
+  panNo: "AAAAA0000A",
   defaultTerms: [
     "Payment due within 15 days of invoice date.",
     "50% advance required to commence production.",
@@ -31,42 +35,29 @@ const COMPANY = {
     "This is a computer-generated quotation and does not require a signature to be valid.",
     "Price quoted is valid for 30 days from the date of quotation.",
     "Delivery timeline starts from receipt of advance & approved artwork.",
-  ],
+  ].join("\n"),
 };
 
-// ── EDIT YOUR BANK DETAILS HERE ─────────────────────────────────────────────
-const BANK = {
-  name: "State Bank of India",
-  branch: "Thiruvananthapuram Main Branch",
+const DEFAULT_BANK: BankConfig = {
+  bankName: "State Bank of India",
+  bankBranch: "Thiruvananthapuram Main Branch",
   accountNo: "00000 00000 00000",
-  ifsc: "SBIN0000000",
+  ifscCode: "SBIN0000000",
   accountType: "Current Account",
 };
-// ────────────────────────────────────────────────────────────────────────────
 
 export interface QuotationItem {
-  description: string;
-  qty: number;
-  unit: string;
-  unitPrice: number;
-  total: number;
+  description: string; qty: number; unit: string; unitPrice: number; total: number;
 }
 
 export interface QuotationData {
-  quotationNo: string;
-  createdAt: string;
-  validUntil: string;
-  status: string;
-  statusLabel: string;
+  quotationNo: string; createdAt: string; validUntil: string;
+  status: string; statusLabel: string;
   customer: { name: string; company: string } | null;
   customerName?: string;
   items: QuotationItem[];
-  subtotal: number;
-  tax: number;
-  discount: number;
-  total: number;
-  terms: string;
-  notes: string;
+  subtotal: number; tax: number; discount: number; total: number;
+  terms: string; notes: string;
 }
 
 function inr(n: number) {
@@ -93,34 +84,59 @@ function numberToWords(n: number): string {
   return word.trim() + " Rupees Only";
 }
 
-export default function QuotationPrintTemplate({ q }: { q: QuotationData }) {
+export default function QuotationPrintTemplate({
+  q,
+  company: companyProp,
+  bank: bankProp,
+}: {
+  q: QuotationData;
+  company?: Partial<CompanyConfig>;
+  bank?: Partial<BankConfig>;
+}) {
+  const C: CompanyConfig = { ...DEFAULT_COMPANY, ...companyProp };
+  const B: BankConfig    = { ...DEFAULT_BANK,    ...bankProp };
+
   const customerName = q.customer?.company || q.customer?.name || q.customerName || "—";
-  const terms = q.terms ? q.terms.split("\n").filter(Boolean) : COMPANY.defaultTerms;
+  const termLines = q.terms
+    ? q.terms.split("\n").filter(Boolean)
+    : C.defaultTerms.split("\n").filter(Boolean);
 
   return (
     <div style={{ fontFamily: "Arial, sans-serif", fontSize: "11px", color: "#1a1a1a", background: "#fff" }}>
 
-      {/* ── HEADER ─────────────────────────────────────────────────────────── */}
+      {/* ── HEADER ───────────────────────────────────────────────────────────── */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "3px solid #4F46E5", paddingBottom: "12px", marginBottom: "14px" }}>
 
         {/* Left: Logo + Company */}
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          {/* ── LOGO: replace this div with <img src="/logo.png" /> ── */}
-          <div style={{ width: "54px", height: "54px", background: "linear-gradient(135deg,#4F46E5,#7C3AED)", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span style={{ color: "#fff", fontWeight: "900", fontSize: "18px", letterSpacing: "-1px" }}>ZAG</span>
-          </div>
-          <div>
-            <div style={{ fontSize: "20px", fontWeight: "900", color: "#4F46E5", letterSpacing: "1px" }}>{COMPANY.name}</div>
-            <div style={{ fontSize: "9px", color: "#6B7280", marginTop: "1px" }}>{COMPANY.tagline}</div>
-            <div style={{ fontSize: "9px", color: "#374151", marginTop: "4px" }}>{COMPANY.address}</div>
-            <div style={{ fontSize: "9px", color: "#374151" }}>
-              {COMPANY.phone} &nbsp;|&nbsp; {COMPANY.email} &nbsp;|&nbsp; {COMPANY.website}
+          {C.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={C.logoUrl} alt={C.name} style={{ height: "54px", width: "auto", objectFit: "contain" }} />
+          ) : (
+            <div style={{ width: "54px", height: "54px", background: "linear-gradient(135deg,#4F46E5,#7C3AED)", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ color: "#fff", fontWeight: "900", fontSize: "16px", letterSpacing: "-1px" }}>
+                {C.name.substring(0, 3).toUpperCase()}
+              </span>
             </div>
-            <div style={{ fontSize: "9px", color: "#374151" }}>GSTIN: {COMPANY.gst} &nbsp;|&nbsp; PAN: {COMPANY.pan}</div>
+          )}
+          <div>
+            <div style={{ fontSize: "20px", fontWeight: "900", color: "#4F46E5", letterSpacing: "1px" }}>{C.name}</div>
+            <div style={{ fontSize: "9px", color: "#6B7280", marginTop: "1px" }}>{C.tagline}</div>
+            <div style={{ fontSize: "9px", color: "#374151", marginTop: "4px" }}>{C.address}</div>
+            <div style={{ fontSize: "9px", color: "#374151" }}>
+              {[C.phone, C.email, C.website].filter(Boolean).join("  |  ")}
+            </div>
+            {(C.gstNo || C.panNo) && (
+              <div style={{ fontSize: "9px", color: "#374151" }}>
+                {C.gstNo && `GSTIN: ${C.gstNo}`}
+                {C.gstNo && C.panNo ? "  |  " : ""}
+                {C.panNo && `PAN: ${C.panNo}`}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Right: QUOTATION box */}
+        {/* Right: Quotation meta box */}
         <div style={{ textAlign: "right" }}>
           <div style={{ background: "#4F46E5", color: "#fff", fontSize: "14px", fontWeight: "800", padding: "6px 16px", borderRadius: "6px", letterSpacing: "2px" }}>QUOTATION</div>
           <table style={{ marginTop: "8px", fontSize: "10px", borderCollapse: "collapse" }}>
@@ -134,7 +150,7 @@ export default function QuotationPrintTemplate({ q }: { q: QuotationData }) {
         </div>
       </div>
 
-      {/* ── BILL TO ────────────────────────────────────────────────────────── */}
+      {/* ── BILL TO ──────────────────────────────────────────────────────────── */}
       <div style={{ background: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "6px", padding: "10px 14px", marginBottom: "14px" }}>
         <div style={{ fontSize: "9px", fontWeight: "700", color: "#6B7280", letterSpacing: "1px", marginBottom: "4px" }}>BILL TO</div>
         <div style={{ fontSize: "13px", fontWeight: "700", color: "#111" }}>{customerName}</div>
@@ -143,7 +159,7 @@ export default function QuotationPrintTemplate({ q }: { q: QuotationData }) {
         )}
       </div>
 
-      {/* ── ITEMS TABLE ─────────────────────────────────────────────────────── */}
+      {/* ── ITEMS TABLE ──────────────────────────────────────────────────────── */}
       <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "4px" }}>
         <thead>
           <tr style={{ background: "#4F46E5", color: "#fff" }}>
@@ -172,7 +188,7 @@ export default function QuotationPrintTemplate({ q }: { q: QuotationData }) {
         </tbody>
       </table>
 
-      {/* ── TOTALS ──────────────────────────────────────────────────────────── */}
+      {/* ── TOTALS ───────────────────────────────────────────────────────────── */}
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "14px" }}>
         <table style={{ fontSize: "10px", borderCollapse: "collapse", minWidth: "220px" }}>
           <tbody>
@@ -205,7 +221,7 @@ export default function QuotationPrintTemplate({ q }: { q: QuotationData }) {
         <strong>Amount in Words:</strong> {numberToWords(q.total)}
       </div>
 
-      {/* ── NOTES ───────────────────────────────────────────────────────────── */}
+      {/* Notes */}
       {q.notes && (
         <div style={{ background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: "5px", padding: "8px 12px", marginBottom: "14px" }}>
           <div style={{ fontSize: "9px", fontWeight: "700", color: "#92400E", marginBottom: "3px" }}>NOTES</div>
@@ -213,20 +229,19 @@ export default function QuotationPrintTemplate({ q }: { q: QuotationData }) {
         </div>
       )}
 
-      {/* ── BANK + TERMS ────────────────────────────────────────────────────── */}
+      {/* ── BANK + TERMS ─────────────────────────────────────────────────────── */}
       <div style={{ display: "flex", gap: "14px", marginBottom: "14px" }}>
-        {/* Bank details */}
         <div style={{ flex: 1, border: "1px solid #E5E7EB", borderRadius: "6px", padding: "10px 12px" }}>
           <div style={{ fontSize: "9px", fontWeight: "700", color: "#6B7280", letterSpacing: "1px", marginBottom: "6px" }}>BANK DETAILS</div>
           <table style={{ fontSize: "10px", borderCollapse: "collapse", width: "100%" }}>
             <tbody>
               {[
-                ["Bank Name", BANK.name],
-                ["Branch", BANK.branch],
-                ["Account No", BANK.accountNo],
-                ["IFSC Code", BANK.ifsc],
-                ["Account Type", BANK.accountType],
-              ].map(([k, v]) => (
+                ["Bank Name", B.bankName],
+                ["Branch", B.bankBranch],
+                ["Account No", B.accountNo],
+                ["IFSC Code", B.ifscCode],
+                ["Account Type", B.accountType],
+              ].filter(([, v]) => v).map(([k, v]) => (
                 <tr key={k}>
                   <td style={{ color: "#6B7280", paddingBottom: "3px", paddingRight: "8px", whiteSpace: "nowrap" }}>{k}</td>
                   <td style={{ fontWeight: "600", color: "#111" }}>{v}</td>
@@ -236,24 +251,23 @@ export default function QuotationPrintTemplate({ q }: { q: QuotationData }) {
           </table>
         </div>
 
-        {/* Terms */}
         <div style={{ flex: 1.2, border: "1px solid #E5E7EB", borderRadius: "6px", padding: "10px 12px" }}>
           <div style={{ fontSize: "9px", fontWeight: "700", color: "#6B7280", letterSpacing: "1px", marginBottom: "6px" }}>TERMS &amp; CONDITIONS</div>
           <ol style={{ margin: 0, padding: "0 0 0 14px", fontSize: "9px", color: "#374151", lineHeight: "1.6" }}>
-            {terms.map((t, i) => <li key={i}>{t}</li>)}
+            {termLines.map((t, i) => <li key={i}>{t}</li>)}
           </ol>
         </div>
       </div>
 
-      {/* ── SIGNATURES ──────────────────────────────────────────────────────── */}
+      {/* ── SIGNATURES ───────────────────────────────────────────────────────── */}
       <div style={{ display: "flex", justifyContent: "space-between", borderTop: "2px solid #E5E7EB", paddingTop: "14px", marginTop: "6px" }}>
         <div style={{ textAlign: "center", width: "160px" }}>
           <div style={{ height: "50px", borderBottom: "1px solid #9CA3AF", marginBottom: "5px" }} />
           <div style={{ fontSize: "9px", color: "#6B7280" }}>Customer Signature &amp; Stamp</div>
         </div>
         <div style={{ textAlign: "center", fontSize: "10px", color: "#6B7280" }}>
-          <div style={{ color: "#4F46E5", fontWeight: "700", fontSize: "11px" }}>{COMPANY.name}</div>
-          <div style={{ fontSize: "8px", marginTop: "2px" }}>{COMPANY.tagline}</div>
+          <div style={{ color: "#4F46E5", fontWeight: "700", fontSize: "11px" }}>{C.name}</div>
+          <div style={{ fontSize: "8px", marginTop: "2px" }}>{C.tagline}</div>
         </div>
         <div style={{ textAlign: "center", width: "160px" }}>
           <div style={{ height: "50px", borderBottom: "1px solid #9CA3AF", marginBottom: "5px" }} />
@@ -261,9 +275,10 @@ export default function QuotationPrintTemplate({ q }: { q: QuotationData }) {
         </div>
       </div>
 
-      {/* ── FOOTER ──────────────────────────────────────────────────────────── */}
+      {/* ── FOOTER ───────────────────────────────────────────────────────────── */}
       <div style={{ marginTop: "12px", textAlign: "center", fontSize: "8px", color: "#9CA3AF", borderTop: "1px solid #F3F4F6", paddingTop: "8px" }}>
-        {COMPANY.name} &nbsp;|&nbsp; {COMPANY.address} &nbsp;|&nbsp; {COMPANY.phone} &nbsp;|&nbsp; GSTIN: {COMPANY.gst}
+        {C.name} &nbsp;|&nbsp; {C.address} &nbsp;|&nbsp; {C.phone}
+        {C.gstNo ? ` &nbsp;|&nbsp; GSTIN: ${C.gstNo}` : ""}
       </div>
     </div>
   );
