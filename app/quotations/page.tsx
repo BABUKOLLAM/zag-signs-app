@@ -1,10 +1,12 @@
 "use client";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import TopBar from "@/components/TopBar";
 import { fmt } from "@/lib/utils";
 import { useApi } from "@/lib/use-api";
+import { api } from "@/lib/api-client";
 import { LoadingState, ErrorState, EmptyState, TableSkeleton } from "@/components/States";
-import { Eye, RefreshCw } from "lucide-react";
+import QuotationPrintTemplate, { type QuotationData } from "@/components/QuotationPrintTemplate";
+import { Eye, Printer, RefreshCw, X } from "lucide-react";
 
 const STATUS_COLORS: Record<string, string> = {
   DRAFT: "bg-gray-100 text-gray-700",
@@ -29,6 +31,8 @@ interface Quotation {
 export default function QuotationsPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [selected, setSelected] = useState<Quotation | null>(null);
+  const [printData, setPrintData] = useState<QuotationData | null>(null);
+  const [loadingPrint, setLoadingPrint] = useState(false);
 
   const { data, loading, error, refetch } = useApi<Quotation[]>("/quotations", {
     status: statusFilter || undefined,
@@ -36,6 +40,22 @@ export default function QuotationsPage() {
   });
 
   const quotations = data ?? [];
+
+  const handlePrint = useCallback(async (q: Quotation) => {
+    setLoadingPrint(true);
+    try {
+      // Fetch full quotation data (includes customer object with company name)
+      const full = await api.get<{ data: QuotationData }>(`/quotations/${q.id}`);
+      const qData: QuotationData = { ...full.data, customerName: q.customerName };
+      setPrintData(qData);
+      // Small delay so React renders the print zone, then trigger print
+      setTimeout(() => { window.print(); }, 300);
+    } catch {
+      alert("Failed to load quotation data for printing.");
+    } finally {
+      setLoadingPrint(false);
+    }
+  }, []);
 
   return (
     <div>
@@ -109,10 +129,16 @@ export default function QuotationsPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <button onClick={() => setSelected(q)}
-                          className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800">
-                          <Eye size={12} /> View
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => setSelected(q)}
+                            className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800">
+                            <Eye size={12} /> View
+                          </button>
+                          <button onClick={() => handlePrint(q)} disabled={loadingPrint}
+                            className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 disabled:opacity-40">
+                            <Printer size={12} /> {loadingPrint ? "…" : "PDF"}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -123,6 +149,7 @@ export default function QuotationsPage() {
         </div>
       </div>
 
+      {/* ── VIEW MODAL ────────────────────────────────────────────────────── */}
       {selected && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -131,9 +158,12 @@ export default function QuotationsPage() {
                 <h2 className="text-base font-bold text-gray-900">{selected.quotationNo}</h2>
                 <p className="text-sm text-gray-500">{selected.customerName}</p>
               </div>
-              <span className={`text-xs font-medium px-2 py-1 rounded-full ${STATUS_COLORS[selected.status] ?? "bg-gray-100 text-gray-700"}`}>
-                {selected.statusLabel}
-              </span>
+              <div className="flex items-center gap-3">
+                <span className={`text-xs font-medium px-2 py-1 rounded-full ${STATUS_COLORS[selected.status] ?? "bg-gray-100 text-gray-700"}`}>
+                  {selected.statusLabel}
+                </span>
+                <button onClick={() => setSelected(null)} className="p-1 rounded hover:bg-gray-100"><X size={16} /></button>
+              </div>
             </div>
             <div className="p-6">
               <table className="w-full mb-5 border border-gray-100 rounded-lg overflow-hidden">
@@ -177,6 +207,11 @@ export default function QuotationsPage() {
                 </tfoot>
               </table>
               <div className="flex justify-end gap-3">
+                <button onClick={() => { setSelected(null); handlePrint(selected); }}
+                  disabled={loadingPrint}
+                  className="flex items-center gap-2 px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50">
+                  <Printer size={14} /> {loadingPrint ? "Loading…" : "Print / PDF"}
+                </button>
                 <button onClick={() => setSelected(null)}
                   className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Close</button>
               </div>
@@ -184,6 +219,11 @@ export default function QuotationsPage() {
           </div>
         </div>
       )}
+
+      {/* ── HIDDEN PRINT ZONE (shown only during window.print()) ─────────── */}
+      <div id="zag-print-zone" style={{ display: "none" }}>
+        {printData && <QuotationPrintTemplate q={printData} />}
+      </div>
     </div>
   );
 }
