@@ -4,11 +4,12 @@ import { ok, err, requireSession } from "@/lib/api-helpers";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await requireSession();
   if (!session) return err("Unauthorized", 401);
 
+  const { id } = await params;
   const body = await request.json() as {
     type?: string;     // IN | OUT | ADJUSTMENT
     quantity?: number;
@@ -21,7 +22,7 @@ export async function POST(
   if (body.quantity === undefined || body.quantity <= 0)
     return err("quantity must be > 0");
 
-  const material = await prisma.material.findUnique({ where: { id: params.id } });
+  const material = await prisma.material.findUnique({ where: { id } });
   if (!material) return err("Material not found", 404);
 
   const delta =
@@ -34,7 +35,7 @@ export async function POST(
   const [movement] = await prisma.$transaction([
     prisma.stockMovement.create({
       data: {
-        materialId: params.id,
+        materialId: id,
         type:       body.type,
         quantity:   body.quantity,
         reference:  body.reference || null,
@@ -42,7 +43,7 @@ export async function POST(
       },
     }),
     prisma.material.update({
-      where: { id: params.id },
+      where: { id },
       data:  { currentStock: newStock },
     }),
   ]);

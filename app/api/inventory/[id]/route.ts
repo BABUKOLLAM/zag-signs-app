@@ -4,11 +4,12 @@ import { ok, err, requireSession } from "@/lib/api-helpers";
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await requireSession();
   if (!session) return err("Unauthorized", 401);
 
+  const { id } = await params;
   const body = await request.json() as {
     name?: string;
     category?: string;
@@ -18,11 +19,11 @@ export async function PUT(
     supplier?: string;
   };
 
-  const m = await prisma.material.findUnique({ where: { id: params.id } });
+  const m = await prisma.material.findUnique({ where: { id } });
   if (!m) return err("Material not found", 404);
 
   const updated = await prisma.material.update({
-    where: { id: params.id },
+    where: { id },
     data: {
       ...(body.name         ? { name: body.name }                 : {}),
       ...(body.category     ? { category: body.category }         : {}),

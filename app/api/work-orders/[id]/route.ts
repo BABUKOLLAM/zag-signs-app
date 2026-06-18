@@ -4,11 +4,12 @@ import { ok, err, requireSession, toDate } from "@/lib/api-helpers";
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await requireSession();
   if (!session) return err("Unauthorized", 401);
 
+  const { id } = await params;
   const body = await request.json() as {
     status?: string;
     priority?: string;
@@ -17,7 +18,7 @@ export async function PUT(
     startDate?: string;
   };
 
-  const wo = await prisma.workOrder.findUnique({ where: { id: params.id } });
+  const wo = await prisma.workOrder.findUnique({ where: { id } });
   if (!wo) return err("Work order not found", 404);
 
   const completedAt =
@@ -28,7 +29,7 @@ export async function PUT(
       : wo.completedAt;
 
   const updated = await prisma.workOrder.update({
-    where: { id: params.id },
+    where: { id },
     data: {
       ...(body.status   ? { status: body.status }     : {}),
       ...(body.priority ? { priority: body.priority } : {}),
