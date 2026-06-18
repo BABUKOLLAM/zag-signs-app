@@ -257,6 +257,39 @@ async function main() {
   });
   console.log(`  ✓ 3 notifications`);
 
+  // ── Company Settings ──────────────────────────────────────────────────
+  await prisma.companySetting.upsert({
+    where: { id: "company" },
+    update: {},
+    create: {
+      id: "company",
+      name: "Zag Signs",
+      tagline: "Excellence in Signage Solutions",
+      address: "TC 44/848/5, Sainarayana Building, Edapazhinji Road, Vazhuthakkad, Thiruvananthapuram - 695014, Kerala",
+      phone: "+91 98953 73806 / +91 62820 50921",
+      email: "zagadvt@gmail.com",
+      website: "www.zagsigns.com",
+      gstNo: "32ATXPK5181A1ZO",
+      panNo: "",
+      bankName: "Dhanlaxmi Bank",
+      bankBranch: "Vazhuthakkad",
+      accountNo: "003705300009231",
+      ifscCode: "DLXB0000231",
+      accountType: "Current Account",
+      defaultTerms: [
+        "Payment due within 15 days of invoice date.",
+        "50% advance required to commence production.",
+        "Goods once sold will not be taken back.",
+        "This is a computer-generated quotation and does not require a signature to be valid.",
+        "Price quoted is valid for 30 days from the date of quotation.",
+        "Delivery timeline starts from receipt of advance & approved artwork.",
+        "Disputes subject to Thiruvananthapuram jurisdiction.",
+      ].join("\n"),
+      validityDays: 30,
+    },
+  });
+  console.log(`  ✓ company settings`);
+
   console.log("\n✅ Seed complete. ZAG SIGNS ERP is ready.");
 }
 
