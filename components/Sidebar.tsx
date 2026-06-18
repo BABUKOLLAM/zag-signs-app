@@ -6,6 +6,7 @@ import {
   Wrench, Package, Wallet, AlertCircle, BarChart3, UserCircle,
   Building2, ClipboardList, Target, CheckSquare, TrendingUp,
   MapPin, FolderOpen, Sparkles, ChevronRight, X, LogOut,
+  Shield, Database,
 } from "lucide-react";
 import { useSidebar } from "@/lib/sidebar-context";
 import { useSession, signOut } from "next-auth/react";
@@ -60,6 +61,13 @@ const sections = [
       { href: "/reports",       label: "Reports & MIS",    icon: BarChart3 },
       { href: "/ai-insights",   label: "AI Insights",      icon: Sparkles },
       { href: "/documents",     label: "Documents",        icon: FolderOpen },
+    ],
+  },
+  {
+    label: "ADMIN",
+    items: [
+      { href: "/admin/users",    label: "User Management",  icon: Shield },
+      { href: "/admin/database", label: "Database Admin",   icon: Database },
     ],
   },
 ];

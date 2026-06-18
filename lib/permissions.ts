@@ -20,7 +20,10 @@ export type Role =
 const BASE_PATHS = ["/dashboard", "/team-reports", "/documents"];
 
 /** Full-access roles see every module. */
-const FULL_ACCESS: Role[] = ["MD", "AVP", "IT Admin"];
+const FULL_ACCESS: Role[] = ["MD", "IT Admin"];
+
+/** Admin-only paths: only MD and IT Admin can access */
+const ADMIN_PATHS = ["/admin/users", "/admin/database"];
 
 /** Per-role allow-lists (in addition to BASE_PATHS). */
 const ROLE_PATHS: Record<Role, string[]> = {
@@ -64,6 +67,11 @@ export function canAccess(role: string | undefined | null, path: string): boolea
   if (!role) return false;
   const r = role as Role;
 
+  // Admin paths: MD and IT Admin only
+  if (ADMIN_PATHS.some(p => path === p || path.startsWith(p + "/"))) {
+    return r === "MD" || r === "IT Admin";
+  }
+
   if (FULL_ACCESS.includes(r)) return true;
   if (BASE_PATHS.some((p) => path === p || path.startsWith(p + "/"))) return true;
 
@@ -87,6 +95,7 @@ export const ALL_MODULE_PATHS = [
   "/accounts", "/collections",
   "/complaints", "/tasks", "/hr", "/field-visits",
   "/team-reports", "/reports", "/ai-insights", "/documents",
+  "/admin/users", "/admin/database",
 ];
 
 /** True if a path is a guarded module page (and therefore subject to canAccess). */

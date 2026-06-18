@@ -158,33 +158,39 @@ enum LeaveStatus {
 // ─── CORE AUTH ────────────────────────────────────────────────────────────────
 
 model User {
-  id        String    @id @default(cuid())
-  name      String
-  email     String    @unique
-  password  String    // bcrypt hash
-  role      UserRole
-  branch    Branch?   // null = access to all branches (MD, AVP, HR, IT)
-  phone     String?
-  isActive  Boolean   @default(true)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id             String    @id @default(cuid())
+  name           String
+  email          String    @unique
+  password       String
+  role           UserRole
+  branch         Branch?   // null = all branches (MD, AVP, HR, IT_ADMIN)
+  phone          String?
+  isActive       Boolean   @default(true)
+  status         String    @default("PENDING") // PENDING | ACTIVE | INACTIVE
+  approvalToken  String?   @unique
+  tokenExpiry    DateTime?
+  reportingToId  String?
+  reportingTo    User?     @relation("Hierarchy", fields: [reportingToId], references: [id])
+  reportees      User[]    @relation("Hierarchy")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   // Relations
-  assignedLeads    Lead[]        @relation("AssignedTo")
-  createdLeads     Lead[]        @relation("CreatedBy")
-  salesOrders      SalesOrder[]
-  assignedTasks    Task[]        @relation("TaskAssignee")
-  createdTasks     Task[]        @relation("TaskCreator")
-  fieldVisits      FieldVisit[]
-  dars             DAR[]
-  wwrs             WWR[]
-  mwrs             MWR[]
-  documents        Document[]
+  assignedLeads      Lead[]      @relation("AssignedTo")
+  createdLeads       Lead[]      @relation("CreatedBy")
+  salesOrders        SalesOrder[]
+  assignedTasks      Task[]      @relation("TaskAssignee")
+  createdTasks       Task[]      @relation("TaskCreator")
+  fieldVisits        FieldVisit[]
+  dars               DAR[]
+  wwrs               WWR[]
+  mwrs               MWR[]
+  documents          Document[]
   assignedComplaints Complaint[] @relation("ComplaintAssignee")
-  attendance       Attendance[]
-  leaveRequests    LeaveRequest[]
-  notifications    Notification[]
-  auditLogs        AuditLog[]
+  attendance         Attendance[]
+  leaveRequests      LeaveRequest[]
+  notifications      Notification[]
+  auditLogs          AuditLog[]
 
   @@map("users")
 }

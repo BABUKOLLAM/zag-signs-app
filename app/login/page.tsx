@@ -145,6 +145,11 @@ export default function LoginPage() {
               }
             </button>
           </form>
+
+          <p className="text-center text-sm text-slate-500 mt-5">
+            New to ZAG SIGNS ERP?{" "}
+            <a href="/signup" className="text-indigo-600 font-semibold hover:underline">Request Access</a>
+          </p>
         </div>
       </div>
 
