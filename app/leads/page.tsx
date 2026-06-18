@@ -8,7 +8,9 @@ import { LoadingState, ErrorState, EmptyState, TableSkeleton } from "@/component
 import { useToast } from "@/components/Toaster";
 import { leadSchema, parseErrors, type FormErrors } from "@/lib/schemas";
 import { exportExcel } from "@/lib/export";
-import { Plus, Phone, Mail, Calendar, RefreshCw, Download } from "lucide-react";
+import DriveButton from "@/components/DriveButton";
+import DocumentsPanel from "@/components/DocumentsPanel";
+import { Plus, Phone, Mail, Calendar, RefreshCw, Download, Paperclip, X } from "lucide-react";
 
 const BRANCHES = ["TVM", "KTYM", "EKM", "CLT"];
 const STATUSES = [
@@ -54,6 +56,7 @@ export default function LeadsPage() {
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState<FormErrors>({});
   const [saving, setSaving] = useState(false);
+  const [docsFor, setDocsFor] = useState<Lead | null>(null);
 
   const { data, loading, error, refetch } = useApi<Lead[]>("/leads", {
     branch: branchFilter || undefined,
@@ -151,6 +154,11 @@ export default function LeadsPage() {
               className="flex items-center gap-2 border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-medium px-3 py-2 rounded-lg disabled:opacity-40">
               <Download size={14} /> Excel
             </button>
+            <DriveButton filename={`Leads_${new Date().toISOString().slice(0,10)}`} rows={leads.map((l) => ({
+              "Lead No": l.leadNo, "Name": l.name, "Company": l.company, "Phone": l.phone,
+              "Email": l.email, "Branch": l.branch, "Status": l.statusLabel, "Source": l.sourceLabel,
+              "Value (₹)": l.value, "Assigned To": l.assignedTo, "Follow Up": l.followUpDate,
+            }))} />
             <button onClick={() => setShowModal(true)}
               className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg">
               <Plus size={14} /> Add Lead
@@ -178,6 +186,7 @@ export default function LeadsPage() {
                     <th className="text-right px-4 py-3">Value</th>
                     <th className="text-left px-4 py-3 hidden lg:table-cell">Assigned To</th>
                     <th className="text-left px-4 py-3 hidden lg:table-cell">Follow Up</th>
+                    <th className="px-4 py-3 w-8"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -211,6 +220,15 @@ export default function LeadsPage() {
                           </span>
                         )}
                       </td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => setDocsFor(lead)}
+                          title="Documents"
+                          className="p-1 rounded hover:bg-indigo-50 text-slate-400 hover:text-indigo-600"
+                        >
+                          <Paperclip size={13} />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -219,6 +237,23 @@ export default function LeadsPage() {
           )}
         </div>
       </div>
+
+      {docsFor && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b sticky top-0 bg-white">
+              <div>
+                <h2 className="text-base font-bold text-slate-900">Documents</h2>
+                <p className="text-xs text-slate-500">{docsFor.name} · {docsFor.leadNo}</p>
+              </div>
+              <button onClick={() => setDocsFor(null)} className="p-1.5 rounded-lg hover:bg-gray-100"><X size={16} /></button>
+            </div>
+            <div className="px-6 py-5">
+              <DocumentsPanel relatedTo={docsFor.id} relatedType="LEAD" />
+            </div>
+          </div>
+        </div>
+      )}
 
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

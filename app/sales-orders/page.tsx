@@ -4,8 +4,10 @@ import { fmt } from "@/lib/utils";
 import { useApi } from "@/lib/use-api";
 import { LoadingState, ErrorState, EmptyState, TableSkeleton } from "@/components/States";
 import { exportExcel } from "@/lib/export";
+import DriveButton from "@/components/DriveButton";
 import { useState } from "react";
-import { RefreshCw, Download } from "lucide-react";
+import DocumentsPanel from "@/components/DocumentsPanel";
+import { RefreshCw, Download, Paperclip, X } from "lucide-react";
 
 const STATUS_COLORS: Record<string, string> = {
   DRAFT: "bg-gray-100 text-gray-700",
@@ -27,6 +29,7 @@ interface SalesOrder {
 
 export default function SalesOrdersPage() {
   const [statusFilter, setStatusFilter] = useState("");
+  const [docsFor, setDocsFor] = useState<SalesOrder | null>(null);
 
   const { data, loading, error, refetch } = useApi<SalesOrder[]>("/sales-orders", {
     status: statusFilter || undefined,
@@ -88,10 +91,18 @@ export default function SalesOrdersPage() {
               <RefreshCw size={14} />
             </button>
           </div>
-          <button onClick={handleExport} disabled={orders.length === 0}
-            className="flex items-center gap-2 border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-medium px-3 py-2 rounded-lg disabled:opacity-40">
-            <Download size={14} /> Export Excel
-          </button>
+          <div className="flex gap-2">
+            <button onClick={handleExport} disabled={orders.length === 0}
+              className="flex items-center gap-2 border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-medium px-3 py-2 rounded-lg disabled:opacity-40">
+              <Download size={14} /> Excel
+            </button>
+            <DriveButton filename={`SalesOrders_${new Date().toISOString().slice(0,10)}`} rows={orders.map((o) => ({
+              "Order No": o.orderNo, "Customer": o.customerName, "Quotation No": o.quotationNo,
+              "Status": o.statusLabel, "Order Value (₹)": o.totalAmount,
+              "Paid (₹)": o.paidAmount, "Outstanding (₹)": Math.max(0, o.totalAmount - o.paidAmount),
+              "Delivery Date": o.deliveryDate,
+            }))} />
+          </div>
         </div>
 
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
@@ -113,6 +124,7 @@ export default function SalesOrdersPage() {
                     <th className="text-right px-4 py-3 hidden lg:table-cell">Paid</th>
                     <th className="text-left px-4 py-3 hidden md:table-cell">Delivery Date</th>
                     <th className="text-left px-4 py-3">Status</th>
+                    <th className="px-4 py-3 w-8"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -136,6 +148,15 @@ export default function SalesOrdersPage() {
                             {o.statusLabel}
                           </span>
                         </td>
+                        <td className="px-4 py-3">
+                          <button
+                            onClick={() => setDocsFor(o)}
+                            title="Documents"
+                            className="p-1 rounded hover:bg-indigo-50 text-slate-400 hover:text-indigo-600"
+                          >
+                            <Paperclip size={13} />
+                          </button>
+                        </td>
                       </tr>
                     );
                   })}
@@ -145,6 +166,23 @@ export default function SalesOrdersPage() {
           )}
         </div>
       </div>
+
+      {docsFor && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b sticky top-0 bg-white">
+              <div>
+                <h2 className="text-base font-bold text-slate-900">Documents</h2>
+                <p className="text-xs text-slate-500">{docsFor.customerName} · {docsFor.orderNo}</p>
+              </div>
+              <button onClick={() => setDocsFor(null)} className="p-1.5 rounded-lg hover:bg-gray-100"><X size={16} /></button>
+            </div>
+            <div className="px-6 py-5">
+              <DocumentsPanel relatedTo={docsFor.id} relatedType="ORDER" />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

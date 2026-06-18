@@ -8,7 +8,9 @@ import { LoadingState, ErrorState, EmptyState, TableSkeleton } from "@/component
 import { useToast } from "@/components/Toaster";
 import { customerSchema, parseErrors, type FormErrors } from "@/lib/schemas";
 import { exportExcel } from "@/lib/export";
-import { Plus, Building2, RefreshCw, Download } from "lucide-react";
+import DriveButton from "@/components/DriveButton";
+import DocumentsPanel from "@/components/DocumentsPanel";
+import { Plus, Building2, RefreshCw, Download, Paperclip, X } from "lucide-react";
 
 const BRANCHES = ["TVM", "KTYM", "EKM", "CLT"];
 
@@ -35,6 +37,7 @@ export default function CustomersPage() {
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState<FormErrors>({});
   const [saving, setSaving] = useState(false);
+  const [docsFor, setDocsFor] = useState<Customer | null>(null);
 
   const { data, loading, error, refetch } = useApi<Customer[]>("/customers", {
     branch: branchFilter || undefined,
@@ -128,6 +131,12 @@ export default function CustomersPage() {
               className="flex items-center gap-2 border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-medium px-3 py-2 rounded-lg disabled:opacity-40">
               <Download size={14} /> Excel
             </button>
+            <DriveButton filename={`Customers_${new Date().toISOString().slice(0,10)}`} rows={customers.map((c) => ({
+              "Customer No": c.customerNo, "Name": c.name, "Company": c.company,
+              "Phone": c.phone, "Email": c.email, "Branch": c.branch,
+              "Total Orders": c.totalOrders, "Total Value (₹)": c.totalValue,
+              "Outstanding (₹)": c.outstandingBalance,
+            }))} />
             <button onClick={() => setShowModal(true)}
               className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg">
               <Plus size={14} /> Add Customer
@@ -154,6 +163,7 @@ export default function CustomersPage() {
                     <th className="text-right px-4 py-3">Orders</th>
                     <th className="text-right px-4 py-3">Total Value</th>
                     <th className="text-right px-4 py-3">Outstanding</th>
+                    <th className="px-4 py-3 w-8"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -183,6 +193,15 @@ export default function CustomersPage() {
                       <td className={`px-4 py-3 text-right font-medium ${c.outstandingBalance > 0 ? "text-red-600" : "text-green-600"}`}>
                         {c.outstandingBalance > 0 ? fmt(c.outstandingBalance) : "Nil"}
                       </td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => setDocsFor(c)}
+                          title="Documents"
+                          className="p-1 rounded hover:bg-indigo-50 text-slate-400 hover:text-indigo-600"
+                        >
+                          <Paperclip size={13} />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -191,6 +210,23 @@ export default function CustomersPage() {
           )}
         </div>
       </div>
+
+      {docsFor && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b sticky top-0 bg-white">
+              <div>
+                <h2 className="text-base font-bold text-slate-900">Documents</h2>
+                <p className="text-xs text-slate-500">{docsFor.name} · {docsFor.customerNo}</p>
+              </div>
+              <button onClick={() => setDocsFor(null)} className="p-1.5 rounded-lg hover:bg-gray-100"><X size={16} /></button>
+            </div>
+            <div className="px-6 py-5">
+              <DocumentsPanel relatedTo={docsFor.id} relatedType="CUSTOMER" />
+            </div>
+          </div>
+        </div>
+      )}
 
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

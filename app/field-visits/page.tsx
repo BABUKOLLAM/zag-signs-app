@@ -7,6 +7,7 @@ import { ErrorState, EmptyState, TableSkeleton } from "@/components/States";
 import { useToast } from "@/components/Toaster";
 import { fieldVisitSchema, parseErrors, type FormErrors } from "@/lib/schemas";
 import { exportExcel } from "@/lib/export";
+import DriveButton from "@/components/DriveButton";
 import { Plus, X, MapPin, Eye, Clock, CheckCircle, Navigation, RefreshCw, Download } from "lucide-react";
 
 type VisitType = "SALES_CALL" | "SITE_SURVEY" | "INSTALLATION" | "SERVICE_COMPLAINT" | "COLLECTION" | "FOLLOW_UP";
@@ -173,6 +174,11 @@ export default function FieldVisitsPage() {
               className="flex items-center gap-2 border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-medium px-3 py-2 rounded-xl disabled:opacity-40">
               <Download size={14} /> Excel
             </button>
+            <DriveButton filename={`FieldVisits_${new Date().toISOString().slice(0,10)}`} rows={visits.map((v) => ({
+              "Date": v.date, "Customer": v.customerName, "Location": v.location,
+              "Visit Type": v.visitTypeLabel, "Outcome": v.outcomeLabel,
+              "Order Value (₹)": v.orderValue || 0, "Employee": v.employee,
+            }))} />
             <button onClick={() => setShowModal(true)}
               className="flex items-center gap-2 text-white text-sm font-semibold px-4 py-2 rounded-xl"
               style={{ background: "linear-gradient(135deg, #4F46E5, #7C3AED)" }}>

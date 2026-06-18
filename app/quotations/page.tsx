@@ -6,6 +6,8 @@ import { useApi } from "@/lib/use-api";
 import { api } from "@/lib/api-client";
 import { LoadingState, ErrorState, EmptyState, TableSkeleton } from "@/components/States";
 import QuotationPrintTemplate, { type QuotationData } from "@/components/QuotationPrintTemplate";
+import DriveButton from "@/components/DriveButton";
+import DocumentsPanel from "@/components/DocumentsPanel";
 import { Eye, Printer, RefreshCw, X } from "lucide-react";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -77,7 +79,7 @@ export default function QuotationsPage() {
         </div>
 
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-wrap gap-3 items-center justify-between">
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap items-center">
             <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
               className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none">
               <option value="">All Status</option>
@@ -91,6 +93,14 @@ export default function QuotationsPage() {
               className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">
               <RefreshCw size={14} />
             </button>
+            <DriveButton
+              filename={`Quotations_${new Date().toISOString().slice(0,10)}`}
+              rows={quotations.map((q) => ({
+                "Quote No": q.quotationNo, "Customer": q.customerName,
+                "Status": q.statusLabel, "Created": q.createdAt,
+                "Valid Until": q.validUntil, "Total (₹)": q.total,
+              }))}
+            />
           </div>
         </div>
 
@@ -206,7 +216,10 @@ export default function QuotationsPage() {
                   </tr>
                 </tfoot>
               </table>
-              <div className="flex justify-end gap-3">
+              <div className="border-t mt-4 pt-4">
+                <DocumentsPanel relatedTo={selected.id} relatedType="QUOTATION" />
+              </div>
+              <div className="flex justify-end gap-3 mt-4">
                 <button onClick={() => { setSelected(null); handlePrint(selected); }}
                   disabled={loadingPrint}
                   className="flex items-center gap-2 px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50">
