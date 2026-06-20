@@ -56,7 +56,7 @@ export interface QuotationData {
   customer: { name: string; company: string } | null;
   customerName?: string;
   items: QuotationItem[];
-  subtotal: number; tax: number; discount: number; total: number;
+  subtotal: number; taxRate: number; tax: number; discount: number; total: number;
   terms: string; notes: string;
 }
 
@@ -196,7 +196,19 @@ export default function QuotationPrintTemplate({
               <td style={{ padding: "5px 10px", color: "#6B7280" }}>Subtotal</td>
               <td style={{ padding: "5px 10px", textAlign: "right" }}>{inr(q.subtotal)}</td>
             </tr>
-            {q.tax > 0 && (
+            {q.tax > 0 && q.taxRate > 0 && (
+              <>
+                <tr style={{ borderBottom: "1px solid #E5E7EB" }}>
+                  <td style={{ padding: "5px 10px", color: "#6B7280" }}>CGST @ {q.taxRate / 2}%</td>
+                  <td style={{ padding: "5px 10px", textAlign: "right" }}>{inr(q.tax / 2)}</td>
+                </tr>
+                <tr style={{ borderBottom: "1px solid #E5E7EB" }}>
+                  <td style={{ padding: "5px 10px", color: "#6B7280" }}>SGST @ {q.taxRate / 2}%</td>
+                  <td style={{ padding: "5px 10px", textAlign: "right" }}>{inr(q.tax / 2)}</td>
+                </tr>
+              </>
+            )}
+            {q.tax > 0 && !q.taxRate && (
               <tr style={{ borderBottom: "1px solid #E5E7EB" }}>
                 <td style={{ padding: "5px 10px", color: "#6B7280" }}>GST / Tax</td>
                 <td style={{ padding: "5px 10px", textAlign: "right" }}>{inr(q.tax)}</td>

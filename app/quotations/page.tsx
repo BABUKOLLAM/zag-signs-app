@@ -24,7 +24,7 @@ interface QuotationItem {
 
 interface Quotation {
   id: string; quotationNo: string; status: string; statusLabel: string;
-  subtotal: number; tax: number; discount: number; total: number;
+  subtotal: number; taxRate: number; tax: number; discount: number; total: number;
   validUntil: string; terms: string; notes: string; createdAt: string;
   customerId: string; customerName: string;
   items: QuotationItem[];
@@ -36,7 +36,7 @@ type NewItem = { description: string; qty: string; unit: string; unitPrice: stri
 
 const BLANK_ITEM: NewItem = { description: "", qty: "1", unit: "Nos", unitPrice: "" };
 const BLANK_FORM = {
-  customerId: "", validUntil: "", tax: "", discount: "", terms: "", notes: "",
+  customerId: "", validUntil: "", taxRate: "0", discount: "", terms: "", notes: "",
   items: [{ ...BLANK_ITEM }],
 };
 
@@ -107,7 +107,8 @@ export default function QuotationsPage() {
   const newQSubtotal = newQ.items.reduce(
     (s, i) => s + Number(i.qty || 0) * Number(i.unitPrice || 0), 0
   );
-  const newQTotal = newQSubtotal + Number(newQ.tax || 0) - Number(newQ.discount || 0);
+  const newQTax = Math.round(newQSubtotal * Number(newQ.taxRate)) / 100;
+  const newQTotal = newQSubtotal + newQTax - Number(newQ.discount || 0);
 
   const handleCreate = useCallback(async () => {
     const validItems = newQ.items.filter((i) => i.description.trim() && Number(i.unitPrice) > 0);
@@ -124,7 +125,7 @@ export default function QuotationsPage() {
           unit: i.unit || "Nos",
           unitPrice: Number(i.unitPrice),
         })),
-        tax: Number(newQ.tax) || 0,
+        taxRate: Number(newQ.taxRate) || 0,
         discount: Number(newQ.discount) || 0,
         validUntil: newQ.validUntil || undefined,
         terms: newQ.terms.trim() || undefined,
@@ -344,14 +345,19 @@ export default function QuotationsPage() {
                 </div>
               </div>
 
-              {/* Tax / Discount / Totals */}
+              {/* GST Rate / Discount / Totals */}
               <div className="flex flex-col md:flex-row gap-4 justify-between">
                 <div className="grid grid-cols-2 gap-4 md:w-72">
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Tax (₹)</label>
-                    <input type="number" min="0" step="any" value={newQ.tax} placeholder="0"
-                      onChange={(e) => setNewQ((p) => ({ ...p, tax: e.target.value }))}
-                      className={inp} />
+                    <label className="block text-xs font-medium text-gray-600 mb-1">GST Rate</label>
+                    <select value={newQ.taxRate}
+                      onChange={(e) => setNewQ((p) => ({ ...p, taxRate: e.target.value }))}
+                      className={inp}>
+                      <option value="0">0% (Exempt)</option>
+                      <option value="5">5% GST</option>
+                      <option value="12">12% GST</option>
+                      <option value="18">18% GST</option>
+                    </select>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">Discount (₹)</label>
@@ -362,7 +368,12 @@ export default function QuotationsPage() {
                 </div>
                 <div className="text-right space-y-1">
                   <p className="text-sm text-gray-500">Subtotal: <span className="font-medium text-gray-800">{fmt(newQSubtotal)}</span></p>
-                  {Number(newQ.tax) > 0 && <p className="text-sm text-gray-500">Tax: <span className="font-medium">{fmt(Number(newQ.tax))}</span></p>}
+                  {newQTax > 0 && (
+                    <>
+                      <p className="text-sm text-gray-500">CGST @ {Number(newQ.taxRate) / 2}%: <span className="font-medium">{fmt(newQTax / 2)}</span></p>
+                      <p className="text-sm text-gray-500">SGST @ {Number(newQ.taxRate) / 2}%: <span className="font-medium">{fmt(newQTax / 2)}</span></p>
+                    </>
+                  )}
                   {Number(newQ.discount) > 0 && <p className="text-sm text-gray-500">Discount: <span className="font-medium text-green-600">-{fmt(Number(newQ.discount))}</span></p>}
                   <p className="text-base font-bold text-indigo-700">Total: {fmt(newQTotal)}</p>
                 </div>
@@ -440,7 +451,19 @@ export default function QuotationsPage() {
                   ))}
                 </tbody>
                 <tfoot>
-                  {selected.tax > 0 && (
+                  {selected.tax > 0 && selected.taxRate > 0 && (
+                    <>
+                      <tr className="text-sm border-t border-gray-100">
+                        <td colSpan={4} className="p-3 text-right text-gray-500">CGST @ {selected.taxRate / 2}%</td>
+                        <td className="p-3 text-right">{fmt(selected.tax / 2)}</td>
+                      </tr>
+                      <tr className="text-sm border-t border-gray-100">
+                        <td colSpan={4} className="p-3 text-right text-gray-500">SGST @ {selected.taxRate / 2}%</td>
+                        <td className="p-3 text-right">{fmt(selected.tax / 2)}</td>
+                      </tr>
+                    </>
+                  )}
+                  {selected.tax > 0 && !selected.taxRate && (
                     <tr className="text-sm border-t border-gray-100">
                       <td colSpan={4} className="p-3 text-right text-gray-500">Tax</td>
                       <td className="p-3 text-right">{fmt(selected.tax)}</td>

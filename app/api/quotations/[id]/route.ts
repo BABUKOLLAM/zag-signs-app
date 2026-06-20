@@ -36,6 +36,7 @@ export async function GET(
       total: i.total,
     })),
     subtotal: q.subtotal,
+    taxRate: q.taxRate,
     tax: q.tax,
     discount: q.discount,
     total: q.total,

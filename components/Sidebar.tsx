@@ -59,6 +59,7 @@ const sections = [
     items: [
       { href: "/team-reports",  label: "Team Reports",     icon: ClipboardList },
       { href: "/reports",       label: "Reports & MIS",    icon: BarChart3 },
+      { href: "/reports/tax",   label: "GST Tax Report",   icon: ScrollText },
       { href: "/ai-insights",   label: "AI Insights",      icon: Sparkles },
       { href: "/documents",     label: "Documents",        icon: FolderOpen },
     ],

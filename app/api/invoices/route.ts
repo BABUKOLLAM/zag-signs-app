@@ -48,18 +48,24 @@ export async function POST(request: NextRequest) {
   const session = await requireSession();
   if (!session) return err("Unauthorized", 401);
   const body = await request.json() as {
-    salesOrderId?: string; amount?: number; taxAmount?: number;
+    salesOrderId?: string; amount?: number; taxRate?: number; taxAmount?: number;
     dueDate?: string; notes?: string;
   };
   if (!body.amount || body.amount <= 0) return err("amount required");
+
+  const taxRate = Number(body.taxRate ?? 0);
+  const taxAmount = body.taxAmount != null
+    ? body.taxAmount
+    : Math.round(body.amount * taxRate) / 100;
 
   const count  = await prisma.invoice.count();
   const invoice = await prisma.invoice.create({
     data: {
       invoiceNo:   autoNo("INV-", count),
       amount:      body.amount,
-      taxAmount:   body.taxAmount ?? 0,
-      totalAmount: body.amount + (body.taxAmount ?? 0),
+      taxRate,
+      taxAmount,
+      totalAmount: body.amount + taxAmount,
       dueDate:     body.dueDate ? new Date(body.dueDate) : null,
       notes:       body.notes ?? null,
       salesOrderId: body.salesOrderId || null,

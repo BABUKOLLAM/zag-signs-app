@@ -14,6 +14,7 @@ function shape(q: Awaited<ReturnType<typeof prisma.quotation.findFirst>> & {
     status: q.status,
     statusLabel: toLabel(q.status),
     subtotal: q.subtotal,
+    taxRate: q.taxRate,
     tax: q.tax,
     discount: q.discount,
     total: q.total,
@@ -67,13 +68,14 @@ export async function POST(request: NextRequest) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
-  const { customerId, leadId, items = [], tax = 0, discount = 0, validUntil, terms, notes } = body;
+  const { customerId, leadId, items = [], taxRate = 0, discount = 0, validUntil, terms, notes } = body;
 
   if (!customerId && !leadId) return err("Customer or Lead is required");
   if (!items.length) return err("At least one item is required");
 
   const subtotal: number = items.reduce((s: number, i: { qty: number; unitPrice: number }) => s + i.qty * i.unitPrice, 0);
-  const total = subtotal + Number(tax) - Number(discount);
+  const tax = Math.round(subtotal * Number(taxRate)) / 100;
+  const total = subtotal + tax - Number(discount);
 
   const year = new Date().getFullYear();
   const count = await prisma.quotation.count();
@@ -85,7 +87,8 @@ export async function POST(request: NextRequest) {
       customerId: customerId ?? null,
       leadId: leadId ?? null,
       subtotal,
-      tax: Number(tax),
+      taxRate: Number(taxRate),
+      tax,
       discount: Number(discount),
       total,
       validUntil: validUntil ? new Date(validUntil) : null,
