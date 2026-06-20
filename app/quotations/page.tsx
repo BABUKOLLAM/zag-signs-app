@@ -9,6 +9,8 @@ import QuotationPrintTemplate, { type QuotationData, type CompanyConfig, type Ba
 import DriveButton from "@/components/DriveButton";
 import DocumentsPanel from "@/components/DocumentsPanel";
 import { Eye, Printer, RefreshCw, X, Plus, Trash2 } from "lucide-react";
+import { uploadToDrive, driveConfigured } from "@/lib/google-drive";
+import { useToast } from "@/components/Toaster";
 
 const STATUS_COLORS: Record<string, string> = {
   DRAFT: "bg-gray-100 text-gray-700",
@@ -41,6 +43,7 @@ const BLANK_FORM = {
 };
 
 export default function QuotationsPage() {
+  const toast = useToast();
   const [statusFilter, setStatusFilter] = useState("");
   const [selected, setSelected] = useState<Quotation | null>(null);
   const [printData, setPrintData] = useState<QuotationData | null>(null);
@@ -72,13 +75,36 @@ export default function QuotationsPage() {
       const s = settingsRes.data;
       setPrintData(qData);
       setPrintSettings(s ? { company: s, bank: s } : null);
-      setTimeout(() => { window.print(); }, 500);
+
+      // Use quotation number as the PDF filename (browser uses document.title)
+      const pdfName = q.quotationNo.replace(/\//g, "-");
+      const prevTitle = document.title;
+      document.title = pdfName;
+
+      setTimeout(() => {
+        window.print();
+        // Restore title and archive to Drive after the print dialog opens
+        setTimeout(() => {
+          document.title = prevTitle;
+          if (driveConfigured()) {
+            const zone = document.getElementById("zag-print-zone");
+            const content = zone?.firstElementChild as HTMLElement | null;
+            if (content) {
+              const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${pdfName}</title></head><body style="margin:20px;font-family:Arial,sans-serif;">${content.outerHTML}</body></html>`;
+              const blob = new Blob([html], { type: "text/html" });
+              uploadToDrive(`${pdfName}.html`, blob)
+                .then(() => toast.success(`Archived to Drive: ${pdfName}`))
+                .catch((err: Error) => toast.error(`Drive: ${err.message}`));
+            }
+          }
+        }, 1200);
+      }, 500);
     } catch {
       alert("Failed to load quotation data for printing.");
     } finally {
       setLoadingPrint(false);
     }
-  }, []);
+  }, [toast]);
 
   const openCreate = useCallback(async () => {
     setShowCreate(true);
