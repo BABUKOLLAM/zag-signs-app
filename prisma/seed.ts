@@ -14,8 +14,8 @@ async function main() {
   const users = await Promise.all([
     prisma.user.upsert({
       where: { email: "md@zagsigns.com" },
-      update: { status: "ACTIVE", isActive: true },
-      create: { name: "Dr. Babu B", email: "md@zagsigns.com", password: await hash("MD@2026"), role: UserRole.MD, branch: null, phone: "9400000001", status: "ACTIVE", isActive: true },
+      update: { name: "Balamurali", status: "ACTIVE", isActive: true },
+      create: { name: "Balamurali", email: "md@zagsigns.com", password: await hash("MD@2026"), role: UserRole.MD, branch: null, phone: "9400000001", status: "ACTIVE", isActive: true },
     }),
     prisma.user.upsert({
       where: { email: "avp@zagsigns.com" },
