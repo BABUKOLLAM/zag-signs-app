@@ -42,6 +42,7 @@ export async function PUT(request: NextRequest) {
     ...(raw.accountType !== undefined && { accountType: String(raw.accountType) }),
     ...(raw.defaultTerms !== undefined && { defaultTerms: String(raw.defaultTerms) }),
     ...(raw.validityDays !== undefined && { validityDays: Number(raw.validityDays) }),
+    ...(raw.paymentQrUrl !== undefined && { paymentQrUrl: raw.paymentQrUrl ? String(raw.paymentQrUrl) : null }),
   };
 
   const settings = await prisma.companySetting.upsert({

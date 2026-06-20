@@ -38,9 +38,22 @@ type NewItem = { description: string; qty: string; unit: string; unitPrice: stri
 
 const BLANK_ITEM: NewItem = { description: "", qty: "1", unit: "Nos", unitPrice: "" };
 const BLANK_FORM = {
-  customerId: "", validUntil: "", taxRate: "0", discount: "", terms: "", notes: "",
+  customerId: "", salutation: "M/s",
+  attentionSalutation: "Mr.", attentionName: "",
+  validUntil: "", taxRate: "0", discount: "",
+  status: "DRAFT", terms: "", notes: "",
   items: [{ ...BLANK_ITEM }],
 };
+
+const SALUTATIONS   = ["M/s", "Mr.", "Ms.", "Mrs.", "Dr.", "Prof.", "Adv.", "Er."];
+const ATTN_SALUTS   = ["Mr.", "Ms.", "Mrs.", "Dr.", "Prof.", "Adv.", "Er."];
+const TAX_RATES     = [{ label: "No GST (0%)", value: "0" }, { label: "GST 5%", value: "5" }, { label: "GST 12%", value: "12" }, { label: "GST 18%", value: "18" }];
+const STATUS_OPTS   = [
+  { label: "Draft",          value: "DRAFT" },
+  { label: "Sent via Email", value: "EMAIL" },
+  { label: "Sent via WhatsApp", value: "WHATSAPP" },
+  { label: "Submitted",     value: "SUBMITTED" },
+];
 
 export default function QuotationsPage() {
   const toast = useToast();
@@ -133,8 +146,9 @@ export default function QuotationsPage() {
   const newQSubtotal = newQ.items.reduce(
     (s, i) => s + Number(i.qty || 0) * Number(i.unitPrice || 0), 0
   );
-  const newQTax = Math.round(newQSubtotal * Number(newQ.taxRate)) / 100;
-  const newQTotal = newQSubtotal + newQTax - Number(newQ.discount || 0);
+  const newQTaxRate = Number(newQ.taxRate) || 0;
+  const newQTax     = Math.round(newQSubtotal * newQTaxRate) / 100;
+  const newQTotal   = newQSubtotal + newQTax - Number(newQ.discount || 0);
 
   const handleCreate = useCallback(async () => {
     const validItems = newQ.items.filter((i) => i.description.trim() && Number(i.unitPrice) > 0);
@@ -144,18 +158,22 @@ export default function QuotationsPage() {
     setCreateError("");
     try {
       await api.post("/quotations", {
-        customerId: newQ.customerId,
+        customerId:          newQ.customerId,
+        salutation:          newQ.salutation          || undefined,
+        attentionSalutation: newQ.attentionSalutation || undefined,
+        attentionName:       newQ.attentionName.trim()  || undefined,
+        status:              newQ.status,
         items: validItems.map((i) => ({
           description: i.description.trim(),
-          qty: Number(i.qty) || 1,
-          unit: i.unit || "Nos",
+          qty:       Number(i.qty) || 1,
+          unit:      i.unit || "Nos",
           unitPrice: Number(i.unitPrice),
         })),
-        taxRate: Number(newQ.taxRate) || 0,
-        discount: Number(newQ.discount) || 0,
+        taxRate:    Number(newQ.taxRate) || 0,
+        discount:   Number(newQ.discount) || 0,
         validUntil: newQ.validUntil || undefined,
-        terms: newQ.terms.trim() || undefined,
-        notes: newQ.notes.trim() || undefined,
+        terms:      newQ.terms.trim() || undefined,
+        notes:      newQ.notes.trim() || undefined,
       });
       setShowCreate(false);
       refetch();
@@ -284,23 +302,48 @@ export default function QuotationsPage() {
             </div>
 
             <div className="p-5 space-y-5">
-              {/* Customer + Valid Until */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Customer + Salutation */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Salutation</label>
+                  <select value={newQ.salutation} onChange={(e) => setNewQ((p) => ({ ...p, salutation: e.target.value }))} className={inp}>
+                    {SALUTATIONS.map((s) => <option key={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div className="md:col-span-2">
                   <label className="block text-xs font-medium text-gray-600 mb-1">Customer <span className="text-red-500">*</span></label>
-                  <select value={newQ.customerId} onChange={(e) => setNewQ((p) => ({ ...p, customerId: e.target.value }))}
-                    className={inp}>
+                  <select value={newQ.customerId} onChange={(e) => setNewQ((p) => ({ ...p, customerId: e.target.value }))} className={inp}>
                     <option value="">Select customer…</option>
                     {customers.map((c) => (
                       <option key={c.id} value={c.id}>{c.company || c.name}</option>
                     ))}
                   </select>
                 </div>
+              </div>
+
+              {/* Kind Attn + Valid Until + Status */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Attn. Salutation</label>
+                  <select value={newQ.attentionSalutation} onChange={(e) => setNewQ((p) => ({ ...p, attentionSalutation: e.target.value }))} className={inp}>
+                    {ATTN_SALUTS.map((s) => <option key={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div className="md:col-span-1">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Kind Attn. Name</label>
+                  <input value={newQ.attentionName} placeholder="Contact person name"
+                    onChange={(e) => setNewQ((p) => ({ ...p, attentionName: e.target.value }))} className={inp} />
+                </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">Valid Until</label>
                   <input type="date" value={newQ.validUntil}
-                    onChange={(e) => setNewQ((p) => ({ ...p, validUntil: e.target.value }))}
-                    className={inp} />
+                    onChange={(e) => setNewQ((p) => ({ ...p, validUntil: e.target.value }))} className={inp} />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Status</label>
+                  <select value={newQ.status} onChange={(e) => setNewQ((p) => ({ ...p, status: e.target.value }))} className={inp}>
+                    {STATUS_OPTS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
                 </div>
               </div>
 

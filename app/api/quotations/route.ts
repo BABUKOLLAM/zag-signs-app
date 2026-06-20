@@ -1,30 +1,60 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, err, requireSession, toLabel, toDate, autoNo } from "@/lib/api-helpers";
+import { ok, err, requireSession, toDate } from "@/lib/api-helpers";
 import { QuotationStatus } from "@prisma/client";
 
-function shape(q: Awaited<ReturnType<typeof prisma.quotation.findFirst>> & {
+const STATUS_LABELS: Record<string, string> = {
+  DRAFT:     "Draft",
+  SENT:      "Sent",
+  EMAIL:     "Sent via Email",
+  WHATSAPP:  "Sent via WhatsApp",
+  SUBMITTED: "Submitted",
+  APPROVED:  "Approved",
+  REJECTED:  "Rejected",
+  EXPIRED:   "Expired",
+};
+
+const ROLE_DISPLAY: Record<string, string> = {
+  MD: "Managing Director", AVP: "AVP",
+  BUSINESS_MANAGER: "Business Manager", SALES_EXECUTIVE: "Sales Executive",
+  CRES: "CRES Executive", PRODUCTION: "Production", ACCOUNTS: "Accounts",
+  HR: "HR", IT_ADMIN: "IT Admin", CONSULTANT: "Consultant",
+};
+
+function getBranchCode(branch: string | null | undefined): string {
+  const map: Record<string, string> = { TVM: "TVM", KTYM: "KTM", EKM: "EKM", CLT: "CLT", All: "HO", "": "HO" };
+  if (!branch) return "HO";
+  return map[branch] ?? branch.substring(0, 3).toUpperCase();
+}
+
+type QRow = {
+  id: string; quotationNo: string; status: string;
+  subtotal: number; taxRate: number; tax: number; discount: number; total: number;
+  validUntil: Date | null; terms: string | null; notes: string | null; createdAt: Date;
+  customerId: string | null; salutation: string | null;
+  attentionSalutation: string | null; attentionName: string | null; branch: string | null;
   customer?: { name: string; company: string } | null;
   items?: { description: string; qty: number; unit: string; unitPrice: number; total: number }[];
-}) {
-  if (!q) return null;
+  proposedBy?: { name: string; role: string; branch: string | null } | null;
+};
+
+function shape(q: QRow) {
   return {
-    id: q.id,
-    quotationNo: q.quotationNo,
-    status: q.status,
-    statusLabel: toLabel(q.status),
-    subtotal: q.subtotal,
-    taxRate: q.taxRate,
-    tax: q.tax,
-    discount: q.discount,
-    total: q.total,
-    validUntil: toDate(q.validUntil),
-    terms: q.terms ?? "",
-    notes: q.notes ?? "",
-    createdAt: toDate(q.createdAt),
-    customerId: q.customerId,
-    customerName: (q as { customer?: { name: string; company: string } | null }).customer?.company ?? "",
-    items: (q as { items?: unknown[] }).items ?? [],
+    id: q.id, quotationNo: q.quotationNo, status: q.status,
+    statusLabel:         STATUS_LABELS[q.status] ?? q.status,
+    subtotal: q.subtotal, taxRate: q.taxRate, tax: q.tax,
+    discount: q.discount, total: q.total,
+    validUntil: toDate(q.validUntil), terms: q.terms ?? "", notes: q.notes ?? "",
+    createdAt: toDate(q.createdAt), customerId: q.customerId,
+    customerName:        q.customer?.company ?? q.customer?.name ?? "",
+    salutation:          q.salutation ?? "",
+    attentionSalutation: q.attentionSalutation ?? "",
+    attentionName:       q.attentionName ?? "",
+    branch:              q.branch ?? "",
+    proposedByName:        q.proposedBy?.name ?? "",
+    proposedByDesignation: ROLE_DISPLAY[q.proposedBy?.role ?? ""] ?? (q.proposedBy?.role ?? ""),
+    proposedByBranch:      getBranchCode(q.proposedBy?.branch),
+    items: q.items ?? [],
   };
 }
 
@@ -33,13 +63,13 @@ export async function GET(request: NextRequest) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
-  const status = searchParams.get("status") as QuotationStatus | null;
+  const status     = searchParams.get("status") as QuotationStatus | null;
   const customerId = searchParams.get("customerId");
-  const page = Math.max(1, Number(searchParams.get("page") ?? "1"));
+  const page  = Math.max(1, Number(searchParams.get("page")  ?? "1"));
   const limit = Math.min(100, Number(searchParams.get("limit") ?? "50"));
 
   const where = {
-    ...(status ? { status } : {}),
+    ...(status     ? { status }     : {}),
     ...(customerId ? { customerId } : {}),
   };
 
@@ -50,15 +80,16 @@ export async function GET(request: NextRequest) {
       skip: (page - 1) * limit,
       take: limit,
       include: {
-        customer: { select: { name: true, company: true } },
-        items: true,
+        customer:   { select: { name: true, company: true } },
+        items:      true,
+        proposedBy: { select: { name: true, role: true, branch: true } },
       },
     }),
     prisma.quotation.count({ where }),
   ]);
 
   return NextResponse.json({
-    data: quotations.map((q) => shape(q as Parameters<typeof shape>[0])),
+    data: quotations.map((q) => shape(q as QRow)),
     pagination: { page, limit, total, pages: Math.ceil(total / limit) },
   });
 }
@@ -67,45 +98,65 @@ export async function POST(request: NextRequest) {
   const session = await requireSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await request.json();
-  const { customerId, leadId, items = [], taxRate = 0, discount = 0, validUntil, terms, notes } = body;
+  const su = session.user as { id?: string; role?: string; branch?: string };
+  const branchCode = getBranchCode(su.branch);
+
+  const body = await request.json() as {
+    customerId?: string; leadId?: string; status?: string;
+    items?: { description: string; qty: number; unit: string; unitPrice: number }[];
+    taxRate?: number; discount?: number; validUntil?: string;
+    terms?: string; notes?: string;
+    salutation?: string; attentionSalutation?: string; attentionName?: string;
+  };
+
+  const { customerId, leadId, items = [], taxRate = 0, discount = 0,
+          validUntil, terms, notes, salutation, attentionSalutation, attentionName,
+          status = "DRAFT" } = body;
 
   if (!customerId && !leadId) return err("Customer or Lead is required");
   if (!items.length) return err("At least one item is required");
 
-  const subtotal: number = items.reduce((s: number, i: { qty: number; unitPrice: number }) => s + i.qty * i.unitPrice, 0);
-  const tax = Math.round(subtotal * Number(taxRate)) / 100;
-  const total = subtotal + tax - Number(discount);
+  const subtotal = items.reduce((s, i) => s + Number(i.qty) * Number(i.unitPrice), 0);
+  const tax      = Math.round(subtotal * Number(taxRate)) / 100;
+  const total    = subtotal + tax - Number(discount);
 
-  const year = new Date().getFullYear();
-  const count = await prisma.quotation.count();
-  const quotationNo = `Q${year}-${String(count + 1).padStart(3, "0")}`;
+  // Branch-sequential number: ZAG/Q/TVM/001
+  const branchCount = await prisma.quotation.count({ where: { branch: branchCode } });
+  const quotationNo  = `ZAG/Q/${branchCode}/${String(branchCount + 1).padStart(3, "0")}`;
 
   const quotation = await prisma.quotation.create({
     data: {
       quotationNo,
-      customerId: customerId ?? null,
-      leadId: leadId ?? null,
-      subtotal,
-      taxRate: Number(taxRate),
-      tax,
-      discount: Number(discount),
+      status:              (status as QuotationStatus),
+      customerId:          customerId          ?? null,
+      leadId:              leadId              ?? null,
+      subtotal, taxRate: Number(taxRate), tax,
+      discount:            Number(discount),
       total,
-      validUntil: validUntil ? new Date(validUntil) : null,
-      terms: terms?.trim() ?? null,
-      notes: notes?.trim() ?? null,
+      validUntil:          validUntil ? new Date(validUntil) : null,
+      terms:               terms?.trim()         ?? null,
+      notes:               notes?.trim()         ?? null,
+      salutation:          salutation            ?? null,
+      attentionSalutation: attentionSalutation   ?? null,
+      attentionName:       attentionName?.trim() ?? null,
+      branch:              branchCode,
+      proposedById:        su.id                 ?? null,
       items: {
-        create: items.map((i: { description: string; qty: number; unit: string; unitPrice: number }) => ({
+        create: items.map((i) => ({
           description: i.description,
-          qty: Number(i.qty),
-          unit: i.unit ?? "Nos",
+          qty:       Number(i.qty),
+          unit:      i.unit ?? "Nos",
           unitPrice: Number(i.unitPrice),
-          total: Number(i.qty) * Number(i.unitPrice),
+          total:     Number(i.qty) * Number(i.unitPrice),
         })),
       },
     },
-    include: { items: true, customer: { select: { name: true, company: true } } },
+    include: {
+      items:      true,
+      customer:   { select: { name: true, company: true } },
+      proposedBy: { select: { name: true, role: true, branch: true } },
+    },
   });
 
-  return ok(shape(quotation), 201);
+  return ok(shape(quotation as QRow), 201);
 }

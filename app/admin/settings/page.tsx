@@ -14,6 +14,7 @@ interface CompanySettings {
   bankName: string; bankBranch: string; accountNo: string;
   ifscCode: string; accountType: string;
   defaultTerms: string; validityDays: number;
+  paymentQrUrl: string;
 }
 
 const DEFAULT_TERMS = [
@@ -62,7 +63,7 @@ export default function SettingsPage() {
     name: "", tagline: "", address: "", phone: "", email: "", website: "",
     gstNo: "", panNo: "", logoUrl: "",
     bankName: "", bankBranch: "", accountNo: "", ifscCode: "", accountType: "Current Account",
-    defaultTerms: DEFAULT_TERMS, validityDays: 30,
+    defaultTerms: DEFAULT_TERMS, validityDays: 30, paymentQrUrl: "",
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -276,7 +277,19 @@ export default function SettingsPage() {
                   <option>OD Account</option>
                 </select>
               </Field>
+              <Field label="Payment QR Code URL" hint="UPI / GPay / PhonePe QR image URL — shown on quotations for advance payment">
+                <Input value={form.paymentQrUrl} onChange={set("paymentQrUrl")} placeholder="https://…/payment-qr.png" />
+              </Field>
             </div>
+            {form.paymentQrUrl && (
+              <div className="flex items-center gap-4 mt-2 p-4 rounded-xl border" style={{ borderColor: "var(--card-border)", background: "var(--background)" }}>
+                <img src={form.paymentQrUrl} alt="Payment QR" className="w-20 h-20 object-contain border rounded" />
+                <div>
+                  <p className="text-xs font-medium" style={{ color: "var(--text-primary)" }}>Payment QR Preview</p>
+                  <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>This QR code will appear in the &quot;Our Payment Details&quot; section on printed quotations.</p>
+                </div>
+              </div>
+            )}
 
             {/* Bank preview */}
             <div className="p-4 rounded-xl border mt-2" style={{ borderColor: "var(--card-border)", background: "var(--background)" }}>
