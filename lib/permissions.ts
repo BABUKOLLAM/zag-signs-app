@@ -1,9 +1,7 @@
 // ─── Role-Based Access Control ──────────────────────────────────────────────
-// Maps each ZAG role (as stored in the NextAuth session) to the set of module
-// paths it may access. "*" grants access to every module.
-//
-// Every role implicitly gets /dashboard, /team-reports (to file DAR/WWR/MWR),
-// and /documents — see BASE_PATHS below.
+// Per-user DB overrides (UserPermission table) take priority over these
+// role defaults. The PermissionContext in lib/permission-context.tsx fetches
+// the override and falls back to canAccess() when none is stored.
 
 export type Role =
   | "MD"
@@ -14,22 +12,28 @@ export type Role =
   | "Production"
   | "Accounts"
   | "HR"
-  | "IT Admin";
+  | "IT Admin"
+  | "Consultant";
 
 /** Paths every authenticated user can reach regardless of role. */
 const BASE_PATHS = ["/dashboard", "/team-reports", "/documents", "/help"];
 
-/** Full-access roles see every module. */
-const FULL_ACCESS: Role[] = ["MD", "IT Admin"];
+/** Roles that get everything unless overridden per-user in DB. */
+const FULL_ACCESS: Role[] = ["AVP", "IT Admin", "Consultant"];
 
-/** Admin-only paths: only MD and IT Admin can access */
-const ADMIN_PATHS = ["/admin/users", "/admin/database", "/admin/audit", "/admin/settings"];
-
-/** Per-role allow-lists (in addition to BASE_PATHS). */
 const ROLE_PATHS: Record<Role, string[]> = {
-  MD: ["*"],
-  AVP: ["*"],
+  // MD sees reports & dashboard by default — IT Admin can unlock more via privileges page
+  MD: [
+    "/dashboard", "/kpi",
+    "/reports", "/reports/tax", "/ai-insights",
+    "/team-reports", "/documents",
+    "/admin/settings", "/admin/users", "/admin/privileges",
+    "/admin/database", "/admin/audit",
+  ],
+
+  AVP:        ["*"],
   "IT Admin": ["*"],
+  Consultant: ["*"],
 
   "Business Manager": [
     "/kpi",
@@ -37,7 +41,7 @@ const ROLE_PATHS: Record<Role, string[]> = {
     "/work-orders", "/production", "/inventory",
     "/accounts", "/collections",
     "/complaints", "/tasks", "/hr", "/field-visits",
-    "/reports", "/ai-insights",
+    "/reports", "/reports/tax", "/ai-insights",
   ],
 
   "Sales Executive": [
@@ -54,32 +58,37 @@ const ROLE_PATHS: Record<Role, string[]> = {
   ],
 
   Accounts: [
-    "/kpi", "/customers", "/accounts", "/collections", "/reports", "/tasks",
+    "/kpi", "/customers", "/accounts", "/collections",
+    "/reports", "/reports/tax", "/tasks",
   ],
 
-  HR: [
-    "/hr", "/tasks",
-  ],
+  HR: ["/hr", "/tasks"],
 };
 
-/** True if the given role may access the given module path. */
+/** True if the given role may access the given path (role-default check only). */
 export function canAccess(role: string | undefined | null, path: string): boolean {
   if (!role) return false;
   const r = role as Role;
-
-  // Admin paths: MD and IT Admin only
-  if (ADMIN_PATHS.some(p => path === p || path.startsWith(p + "/"))) {
-    return r === "MD" || r === "IT Admin";
-  }
-
   if (FULL_ACCESS.includes(r)) return true;
   if (BASE_PATHS.some((p) => path === p || path.startsWith(p + "/"))) return true;
-
   const allowed = ROLE_PATHS[r];
   if (!allowed) return false;
   if (allowed.includes("*")) return true;
-
   return allowed.some((p) => path === p || path.startsWith(p + "/"));
+}
+
+/** Check whether a custom modules array grants access to a path. */
+export function canAccessModules(modules: string[], path: string): boolean {
+  if (modules.includes("*")) return true;
+  if (BASE_PATHS.some((p) => path === p || path.startsWith(p + "/"))) return true;
+  return modules.some((m) => path === m || path.startsWith(m + "/"));
+}
+
+/** Default module list for a role — used to pre-fill the privilege editor. */
+export function defaultModulesForRole(role: string): string[] {
+  const r = role as Role;
+  if (FULL_ACCESS.includes(r)) return ["*"];
+  return ROLE_PATHS[r] ?? BASE_PATHS;
 }
 
 /** Default landing path for a role (always allowed). */
@@ -87,19 +96,90 @@ export function homePath(): string {
   return "/dashboard";
 }
 
-/** Every module path the app guards. Non-module paths (/, 404s) are not gated. */
+/** All guarded module paths (used by RouteGuard). */
 export const ALL_MODULE_PATHS = [
   "/dashboard", "/kpi",
   "/leads", "/opportunities", "/customers", "/quotations", "/sales-orders",
   "/work-orders", "/production", "/inventory",
   "/accounts", "/collections",
   "/complaints", "/tasks", "/hr", "/field-visits",
-  "/team-reports", "/reports", "/ai-insights", "/documents",
-  "/admin/users", "/admin/database", "/admin/audit", "/admin/settings",
+  "/team-reports", "/reports", "/reports/tax", "/ai-insights", "/documents",
+  "/admin/users", "/admin/database", "/admin/audit",
+  "/admin/settings", "/admin/privileges",
   "/help",
 ];
 
-/** True if a path is a guarded module page (and therefore subject to canAccess). */
+/** True if a path is a guarded module page. */
 export function isGuardedPath(path: string): boolean {
   return ALL_MODULE_PATHS.some((p) => path === p || path.startsWith(p + "/"));
 }
+
+/** Module groups for the privilege management UI. */
+export const MODULE_GROUPS: { group: string; color: string; items: { path: string; label: string }[] }[] = [
+  {
+    group: "Dashboard & KPI", color: "indigo",
+    items: [
+      { path: "/dashboard", label: "Dashboard" },
+      { path: "/kpi",       label: "KPI Monitor" },
+    ],
+  },
+  {
+    group: "CRM", color: "blue",
+    items: [
+      { path: "/leads",         label: "Leads" },
+      { path: "/opportunities", label: "Opportunities" },
+      { path: "/customers",     label: "Customers" },
+    ],
+  },
+  {
+    group: "Sales", color: "green",
+    items: [
+      { path: "/quotations",   label: "Quotations" },
+      { path: "/sales-orders", label: "Sales Orders" },
+    ],
+  },
+  {
+    group: "Operations", color: "orange",
+    items: [
+      { path: "/work-orders", label: "Work Orders" },
+      { path: "/production",  label: "Production" },
+      { path: "/inventory",   label: "Inventory" },
+    ],
+  },
+  {
+    group: "Finance", color: "emerald",
+    items: [
+      { path: "/accounts",    label: "Accounts / Invoices" },
+      { path: "/collections", label: "Collections" },
+    ],
+  },
+  {
+    group: "People & Field", color: "purple",
+    items: [
+      { path: "/complaints",   label: "Complaints" },
+      { path: "/tasks",        label: "Tasks" },
+      { path: "/hr",           label: "HR" },
+      { path: "/field-visits", label: "Field Visits" },
+    ],
+  },
+  {
+    group: "Reports", color: "rose",
+    items: [
+      { path: "/team-reports", label: "Team Reports (DAR/WWR/MWR)" },
+      { path: "/reports",      label: "Reports & MIS" },
+      { path: "/reports/tax",  label: "GST Tax Report" },
+      { path: "/ai-insights",  label: "AI Insights" },
+      { path: "/documents",    label: "Documents" },
+    ],
+  },
+  {
+    group: "Administration", color: "slate",
+    items: [
+      { path: "/admin/users",      label: "User Management" },
+      { path: "/admin/settings",   label: "Company Settings" },
+      { path: "/admin/privileges", label: "Privilege Management" },
+      { path: "/admin/database",   label: "Database Studio" },
+      { path: "/admin/audit",      label: "Audit Logs" },
+    ],
+  },
+];

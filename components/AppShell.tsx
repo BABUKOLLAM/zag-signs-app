@@ -6,6 +6,7 @@ import Sidebar from "./Sidebar";
 import MobileBottomNav from "./MobileBottomNav";
 import RouteGuard from "./RouteGuard";
 import { useSidebar } from "@/lib/sidebar-context";
+import { PermissionProvider } from "@/lib/permission-context";
 
 function ShellContent({ children }: { children: React.ReactNode }) {
   const { open, close } = useSidebar();
@@ -48,7 +49,9 @@ function ShellContent({ children }: { children: React.ReactNode }) {
 export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
-      <ShellContent>{children}</ShellContent>
+      <PermissionProvider>
+        <ShellContent>{children}</ShellContent>
+      </PermissionProvider>
     </SessionProvider>
   );
 }

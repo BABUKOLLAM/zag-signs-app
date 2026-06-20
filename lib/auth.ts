@@ -23,6 +23,7 @@ const ROLE_DISPLAY: Record<string, string> = {
   ACCOUNTS:         "Accounts",
   HR:               "HR",
   IT_ADMIN:         "IT Admin",
+  CONSULTANT:       "Consultant",
 };
 
 export const authOptions: NextAuthOptions = {
@@ -74,6 +75,7 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     jwt({ token, user }) {
       if (user) {
+        token.id     = user.id;
         token.role   = (user as DemoUser).role;
         token.branch = (user as DemoUser).branch;
       }
@@ -81,6 +83,7 @@ export const authOptions: NextAuthOptions = {
     },
     session({ session, token }) {
       if (session.user) {
+        (session.user as { id?: string }).id = token.id as string;
         session.user.role   = token.role   as string;
         session.user.branch = token.branch as string;
       }

@@ -27,6 +27,7 @@ enum UserRole {
   ACCOUNTS
   HR
   IT_ADMIN
+  CONSULTANT
 }
 
 enum LeadStatus {
@@ -176,6 +177,7 @@ model User {
   updatedAt      DateTime  @updatedAt
 
   // Relations
+  permission         UserPermission?
   assignedLeads      Lead[]      @relation("AssignedTo")
   createdLeads       Lead[]      @relation("CreatedBy")
   salesOrders        SalesOrder[]
@@ -193,6 +195,17 @@ model User {
   auditLogs          AuditLog[]
 
   @@map("users")
+}
+
+model UserPermission {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  modules     String[]
+  updatedAt   DateTime @updatedAt
+  updatedById String?
+
+  @@map("user_permissions")
 }
 
 // ─── CRM ──────────────────────────────────────────────────────────────────────

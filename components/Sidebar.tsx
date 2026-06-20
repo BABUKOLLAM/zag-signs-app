@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { useSidebar } from "@/lib/sidebar-context";
 import { useSession, signOut } from "next-auth/react";
-import { canAccess } from "@/lib/permissions";
+import { usePermissions } from "@/lib/permission-context";
 
 const sections = [
   {
@@ -67,10 +67,11 @@ const sections = [
   {
     label: "ADMIN",
     items: [
-      { href: "/admin/settings", label: "Company Settings", icon: Settings },
-      { href: "/admin/users",    label: "User Management",  icon: Shield },
-      { href: "/admin/database", label: "Database Admin",   icon: Database },
-      { href: "/admin/audit",    label: "Audit Trail",      icon: ScrollText },
+      { href: "/admin/settings",    label: "Company Settings",    icon: Settings },
+      { href: "/admin/users",       label: "User Management",     icon: Shield },
+      { href: "/admin/privileges",  label: "Privilege Settings",  icon: Shield },
+      { href: "/admin/database",    label: "Database Admin",      icon: Database },
+      { href: "/admin/audit",       label: "Audit Trail",         icon: ScrollText },
     ],
   },
   {
@@ -86,11 +87,11 @@ export default function Sidebar() {
   const { open, close } = useSidebar();
   const { data: session } = useSession();
   const user = session?.user;
+  const { canUse } = usePermissions();
 
-  // Filter nav by the signed-in role; drop sections that end up empty.
-  const role = user?.role;
+  // Filter nav using DB-overridden permissions (falls back to role defaults).
   const visibleSections = sections
-    .map((s) => ({ ...s, items: s.items.filter((i) => canAccess(role, i.href)) }))
+    .map((s) => ({ ...s, items: s.items.filter((i) => canUse(i.href)) }))
     .filter((s) => s.items.length > 0);
 
   return (
