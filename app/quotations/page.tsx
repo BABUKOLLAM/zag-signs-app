@@ -8,7 +8,7 @@ import { LoadingState, ErrorState, EmptyState, TableSkeleton } from "@/component
 import QuotationPrintTemplate, { type QuotationData, type CompanyConfig, type BankConfig } from "@/components/QuotationPrintTemplate";
 import DriveButton from "@/components/DriveButton";
 import DocumentsPanel from "@/components/DocumentsPanel";
-import { Eye, Printer, RefreshCw, X } from "lucide-react";
+import { Eye, Printer, RefreshCw, X, Plus, Trash2 } from "lucide-react";
 
 const STATUS_COLORS: Record<string, string> = {
   DRAFT: "bg-gray-100 text-gray-700",
@@ -30,12 +30,29 @@ interface Quotation {
   items: QuotationItem[];
 }
 
+interface Customer { id: string; name: string; company: string; }
+
+type NewItem = { description: string; qty: string; unit: string; unitPrice: string };
+
+const BLANK_ITEM: NewItem = { description: "", qty: "1", unit: "Nos", unitPrice: "" };
+const BLANK_FORM = {
+  customerId: "", validUntil: "", tax: "", discount: "", terms: "", notes: "",
+  items: [{ ...BLANK_ITEM }],
+};
+
 export default function QuotationsPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [selected, setSelected] = useState<Quotation | null>(null);
   const [printData, setPrintData] = useState<QuotationData | null>(null);
   const [printSettings, setPrintSettings] = useState<{ company: Partial<CompanyConfig>; bank: Partial<BankConfig> } | null>(null);
   const [loadingPrint, setLoadingPrint] = useState(false);
+
+  // Create modal
+  const [showCreate, setShowCreate] = useState(false);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState("");
+  const [newQ, setNewQ] = useState(BLANK_FORM);
 
   const { data, loading, error, refetch } = useApi<Quotation[]>("/quotations", {
     status: statusFilter || undefined,
@@ -55,13 +72,74 @@ export default function QuotationsPage() {
       const s = settingsRes.data;
       setPrintData(qData);
       setPrintSettings(s ? { company: s, bank: s } : null);
-      setTimeout(() => { window.print(); }, 300);
+      setTimeout(() => { window.print(); }, 500);
     } catch {
       alert("Failed to load quotation data for printing.");
     } finally {
       setLoadingPrint(false);
     }
   }, []);
+
+  const openCreate = useCallback(async () => {
+    setShowCreate(true);
+    setCreateError("");
+    setNewQ({ ...BLANK_FORM, items: [{ ...BLANK_ITEM }] });
+    try {
+      const res = await api.get<{ data: Customer[] }>("/customers", { limit: 200 });
+      setCustomers(res.data ?? []);
+    } catch {
+      setCustomers([]);
+    }
+  }, []);
+
+  const updateItem = (idx: number, field: keyof NewItem, value: string) => {
+    setNewQ((prev) => {
+      const items = prev.items.map((it, i) => i === idx ? { ...it, [field]: value } : it);
+      return { ...prev, items };
+    });
+  };
+
+  const addItem = () => setNewQ((prev) => ({ ...prev, items: [...prev.items, { ...BLANK_ITEM }] }));
+
+  const removeItem = (idx: number) =>
+    setNewQ((prev) => ({ ...prev, items: prev.items.filter((_, i) => i !== idx) }));
+
+  const newQSubtotal = newQ.items.reduce(
+    (s, i) => s + Number(i.qty || 0) * Number(i.unitPrice || 0), 0
+  );
+  const newQTotal = newQSubtotal + Number(newQ.tax || 0) - Number(newQ.discount || 0);
+
+  const handleCreate = useCallback(async () => {
+    const validItems = newQ.items.filter((i) => i.description.trim() && Number(i.unitPrice) > 0);
+    if (!newQ.customerId) { setCreateError("Please select a customer."); return; }
+    if (!validItems.length) { setCreateError("Add at least one item with description and rate."); return; }
+    setCreating(true);
+    setCreateError("");
+    try {
+      await api.post("/quotations", {
+        customerId: newQ.customerId,
+        items: validItems.map((i) => ({
+          description: i.description.trim(),
+          qty: Number(i.qty) || 1,
+          unit: i.unit || "Nos",
+          unitPrice: Number(i.unitPrice),
+        })),
+        tax: Number(newQ.tax) || 0,
+        discount: Number(newQ.discount) || 0,
+        validUntil: newQ.validUntil || undefined,
+        terms: newQ.terms.trim() || undefined,
+        notes: newQ.notes.trim() || undefined,
+      });
+      setShowCreate(false);
+      refetch();
+    } catch (e) {
+      setCreateError(e instanceof Error ? e.message : "Failed to create quotation.");
+    } finally {
+      setCreating(false);
+    }
+  }, [newQ, refetch]);
+
+  const inp = "border border-gray-200 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:border-indigo-400";
 
   return (
     <div>
@@ -106,6 +184,10 @@ export default function QuotationsPage() {
               }))}
             />
           </div>
+          <button onClick={openCreate}
+            className="flex items-center gap-2 px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium">
+            <Plus size={15} /> New Quotation
+          </button>
         </div>
 
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
@@ -114,7 +196,7 @@ export default function QuotationsPage() {
           ) : error ? (
             <ErrorState message={error} onRetry={refetch} />
           ) : quotations.length === 0 ? (
-            <EmptyState label="No quotations found" hint="Quotations will appear here once created." />
+            <EmptyState label="No quotations found" hint="Click 'New Quotation' to create one." />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -162,6 +244,162 @@ export default function QuotationsPage() {
           )}
         </div>
       </div>
+
+      {/* ── CREATE QUOTATION MODAL ──────────────────────────────────────────── */}
+      {showCreate && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[92vh] overflow-y-auto">
+            <div className="flex justify-between items-center p-5 border-b">
+              <h2 className="text-base font-bold text-gray-900">New Quotation</h2>
+              <button onClick={() => setShowCreate(false)} className="p-1 rounded hover:bg-gray-100">
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-5">
+              {/* Customer + Valid Until */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Customer <span className="text-red-500">*</span></label>
+                  <select value={newQ.customerId} onChange={(e) => setNewQ((p) => ({ ...p, customerId: e.target.value }))}
+                    className={inp}>
+                    <option value="">Select customer…</option>
+                    {customers.map((c) => (
+                      <option key={c.id} value={c.id}>{c.company || c.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Valid Until</label>
+                  <input type="date" value={newQ.validUntil}
+                    onChange={(e) => setNewQ((p) => ({ ...p, validUntil: e.target.value }))}
+                    className={inp} />
+                </div>
+              </div>
+
+              {/* Line items */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-medium text-gray-600">Items <span className="text-red-500">*</span></label>
+                  <button onClick={addItem}
+                    className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+                    <Plus size={12} /> Add Row
+                  </button>
+                </div>
+                <div className="border border-gray-200 rounded-lg overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50">
+                      <tr className="text-xs text-gray-500">
+                        <th className="text-left px-3 py-2 w-[40%]">Description</th>
+                        <th className="text-right px-3 py-2 w-[10%]">Qty</th>
+                        <th className="text-left px-3 py-2 w-[12%]">Unit</th>
+                        <th className="text-right px-3 py-2 w-[18%]">Rate (₹)</th>
+                        <th className="text-right px-3 py-2 w-[15%]">Amount</th>
+                        <th className="w-[5%]"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {newQ.items.map((item, idx) => {
+                        const rowTotal = Number(item.qty || 0) * Number(item.unitPrice || 0);
+                        return (
+                          <tr key={idx}>
+                            <td className="px-2 py-1.5">
+                              <input value={item.description} placeholder="Description"
+                                onChange={(e) => updateItem(idx, "description", e.target.value)}
+                                className="border border-gray-200 rounded px-2 py-1 text-sm w-full focus:outline-none focus:border-indigo-400" />
+                            </td>
+                            <td className="px-2 py-1.5">
+                              <input type="number" min="0.01" step="any" value={item.qty}
+                                onChange={(e) => updateItem(idx, "qty", e.target.value)}
+                                className="border border-gray-200 rounded px-2 py-1 text-sm w-full text-right focus:outline-none focus:border-indigo-400" />
+                            </td>
+                            <td className="px-2 py-1.5">
+                              <select value={item.unit} onChange={(e) => updateItem(idx, "unit", e.target.value)}
+                                className="border border-gray-200 rounded px-2 py-1 text-sm w-full focus:outline-none focus:border-indigo-400">
+                                {["Nos", "Sqft", "Rft", "Mtr", "Set", "Job", "Kg"].map((u) => (
+                                  <option key={u}>{u}</option>
+                                ))}
+                              </select>
+                            </td>
+                            <td className="px-2 py-1.5">
+                              <input type="number" min="0" step="any" value={item.unitPrice} placeholder="0"
+                                onChange={(e) => updateItem(idx, "unitPrice", e.target.value)}
+                                className="border border-gray-200 rounded px-2 py-1 text-sm w-full text-right focus:outline-none focus:border-indigo-400" />
+                            </td>
+                            <td className="px-2 py-1.5 text-right text-gray-700 font-medium whitespace-nowrap">
+                              {rowTotal > 0 ? fmt(rowTotal) : "—"}
+                            </td>
+                            <td className="px-2 py-1.5">
+                              {newQ.items.length > 1 && (
+                                <button onClick={() => removeItem(idx)} className="text-gray-300 hover:text-red-500">
+                                  <Trash2 size={13} />
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Tax / Discount / Totals */}
+              <div className="flex flex-col md:flex-row gap-4 justify-between">
+                <div className="grid grid-cols-2 gap-4 md:w-72">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Tax (₹)</label>
+                    <input type="number" min="0" step="any" value={newQ.tax} placeholder="0"
+                      onChange={(e) => setNewQ((p) => ({ ...p, tax: e.target.value }))}
+                      className={inp} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Discount (₹)</label>
+                    <input type="number" min="0" step="any" value={newQ.discount} placeholder="0"
+                      onChange={(e) => setNewQ((p) => ({ ...p, discount: e.target.value }))}
+                      className={inp} />
+                  </div>
+                </div>
+                <div className="text-right space-y-1">
+                  <p className="text-sm text-gray-500">Subtotal: <span className="font-medium text-gray-800">{fmt(newQSubtotal)}</span></p>
+                  {Number(newQ.tax) > 0 && <p className="text-sm text-gray-500">Tax: <span className="font-medium">{fmt(Number(newQ.tax))}</span></p>}
+                  {Number(newQ.discount) > 0 && <p className="text-sm text-gray-500">Discount: <span className="font-medium text-green-600">-{fmt(Number(newQ.discount))}</span></p>}
+                  <p className="text-base font-bold text-indigo-700">Total: {fmt(newQTotal)}</p>
+                </div>
+              </div>
+
+              {/* Terms + Notes */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Terms & Conditions</label>
+                  <textarea rows={3} value={newQ.terms} placeholder="Payment terms, delivery terms…"
+                    onChange={(e) => setNewQ((p) => ({ ...p, terms: e.target.value }))}
+                    className={inp + " resize-none"} />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Notes</label>
+                  <textarea rows={3} value={newQ.notes} placeholder="Internal notes (not printed)"
+                    onChange={(e) => setNewQ((p) => ({ ...p, notes: e.target.value }))}
+                    className={inp + " resize-none"} />
+                </div>
+              </div>
+
+              {createError && (
+                <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{createError}</p>
+              )}
+
+              <div className="flex justify-end gap-3 pt-1">
+                <button onClick={() => setShowCreate(false)}
+                  className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
+                <button onClick={handleCreate} disabled={creating}
+                  className="flex items-center gap-2 px-5 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 font-medium">
+                  {creating ? "Saving…" : "Create Quotation"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── VIEW MODAL ────────────────────────────────────────────────────── */}
       {selected && (
@@ -237,8 +475,8 @@ export default function QuotationsPage() {
         </div>
       )}
 
-      {/* ── HIDDEN PRINT ZONE (shown only during window.print()) ─────────── */}
-      <div id="zag-print-zone" style={{ display: "none" }}>
+      {/* ── PRINT ZONE (CSS keeps it off-screen; @media print makes it visible) */}
+      <div id="zag-print-zone">
         {printData && (
           <QuotationPrintTemplate
             q={printData}
