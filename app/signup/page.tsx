@@ -11,6 +11,7 @@ const ROLES = [
   { value: "SALES_EXECUTIVE",  label: "Sales Executive" },
   { value: "CRES",             label: "CRES (Customer Relations)" },
   { value: "PRODUCTION",       label: "Production" },
+  { value: "DESIGNER",         label: "Designer" },
   { value: "ACCOUNTS",         label: "Accounts" },
   { value: "HR",               label: "HR" },
   { value: "IT_ADMIN",         label: "IT Admin" },

@@ -190,7 +190,7 @@ input:focus, select:focus, textarea:focus {
   body * { visibility: hidden !important; }
   #zag-print-zone {
     visibility: visible !important;
-    position: fixed !important;
+    position: absolute !important;
     left: 0 !important;
     top: 0 !important;
     width: 100% !important;

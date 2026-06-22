@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import TopBar from "@/components/TopBar";
 import { fmt } from "@/lib/utils";
 import { useApi } from "@/lib/use-api";
@@ -8,9 +9,11 @@ import { LoadingState, ErrorState, EmptyState, TableSkeleton } from "@/component
 import { useToast } from "@/components/Toaster";
 import { customerSchema, parseErrors, type FormErrors } from "@/lib/schemas";
 import { exportExcel } from "@/lib/export";
+import BatchImportModal from "@/components/BatchImportModal";
+import { CUSTOMER_COLUMNS } from "@/lib/import-specs";
 import DriveButton from "@/components/DriveButton";
 import DocumentsPanel from "@/components/DocumentsPanel";
-import { Plus, Building2, RefreshCw, Download, Paperclip, X } from "lucide-react";
+import { Plus, Building2, RefreshCw, Download, Paperclip, X, FileText, Upload } from "lucide-react";
 
 const BRANCHES = ["TVM", "KTYM", "EKM", "CLT"];
 
@@ -31,6 +34,7 @@ const ic = (err?: string) =>
 
 export default function CustomersPage() {
   const toast = useToast();
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [branchFilter, setBranchFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -38,6 +42,7 @@ export default function CustomersPage() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [saving, setSaving] = useState(false);
   const [docsFor, setDocsFor] = useState<Customer | null>(null);
+  const [showImport, setShowImport] = useState(false);
 
   const { data, loading, error, refetch } = useApi<Customer[]>("/customers", {
     branch: branchFilter || undefined,
@@ -75,6 +80,11 @@ export default function CustomersPage() {
   };
 
   const closeModal = () => { setShowModal(false); setForm(emptyForm); setErrors({}); };
+
+  const openQuotation = (c: Customer) => {
+    const company = encodeURIComponent(c.company || c.name);
+    router.push(`/quotations?fromCustomer=${c.id}&company=${company}`);
+  };
 
   const handleExport = () => exportExcel(`Customers_${new Date().toISOString().slice(0,10)}`, customers.map((c) => ({
     "Customer No": c.customerNo,
@@ -127,6 +137,10 @@ export default function CustomersPage() {
             </button>
           </div>
           <div className="flex gap-2">
+            <button onClick={() => setShowImport(true)}
+              className="flex items-center gap-2 border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-medium px-3 py-2 rounded-lg">
+              <Upload size={14} /> Import
+            </button>
             <button onClick={handleExport} disabled={customers.length === 0}
               className="flex items-center gap-2 border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-medium px-3 py-2 rounded-lg disabled:opacity-40">
               <Download size={14} /> Excel
@@ -163,7 +177,7 @@ export default function CustomersPage() {
                     <th className="text-right px-4 py-3">Orders</th>
                     <th className="text-right px-4 py-3">Total Value</th>
                     <th className="text-right px-4 py-3">Outstanding</th>
-                    <th className="px-4 py-3 w-8"></th>
+                    <th className="px-4 py-3 text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -194,13 +208,22 @@ export default function CustomersPage() {
                         {c.outstandingBalance > 0 ? fmt(c.outstandingBalance) : "Nil"}
                       </td>
                       <td className="px-4 py-3">
-                        <button
-                          onClick={() => setDocsFor(c)}
-                          title="Documents"
-                          className="p-1 rounded hover:bg-indigo-50 text-slate-400 hover:text-indigo-600"
-                        >
-                          <Paperclip size={13} />
-                        </button>
+                        <div className="flex items-center gap-1 justify-center">
+                          <button
+                            onClick={() => openQuotation(c)}
+                            title="Create Quotation"
+                            className="flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-amber-50 text-amber-700 hover:bg-amber-100 font-medium whitespace-nowrap"
+                          >
+                            <FileText size={10} /> Quote
+                          </button>
+                          <button
+                            onClick={() => setDocsFor(c)}
+                            title="Documents"
+                            className="p-1 rounded hover:bg-indigo-50 text-slate-400 hover:text-indigo-600"
+                          >
+                            <Paperclip size={13} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -274,6 +297,17 @@ export default function CustomersPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {showImport && (
+        <BatchImportModal
+          title="Import Customers"
+          endpoint="/customers/bulk"
+          templateName="zag-customers-template"
+          columns={CUSTOMER_COLUMNS}
+          onClose={() => setShowImport(false)}
+          onDone={() => refetch()}
+        />
       )}
     </div>
   );

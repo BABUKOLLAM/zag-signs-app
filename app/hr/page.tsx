@@ -3,8 +3,11 @@ import { useState } from "react";
 import TopBar from "@/components/TopBar";
 import { useApi } from "@/lib/use-api";
 import {
-  Plus, CheckCircle2, XCircle, Search, RefreshCw, Loader2,
+  Plus, CheckCircle2, XCircle, Search, RefreshCw, Loader2, Upload, Download,
 } from "lucide-react";
+import { exportExcel } from "@/lib/export";
+import BatchImportModal from "@/components/BatchImportModal";
+import { EMPLOYEE_COLUMNS } from "@/lib/import-specs";
 
 type Employee = {
   id: string; employeeNo: string; name: string; designation: string;
@@ -42,19 +45,27 @@ export default function HRPage() {
   const [leaveStatus, setLeaveStatus] = useState("");
   const [saving, setSaving] = useState(false);
   const [showAddEmp,   setShowAddEmp]   = useState(false);
+  const [showImportEmp, setShowImportEmp] = useState(false);
   const [showAddLeave, setShowAddLeave] = useState(false);
   const [showAttend,   setShowAttend]   = useState(false);
   const today = new Date().toISOString().split("T")[0];
   const [attDate, setAttDate] = useState(today);
 
   const empParams = new URLSearchParams({ ...(search ? { search } : {}), ...(dept ? { department: dept } : {}) });
-  const { data: employees, loading: loadEmp, refetch: refetchEmp } = useApi<Employee[]>(`/api/employees?${empParams}`);
-  const { data: leaves, loading: loadLeave, refetch: refetchLeave } = useApi<LeaveReq[]>(`/api/leave-requests?${leaveStatus ? `status=${leaveStatus}` : ""}`);
-  const { data: attendance, loading: loadAtt, refetch: refetchAtt } = useApi<Attendance[]>(`/api/attendance?date=${attDate}`);
+  const { data: employees, loading: loadEmp, refetch: refetchEmp } = useApi<Employee[]>(`/employees?${empParams}`);
+  const { data: leaves, loading: loadLeave, refetch: refetchLeave } = useApi<LeaveReq[]>(`/leave-requests?${leaveStatus ? `status=${leaveStatus}` : ""}`);
+  const { data: attendance, loading: loadAtt, refetch: refetchAtt } = useApi<Attendance[]>(`/attendance?date=${attDate}`);
 
   const empList  = employees  ?? [];
   const leaveList = leaves    ?? [];
   const attList   = attendance ?? [];
+
+  const handleExportEmp = () => exportExcel(`Employees_${new Date().toISOString().slice(0,10)}`, empList.map((e) => ({
+    "Employee No": e.employeeNo, "Name": e.name, "Designation": e.designation,
+    "Department": e.department, "Branch": e.branch, "Phone": e.phone,
+    "Email": e.email, "Date of Joining": e.dateOfJoining, "Salary": e.salary,
+    "Active": e.isActive ? "Yes" : "No",
+  })));
 
   const [empForm, setEmpForm] = useState({ name:"", designation:"", department:"", branch:"TVM", phone:"", email:"", dateOfJoining:"", salary:"" });
   const [leaveForm, setLeaveForm] = useState({ employeeId:"", leaveType:"Casual Leave", fromDate:"", toDate:"", days:"1", reason:"" });
@@ -135,6 +146,14 @@ export default function HRPage() {
                 <option value="">All Departments</option>
                 {DEPTS.map(d => <option key={d}>{d}</option>)}
               </select>
+              <button onClick={() => setShowImportEmp(true)}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium">
+                <Upload size={14} /> Import
+              </button>
+              <button onClick={handleExportEmp} disabled={empList.length === 0}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium disabled:opacity-40">
+                <Download size={14} /> Excel
+              </button>
               <button onClick={() => setShowAddEmp(true)}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-semibold"
                 style={{ background:"linear-gradient(135deg,#4F46E5,#7C3AED)" }}>
@@ -381,6 +400,17 @@ export default function HRPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {showImportEmp && (
+        <BatchImportModal
+          title="Import Employees"
+          endpoint="/employees/bulk"
+          templateName="zag-employees-template"
+          columns={EMPLOYEE_COLUMNS}
+          onClose={() => setShowImportEmp(false)}
+          onDone={() => refetchEmp()}
+        />
       )}
     </div>
   );

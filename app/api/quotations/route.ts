@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok, err, requireSession, toDate } from "@/lib/api-helpers";
 import { QuotationStatus } from "@prisma/client";
+import { makeClientCode } from "@/lib/utils";
 
 const STATUS_LABELS: Record<string, string> = {
   DRAFT:     "Draft",
@@ -33,6 +34,7 @@ type QRow = {
   validUntil: Date | null; terms: string | null; notes: string | null; createdAt: Date;
   customerId: string | null; salutation: string | null;
   attentionSalutation: string | null; attentionName: string | null; branch: string | null;
+  clientCode: string | null; parentQuotationId: string | null;
   customer?: { name: string; company: string } | null;
   items?: { description: string; qty: number; unit: string; unitPrice: number; total: number }[];
   proposedBy?: { name: string; role: string; branch: string | null } | null;
@@ -47,6 +49,8 @@ function shape(q: QRow) {
     validUntil: toDate(q.validUntil), terms: q.terms ?? "", notes: q.notes ?? "",
     createdAt: toDate(q.createdAt), customerId: q.customerId,
     customerName:        q.customer?.company ?? q.customer?.name ?? "",
+    clientCode:          q.clientCode ?? "",
+    parentQuotationId:   q.parentQuotationId ?? null,
     salutation:          q.salutation ?? "",
     attentionSalutation: q.attentionSalutation ?? "",
     attentionName:       q.attentionName ?? "",
@@ -65,12 +69,14 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const status     = searchParams.get("status") as QuotationStatus | null;
   const customerId = searchParams.get("customerId");
+  const leadId     = searchParams.get("leadId");
   const page  = Math.max(1, Number(searchParams.get("page")  ?? "1"));
   const limit = Math.min(100, Number(searchParams.get("limit") ?? "50"));
 
   const where = {
     ...(status     ? { status }     : {}),
     ...(customerId ? { customerId } : {}),
+    ...(leadId     ? { leadId }     : {}),
   };
 
   const [quotations, total] = await Promise.all([
@@ -107,11 +113,14 @@ export async function POST(request: NextRequest) {
     taxRate?: number; discount?: number; validUntil?: string;
     terms?: string; notes?: string;
     salutation?: string; attentionSalutation?: string; attentionName?: string;
+    // revision fields
+    parentQuotationId?: string;
+    revisionNote?: string;
   };
 
   const { customerId, leadId, items = [], taxRate = 0, discount = 0,
           validUntil, terms, notes, salutation, attentionSalutation, attentionName,
-          status = "DRAFT" } = body;
+          status = "DRAFT", parentQuotationId, revisionNote } = body;
 
   if (!customerId && !leadId) return err("Customer or Lead is required");
   if (!items.length) return err("At least one item is required");
@@ -120,9 +129,30 @@ export async function POST(request: NextRequest) {
   const tax      = Math.round(subtotal * Number(taxRate)) / 100;
   const total    = subtotal + tax - Number(discount);
 
-  // Branch-sequential number: ZAG/Q/TVM/001
-  const branchCount = await prisma.quotation.count({ where: { branch: branchCode } });
-  const quotationNo  = `ZAG/Q/${branchCode}/${String(branchCount + 1).padStart(3, "0")}`;
+  // Generate client code from customer company name
+  let code = "";
+  if (customerId) {
+    const cust = await prisma.customer.findUnique({ where: { id: customerId }, select: { company: true, name: true } });
+    code = makeClientCode(cust?.company || cust?.name || "");
+  } else if (leadId) {
+    const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { company: true, name: true } });
+    code = makeClientCode(lead?.company || lead?.name || "");
+  }
+
+  let quotationNo: string;
+
+  if (parentQuotationId) {
+    // Revision: number = parentNo-R{n}
+    const parent = await prisma.quotation.findUnique({ where: { id: parentQuotationId }, select: { quotationNo: true } });
+    if (!parent) return err("Parent quotation not found");
+    const rootNo = parent.quotationNo; // e.g. ZAG/Q/HO/001
+    const existingRevisions = await prisma.quotation.count({ where: { parentQuotationId } });
+    quotationNo = `${rootNo}-R${existingRevisions + 2}`; // R2, R3, ...
+  } else {
+    // New root quotation: branch-sequential
+    const branchCount = await prisma.quotation.count({ where: { branch: branchCode, parentQuotationId: null } });
+    quotationNo = `ZAG/Q/${branchCode}/${String(branchCount + 1).padStart(3, "0")}`;
+  }
 
   const quotation = await prisma.quotation.create({
     data: {
@@ -141,6 +171,9 @@ export async function POST(request: NextRequest) {
       attentionName:       attentionName?.trim() ?? null,
       branch:              branchCode,
       proposedById:        su.id                 ?? null,
+      clientCode:          code                  || null,
+      parentQuotationId:   parentQuotationId     ?? null,
+      revisionNote:        revisionNote?.trim()  ?? null,
       items: {
         create: items.map((i) => ({
           description: i.description,

@@ -1,6 +1,10 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok, err, requireSession, autoNo } from "@/lib/api-helpers";
+import { hasRole } from "@/lib/bulk-helpers";
+
+// Employee records carry payroll data — restrict writes to HR / mgmt / admins.
+const EMP_ROLES = ["MD", "AVP", "IT Admin", "HR", "Consultant"];
 
 function shape(e: {
   id: string; employeeNo: string; name: string; designation: string;
@@ -43,6 +47,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const session = await requireSession();
   if (!session) return err("Unauthorized", 401);
+  if (!hasRole((session.user as { role?: string }).role, EMP_ROLES))
+    return err("Forbidden — only HR or an administrator can add employees", 403);
   const body = await request.json() as {
     name?: string; designation?: string; department?: string; branch?: string;
     phone?: string; email?: string; dateOfJoining?: string; salary?: number;

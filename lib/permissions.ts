@@ -10,6 +10,7 @@ export type Role =
   | "Sales Executive"
   | "CRES"
   | "Production"
+  | "Designer"
   | "Accounts"
   | "HR"
   | "IT Admin"
@@ -38,23 +39,30 @@ const ROLE_PATHS: Record<Role, string[]> = {
   "Business Manager": [
     "/kpi",
     "/leads", "/opportunities", "/customers", "/quotations", "/sales-orders",
+    "/work-order-tickets",
     "/work-orders", "/production", "/inventory",
-    "/accounts", "/collections",
+    "/accounts", "/collections", "/invoices",
     "/complaints", "/tasks", "/hr", "/field-visits",
     "/reports", "/reports/tax", "/ai-insights",
   ],
 
   "Sales Executive": [
     "/leads", "/opportunities", "/customers", "/quotations", "/sales-orders",
+    "/work-order-tickets",
     "/field-visits", "/tasks", "/complaints",
   ],
 
   CRES: [
     "/leads", "/customers", "/complaints", "/tasks", "/field-visits",
+    "/work-order-tickets",
   ],
 
   Production: [
     "/work-orders", "/production", "/inventory", "/tasks",
+  ],
+
+  Designer: [
+    "/my-work", "/tasks",
   ],
 
   Accounts: [
@@ -100,8 +108,9 @@ export function homePath(): string {
 export const ALL_MODULE_PATHS = [
   "/dashboard", "/kpi",
   "/leads", "/opportunities", "/customers", "/quotations", "/sales-orders",
+  "/work-order-tickets", "/my-work",
   "/work-orders", "/production", "/inventory",
-  "/accounts", "/collections",
+  "/accounts", "/collections", "/invoices",
   "/complaints", "/tasks", "/hr", "/field-visits",
   "/team-reports", "/reports", "/reports/tax", "/ai-insights", "/documents",
   "/admin/users", "/admin/database", "/admin/audit",
@@ -141,9 +150,11 @@ export const MODULE_GROUPS: { group: string; color: string; items: { path: strin
   {
     group: "Operations", color: "orange",
     items: [
-      { path: "/work-orders", label: "Work Orders" },
-      { path: "/production",  label: "Production" },
-      { path: "/inventory",   label: "Inventory" },
+      { path: "/work-order-tickets", label: "Work Order Tickets" },
+      { path: "/my-work",            label: "Designer: My Work" },
+      { path: "/work-orders",        label: "Work Orders (Production)" },
+      { path: "/production",         label: "Production" },
+      { path: "/inventory",          label: "Inventory" },
     ],
   },
   {

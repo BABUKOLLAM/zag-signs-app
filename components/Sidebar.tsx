@@ -6,11 +6,13 @@ import {
   Wrench, Package, Wallet, AlertCircle, BarChart3, UserCircle,
   Building2, ClipboardList, Target, CheckSquare, TrendingUp,
   MapPin, FolderOpen, Sparkles, ChevronRight, X, LogOut,
-  Shield, Database, ScrollText, BookOpen, Settings,
+  Shield, Database, ScrollText, BookOpen, Settings, Receipt,
+  Ticket, Palette,
 } from "lucide-react";
 import { useSidebar } from "@/lib/sidebar-context";
 import { useSession, signOut } from "next-auth/react";
 import { usePermissions } from "@/lib/permission-context";
+import PoweredByBpro from "@/components/PoweredByBpro";
 
 const sections = [
   {
@@ -33,16 +35,19 @@ const sections = [
   {
     label: "OPERATIONS",
     items: [
-      { href: "/work-orders",   label: "Work Orders",      icon: Wrench },
-      { href: "/production",    label: "Production",       icon: Package },
-      { href: "/inventory",     label: "Inventory",        icon: Package },
+      { href: "/work-order-tickets", label: "Work Order Tickets", icon: Ticket },
+      { href: "/my-work",            label: "My Work",            icon: Palette },
+      { href: "/work-orders",        label: "Work Orders",        icon: Wrench },
+      { href: "/production",         label: "Production",         icon: Package },
+      { href: "/inventory",          label: "Inventory",          icon: Package },
     ],
   },
   {
     label: "FINANCE",
     items: [
+      { href: "/invoices",      label: "Invoices",           icon: Receipt },
       { href: "/accounts",      label: "Accounts & Billing", icon: Wallet },
-      { href: "/collections",   label: "Collections",      icon: Wallet },
+      { href: "/collections",   label: "Collections",        icon: Wallet },
     ],
   },
   {
@@ -178,6 +183,9 @@ export default function Sidebar() {
           >
             <LogOut size={14} />
           </button>
+        </div>
+        <div className="mt-3 pt-3 border-t border-white/10">
+          <PoweredByBpro variant="dark" logoHeight={16} />
         </div>
       </div>
     </aside>

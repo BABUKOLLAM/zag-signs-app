@@ -2,8 +2,10 @@
 import { useState, useEffect } from "react";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Building2, ChevronDown, AlertCircle, Loader2 } from "lucide-react";
+import { Eye, EyeOff, ChevronDown, AlertCircle, Loader2 } from "lucide-react";
 import { DEMO_CREDENTIALS } from "@/lib/demo-credentials";
+import BrandLogo from "@/components/BrandLogo";
+import PoweredByBpro from "@/components/PoweredByBpro";
 
 const roleColors: Record<string, string> = {
   "MD":               "bg-violet-100 text-violet-700",
@@ -67,18 +69,14 @@ export default function LoginPage() {
 
       {/* Logo */}
       <div className="relative mb-7 flex flex-col items-center">
-        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-3 shadow-xl"
-          style={{ background: "linear-gradient(135deg, #4F46E5, #7C3AED)" }}>
-          <Building2 size={28} className="text-white" />
-        </div>
-        <h1 className="text-2xl font-bold text-white tracking-tight">ZAG SIGNS</h1>
-        <p className="text-slate-400 text-sm mt-0.5">Enterprise ERP System</p>
+        <BrandLogo height={46} pill className="mb-3 shadow-xl" />
+        <p className="text-slate-400 text-sm mt-1">Enterprise ERP System</p>
       </div>
 
       {/* Login card */}
       <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden">
         {/* Gradient top strip */}
-        <div className="h-1" style={{ background: "linear-gradient(90deg, #4F46E5, #7C3AED, #6366F1)" }} />
+        <div className="h-1" style={{ background: "linear-gradient(90deg, #6366F1, #9333EA, #EC4899)" }} />
 
         <div className="px-8 pt-7 pb-8">
           <h2 className="text-xl font-bold text-slate-900 mb-1">Sign in</h2>
@@ -137,7 +135,7 @@ export default function LoginPage() {
               type="submit"
               disabled={loading || status === "loading"}
               className="w-full py-3 rounded-xl text-white font-semibold text-sm disabled:opacity-70 flex items-center justify-center gap-2 transition-opacity shadow-md"
-              style={{ background: "linear-gradient(135deg, #4F46E5, #7C3AED)" }}
+              style={{ background: "linear-gradient(135deg, #6366F1, #EC4899)" }}
             >
               {loading
                 ? <><Loader2 size={15} className="animate-spin" /> Signing in…</>
@@ -186,9 +184,10 @@ export default function LoginPage() {
         )}
       </div>
 
-      <p className="relative mt-5 text-xs text-slate-600">
-        © 2026 ZAG SIGNS. Enterprise ERP · All rights reserved.
-      </p>
+      <div className="relative mt-6 flex flex-col items-center gap-2">
+        <PoweredByBpro variant="dark" logoHeight={18} />
+        <p className="text-xs text-slate-600">© 2026 ZAG SIGNS. Enterprise ERP · All rights reserved.</p>
+      </div>
     </div>
   );
 }

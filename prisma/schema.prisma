@@ -24,6 +24,7 @@ enum UserRole {
   SALES_EXECUTIVE
   CRES
   PRODUCTION
+  DESIGNER
   ACCOUNTS
   HR
   IT_ADMIN
@@ -159,6 +160,32 @@ enum LeaveStatus {
   REJECTED
 }
 
+enum WOTicketSource {
+  WALK_IN
+  PHONE
+  WHATSAPP
+  EMAIL
+  QUOTATION
+  OTHER
+}
+
+enum WOTicketStatus {
+  NEW
+  ASSIGNED
+  IN_PROGRESS
+  HALF_DONE
+  DONE
+  BILLED
+  CANCELLED
+}
+
+enum WOTicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
 // ─── CORE AUTH ────────────────────────────────────────────────────────────────
 
 model User {
@@ -197,6 +224,10 @@ model User {
   leaveRequests      LeaveRequest[]
   notifications      Notification[]
   auditLogs          AuditLog[]
+
+  assignedTickets    WorkOrderTicket[] @relation("TicketDesigner")
+  createdTickets     WorkOrderTicket[] @relation("TicketCreator")
+  ticketEvents       WorkOrderTicketEvent[]
 
   @@map("users")
 }
@@ -263,6 +294,8 @@ model Customer {
   complaints   Complaint[]
   collections  Collection[]
   fieldVisits  FieldVisit[]
+  invoices     Invoice[]
+  tickets      WorkOrderTicket[]
 
   @@map("customers")
 }
@@ -305,17 +338,24 @@ model Quotation {
   attentionName       String?         // name for Kind Attn line
   branch              String?         // branch code (TVM/KTM/EKM/CLT/HO)
   proposedById        String?
+  clientCode          String?         // auto-generated abbreviation e.g. BMH
+  parentQuotationId   String?         // root quotation for revisions
+  revisionNote        String?         // reason for this revision
   createdAt           DateTime        @default(now())
   updatedAt           DateTime        @updatedAt
 
-  customerId  String?
-  customer    Customer? @relation(fields: [customerId], references: [id])
-  leadId      String?
-  lead        Lead?     @relation(fields: [leadId], references: [id])
-  proposedBy  User?     @relation("QuotationProposedBy", fields: [proposedById], references: [id])
+  customerId      String?
+  customer        Customer?  @relation(fields: [customerId], references: [id])
+  leadId          String?
+  lead            Lead?      @relation(fields: [leadId], references: [id])
+  proposedBy      User?      @relation("QuotationProposedBy", fields: [proposedById], references: [id])
+  parentQuotation Quotation? @relation("QuotationRevisions", fields: [parentQuotationId], references: [id], onDelete: SetNull)
+  revisions       Quotation[] @relation("QuotationRevisions")
 
   items       QuotationItem[]
   salesOrders SalesOrder[]
+  invoices    Invoice[]
+  tickets     WorkOrderTicket[]
 
   @@map("quotations")
 }
@@ -437,21 +477,36 @@ model StockMovement {
 // ─── FINANCE ──────────────────────────────────────────────────────────────────
 
 model Invoice {
-  id          String        @id @default(cuid())
-  invoiceNo   String        @unique
-  invoiceDate DateTime      @default(now())
-  dueDate     DateTime?
-  amount      Float
-  taxRate     Float         @default(0)
-  taxAmount   Float         @default(0)
-  totalAmount Float
-  status      PaymentStatus @default(PENDING)
-  notes       String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id              String        @id @default(cuid())
+  invoiceNo       String        @unique
+  invoiceDate     DateTime      @default(now())
+  dueDate         DateTime?
+  subtotal        Float         @default(0)
+  taxRate         Float         @default(0)
+  taxAmount       Float         @default(0)
+  discount        Float         @default(0)
+  totalAmount     Float
+  status          PaymentStatus @default(PENDING)
+  notes           String?
+  branch          String        @default("HO")
+  items           Json          @default("[]")
+  customerName    String?
+  customerAddress String?
+  customerGst     String?
+  customerPhone   String?
+  salutation      String?
+  attentionName   String?
+  tallyExported   Boolean       @default(false)
+  tallyExportedAt DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   salesOrderId String?
   salesOrder   SalesOrder? @relation(fields: [salesOrderId], references: [id])
+  quotationId  String?
+  quotation    Quotation?  @relation(fields: [quotationId], references: [id])
+  customerId   String?
+  customer     Customer?   @relation(fields: [customerId], references: [id])
 
   collections Collection[]
 
@@ -771,4 +826,87 @@ model AuditLog {
   user   User?   @relation(fields: [userId], references: [id])
 
   @@map("audit_logs")
+}
+
+// ─── WORK ORDER TICKETS ───────────────────────────────────────────────────────
+// Front-office tickets opened from walk-in / phone / WhatsApp / quotation flow.
+// Distinct from `WorkOrder` (production tracking downstream of a SalesOrder).
+
+model WorkOrderTicket {
+  id              String           @id @default(cuid())
+  ticketNo        String           @unique
+  branch          String           @default("HO")
+  source          WOTicketSource   @default(WALK_IN)
+  status          WOTicketStatus   @default(NEW)
+  priority        WOTicketPriority @default(MEDIUM)
+
+  // Customer details (may or may not be linked to Customer record)
+  customerId      String?
+  customer        Customer?  @relation(fields: [customerId], references: [id])
+  customerName    String
+  customerPhone   String?
+  customerEmail   String?
+  customerAddress String?
+
+  // Optional link to upstream quotation
+  quotationId     String?
+  quotation       Quotation? @relation(fields: [quotationId], references: [id])
+
+  // Work details
+  natureOfWork    String      // e.g. Signboard, LED Display, Vehicle Wrap, Hoarding
+  description     String
+  reference       String?     // PO no, sketch ref, customer's own ref
+  attachments     Json        @default("[]")   // [{name,url}]
+
+  // Costing
+  estimatedCost   Float       @default(0)
+  advancePaid     Float       @default(0)
+  balanceDue      Float       @default(0)
+  paymentMode     String?     // Cash, NEFT, UPI, Cheque, On Delivery
+
+  // Timeline
+  receivedAt      DateTime    @default(now())
+  expectedAt      DateTime?
+  assignedAt      DateTime?
+  startedAt       DateTime?
+  halfDoneAt      DateTime?
+  completedAt     DateTime?
+  billedAt        DateTime?
+
+  // Designer assignment
+  assignedDesignerId String?
+  assignedDesigner   User?    @relation("TicketDesigner", fields: [assignedDesignerId], references: [id])
+
+  // Status notes
+  halfDoneReason   String?
+  designerRemarks  String?
+  closingNotes     String?
+
+  // Tracking
+  createdById      String?
+  createdBy        User?      @relation("TicketCreator", fields: [createdById], references: [id])
+
+  events           WorkOrderTicketEvent[]
+
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  @@index([branch, status])
+  @@index([assignedDesignerId, status])
+  @@map("work_order_tickets")
+}
+
+model WorkOrderTicketEvent {
+  id          String         @id @default(cuid())
+  ticketId    String
+  ticket      WorkOrderTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  fromStatus  WOTicketStatus?
+  toStatus    WOTicketStatus
+  note        String?
+  actorId     String?
+  actor       User?          @relation(fields: [actorId], references: [id])
+  createdAt   DateTime       @default(now())
+
+  @@index([ticketId, createdAt])
+  @@map("work_order_ticket_events")
 }

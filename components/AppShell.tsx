@@ -23,7 +23,9 @@ function ShellContent({ children }: { children: React.ReactNode }) {
     return () => { document.body.style.overflow = ""; };
   }, [open]);
 
-  if (pathname === "/login") return <>{children}</>;
+  // Public, full-screen pages render without the sidebar/topbar chrome.
+  const BARE_ROUTES = ["/", "/login", "/signup"];
+  if (BARE_ROUTES.includes(pathname)) return <>{children}</>;
 
   return (
     <>
