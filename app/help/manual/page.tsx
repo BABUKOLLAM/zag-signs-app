@@ -10,7 +10,19 @@ const VERSION_DATE = "20/06/2026";
 // Print styles injected at component mount
 const PRINT_STYLE = `
   @media print {
-    body { margin: 0; }
+    * {
+      color: #000 !important;
+      background: white !important;
+    }
+    body {
+      margin: 0;
+      background: white !important;
+      color: #000 !important;
+    }
+    div, p, span, h1, h2, h3, h4, h5, h6, table, tr, td, th {
+      color: #000 !important;
+      background: transparent !important;
+    }
     .no-print { display: none !important; }
     .page-break { page-break-before: always; }
     h1, h2, h3 { page-break-after: avoid; }
