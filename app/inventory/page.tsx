@@ -5,7 +5,10 @@ import { useApi } from "@/lib/use-api";
 import { api } from "@/lib/api-client";
 import { LoadingState, ErrorState, EmptyState, TableSkeleton } from "@/components/States";
 import { useToast } from "@/components/Toaster";
-import { Plus, RefreshCw, Package, AlertTriangle, X, ArrowUpDown } from "lucide-react";
+import { exportExcel } from "@/lib/export";
+import BatchImportModal from "@/components/BatchImportModal";
+import { MATERIAL_COLUMNS } from "@/lib/import-specs";
+import { Plus, RefreshCw, Package, AlertTriangle, X, ArrowUpDown, Upload, Download } from "lucide-react";
 
 const CATEGORIES = ["Flex", "Vinyl", "ACP", "Acrylic", "LED", "Metal", "Electrical", "Ink", "Hardware", "Other"];
 const UNITS = ["Sqft", "Sqmtr", "Meters", "Kg", "Nos", "Rolls", "Litres", "Sheets", "Boxes"];
@@ -41,6 +44,7 @@ export default function InventoryPage() {
   const [form, setForm]                 = useState(emptyMaterial);
   const [moveForm, setMoveForm]         = useState(emptyMovement);
   const [saving, setSaving]             = useState(false);
+  const [showImport, setShowImport]     = useState(false);
 
   const { data, loading, error, refetch } = useApi<Material[]>("/inventory", {
     category: catFilter || undefined,
@@ -48,6 +52,13 @@ export default function InventoryPage() {
   });
 
   const materials = data ?? [];
+
+  const handleExport = () => exportExcel(`Inventory_${new Date().toISOString().slice(0,10)}`, materials.map((m) => ({
+    "Name": m.name, "Category": m.category, "Unit": m.unit,
+    "Current Stock": m.currentStock, "Minimum Stock": m.minimumStock,
+    "Unit Cost (₹)": m.unitCost, "Stock Value (₹)": m.stockValue,
+    "Supplier": m.supplier, "Status": m.stockStatus,
+  })));
   const totalValue   = materials.reduce((s, m) => s + m.stockValue, 0);
   const lowCount     = materials.filter((m) => m.stockStatus === "Low").length;
   const criticalCount = materials.filter((m) => m.stockStatus === "Critical" || m.stockStatus === "Out").length;
@@ -140,10 +151,20 @@ export default function InventoryPage() {
               <RefreshCw size={14} />
             </button>
           </div>
-          <button onClick={() => setShowAdd(true)}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg">
-            <Plus size={14} /> Add Material
-          </button>
+          <div className="flex gap-2">
+            <button onClick={() => setShowImport(true)}
+              className="flex items-center gap-2 border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-medium px-3 py-2 rounded-lg">
+              <Upload size={14} /> Import
+            </button>
+            <button onClick={handleExport} disabled={materials.length === 0}
+              className="flex items-center gap-2 border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-medium px-3 py-2 rounded-lg disabled:opacity-40">
+              <Download size={14} /> Excel
+            </button>
+            <button onClick={() => setShowAdd(true)}
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg">
+              <Plus size={14} /> Add Material
+            </button>
+          </div>
         </div>
 
         {/* Category pills */}
@@ -358,6 +379,17 @@ export default function InventoryPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {showImport && (
+        <BatchImportModal
+          title="Import Inventory / Materials"
+          endpoint="/inventory/bulk"
+          templateName="zag-inventory-template"
+          columns={MATERIAL_COLUMNS}
+          onClose={() => setShowImport(false)}
+          onDone={() => refetch()}
+        />
       )}
     </div>
   );

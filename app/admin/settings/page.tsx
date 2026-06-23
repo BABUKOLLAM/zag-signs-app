@@ -4,7 +4,7 @@ import TopBar from "@/components/TopBar";
 import { api } from "@/lib/api-client";
 import {
   Building2, CreditCard, FileText, Save, CheckCircle,
-  Loader2, AlertCircle, Eye,
+  Loader2, AlertCircle, Eye, Landmark,
 } from "lucide-react";
 
 interface CompanySettings {
@@ -17,6 +17,12 @@ interface CompanySettings {
   paymentQrUrl: string;
 }
 
+interface BranchSettings {
+  id: string;
+  bankName: string; bankBranch: string; accountNo: string;
+  ifscCode: string; accountType: string;
+}
+
 const DEFAULT_TERMS = [
   "Payment due within 15 days of invoice date.",
   "50% advance required to commence production.",
@@ -26,9 +32,18 @@ const DEFAULT_TERMS = [
   "Delivery timeline starts from receipt of advance & approved artwork.",
 ].join("\n");
 
+const BRANCHES = [
+  { id: "HO", label: "Head Office" },
+  { id: "TVM", label: "Thiruvananthapuram" },
+  { id: "KTYM", label: "Kottayam" },
+  { id: "EKM", label: "Ernakulam" },
+  { id: "CLT", label: "Calicut" },
+];
+
 const TABS = [
   { id: "company",    label: "Company Info",  icon: <Building2 size={15} /> },
   { id: "bank",       label: "Bank Details",  icon: <CreditCard size={15} /> },
+  { id: "branches",   label: "Branch Banks",  icon: <Landmark size={15} /> },
   { id: "quotation",  label: "Quotation",     icon: <FileText size={15} /> },
 ];
 
@@ -65,17 +80,53 @@ export default function SettingsPage() {
     bankName: "", bankBranch: "", accountNo: "", ifscCode: "", accountType: "Current Account",
     defaultTerms: DEFAULT_TERMS, validityDays: 30, paymentQrUrl: "",
   });
+  const [branchSettings, setBranchSettings] = useState<Record<string, BranchSettings>>({});
+  const [selectedBranch, setSelectedBranch] = useState("HO");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [branchSaving, setBranchSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [branchSaved, setBranchSaved] = useState(false);
   const [error, setError] = useState("");
+  const [branchError, setBranchError] = useState("");
   const [preview, setPreview] = useState(false);
 
   useEffect(() => {
-    api.get<{ data: CompanySettings }>("/settings")
-      .then(r => setForm(f => ({ ...f, ...r.data })))
-      .catch(() => setError("Failed to load settings"))
-      .finally(() => setLoading(false));
+    const loadData = async () => {
+      try {
+        const companyRes = await api.get<{ data: CompanySettings }>("/settings");
+        setForm(f => ({ ...f, ...companyRes.data }));
+
+        // Load all branch settings in parallel
+        const branchPromises = BRANCHES.map(branch =>
+          api.get<{ data: BranchSettings }>(`/branch-settings?branch=${branch.id}`)
+            .then(res => ({ id: branch.id, data: res.data }))
+            .catch(() => ({
+              id: branch.id,
+              data: {
+                id: branch.id,
+                bankName: "",
+                bankBranch: "",
+                accountNo: "",
+                ifscCode: "",
+                accountType: "Current Account",
+              },
+            }))
+        );
+
+        const branchResults = await Promise.all(branchPromises);
+        const branches: Record<string, BranchSettings> = {};
+        branchResults.forEach(({ id, data }) => {
+          branches[id] = data;
+        });
+        setBranchSettings(branches);
+      } catch (err) {
+        setError("Failed to load settings");
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
   }, []);
 
   const set = (key: keyof CompanySettings) => (val: string | number) =>
@@ -95,6 +146,37 @@ export default function SettingsPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleBranchSave = async () => {
+    setBranchSaving(true);
+    setBranchError("");
+    setBranchSaved(false);
+    try {
+      const current = branchSettings[selectedBranch];
+      await api.put("/branch-settings", {
+        branch: selectedBranch,
+        bankName: current.bankName,
+        bankBranch: current.bankBranch,
+        accountNo: current.accountNo,
+        ifscCode: current.ifscCode,
+        accountType: current.accountType,
+      });
+      setBranchSaved(true);
+      setTimeout(() => setBranchSaved(false), 3000);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to save branch settings.";
+      setBranchError(msg);
+    } finally {
+      setBranchSaving(false);
+    }
+  };
+
+  const setBranch = (key: keyof BranchSettings) => (val: string) => {
+    setBranchSettings(prev => ({
+      ...prev,
+      [selectedBranch]: { ...prev[selectedBranch], [key]: val },
+    }));
   };
 
   if (loading) return (
@@ -310,6 +392,109 @@ export default function SettingsPage() {
                 ))}
               </div>
             </div>
+          </div>
+        )}
+
+        {/* ── BRANCH BANK SETTINGS TAB ─────────────────────────────────── */}
+        {tab === "branches" && (
+          <div className="rounded-2xl p-6 space-y-4" style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)" }}>
+            <h2 className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>Branch-Specific Bank Details</h2>
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+              Different bank accounts for each branch. These details appear on quotations and invoices based on the branch.
+            </p>
+
+            {branchError && (
+              <div className="flex items-center gap-2 p-3 rounded-xl text-sm bg-red-50 text-red-700 border border-red-100">
+                <AlertCircle size={15} /> {branchError}
+              </div>
+            )}
+
+            {branchSaved && (
+              <div className="flex items-center gap-2 p-3 rounded-xl text-sm bg-green-50 text-green-700 border border-green-100">
+                <CheckCircle size={15} /> Branch bank details saved.
+              </div>
+            )}
+
+            {/* Branch selector */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+              {BRANCHES.map(b => (
+                <button
+                  key={b.id}
+                  onClick={() => setSelectedBranch(b.id)}
+                  className="px-3 py-2 rounded-lg text-sm font-medium transition-all"
+                  style={selectedBranch === b.id
+                    ? { background: "#4F46E5", color: "#fff" }
+                    : { background: "var(--input-bg)", color: "var(--text-secondary)", border: "1px solid var(--input-border)" }
+                  }
+                >
+                  {b.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Branch form */}
+            {branchSettings[selectedBranch] && (
+              <div className="space-y-4 mt-6 pt-6 border-t" style={{ borderColor: "var(--card-border)" }}>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <Field label="Bank Name">
+                    <Input
+                      value={branchSettings[selectedBranch].bankName}
+                      onChange={setBranch("bankName")}
+                      placeholder="State Bank of India"
+                    />
+                  </Field>
+                  <Field label="Branch Name">
+                    <Input
+                      value={branchSettings[selectedBranch].bankBranch}
+                      onChange={setBranch("bankBranch")}
+                      placeholder="Branch Name"
+                    />
+                  </Field>
+                  <Field label="Account Number">
+                    <Input
+                      value={branchSettings[selectedBranch].accountNo}
+                      onChange={setBranch("accountNo")}
+                      placeholder="00000 00000 00000"
+                    />
+                  </Field>
+                  <Field label="IFSC Code">
+                    <Input
+                      value={branchSettings[selectedBranch].ifscCode}
+                      onChange={setBranch("ifscCode")}
+                      placeholder="SBIN0000000"
+                    />
+                  </Field>
+                  <Field label="Account Type">
+                    <select
+                      value={branchSettings[selectedBranch].accountType}
+                      onChange={e => setBranch("accountType")(e.target.value)}
+                      className="w-full border rounded-xl px-3 py-2 text-sm"
+                      style={{ background: "var(--input-bg)", borderColor: "var(--input-border)", color: "var(--text-primary)" }}
+                    >
+                      <option>Current Account</option>
+                      <option>Savings Account</option>
+                      <option>OD Account</option>
+                    </select>
+                  </Field>
+                </div>
+
+                <div className="flex gap-2 pt-4">
+                  <button
+                    onClick={handleBranchSave}
+                    disabled={branchSaving}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all disabled:opacity-60"
+                    style={{ background: "linear-gradient(135deg,#4F46E5,#6366F1)" }}
+                  >
+                    {branchSaving
+                      ? <><Loader2 size={14} className="animate-spin" /> Saving…</>
+                      : branchSaved
+                        ? <><CheckCircle size={14} /> Saved!</>
+                        : <><Save size={14} /> Save for {BRANCHES.find(b => b.id === selectedBranch)?.label}</>
+                    }
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

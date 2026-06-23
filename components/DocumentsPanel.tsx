@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { api } from "@/lib/api-client";
-import { uploadToDrive, driveConfigured } from "@/lib/google-drive";
+import { uploadToDrive, isDriveConfigured } from "@/lib/google-drive";
 import { useToast } from "@/components/Toaster";
 import { Paperclip, ExternalLink, Trash2, Plus, FolderOpen, Link } from "lucide-react";
 
@@ -119,7 +119,8 @@ export default function DocumentsPanel({ relatedTo, relatedType }: Props) {
     }
   };
 
-  const canUpload = driveConfigured();
+  const [canUpload, setCanUpload] = useState(false);
+  useEffect(() => { isDriveConfigured().then(setCanUpload).catch(() => setCanUpload(false)); }, []);
 
   return (
     <>

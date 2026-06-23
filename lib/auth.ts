@@ -6,7 +6,8 @@ import bcrypt from "bcryptjs";
 
 export type UserRole =
   | "MD" | "AVP" | "Business Manager" | "Sales Executive"
-  | "CRES" | "Production" | "Accounts" | "HR" | "IT Admin";
+  | "CRES" | "Production" | "Designer"
+  | "Accounts" | "HR" | "IT Admin";
 
 export interface DemoUser {
   id: string; name: string; email: string;
@@ -20,6 +21,7 @@ const ROLE_DISPLAY: Record<string, string> = {
   SALES_EXECUTIVE:  "Sales Executive",
   CRES:             "CRES",
   PRODUCTION:       "Production",
+  DESIGNER:         "Designer",
   ACCOUNTS:         "Accounts",
   HR:               "HR",
   IT_ADMIN:         "IT Admin",

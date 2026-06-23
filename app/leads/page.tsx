@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import TopBar from "@/components/TopBar";
 import { fmt } from "@/lib/utils";
 import { useApi } from "@/lib/use-api";
@@ -8,9 +9,11 @@ import { LoadingState, ErrorState, EmptyState, TableSkeleton } from "@/component
 import { useToast } from "@/components/Toaster";
 import { leadSchema, parseErrors, type FormErrors } from "@/lib/schemas";
 import { exportExcel } from "@/lib/export";
+import BatchImportModal from "@/components/BatchImportModal";
+import { LEAD_COLUMNS } from "@/lib/import-specs";
 import DriveButton from "@/components/DriveButton";
 import DocumentsPanel from "@/components/DocumentsPanel";
-import { Plus, Phone, Mail, Calendar, RefreshCw, Download, Paperclip, X } from "lucide-react";
+import { Plus, Phone, Mail, Calendar, RefreshCw, Download, Paperclip, X, TrendingUp, UserCheck, FileText, Upload } from "lucide-react";
 
 const BRANCHES = ["TVM", "KTYM", "EKM", "CLT"];
 const STATUSES = [
@@ -49,14 +52,17 @@ const ic = (err?: string) =>
 
 export default function LeadsPage() {
   const toast = useToast();
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [branchFilter, setBranchFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState<FormErrors>({});
   const [saving, setSaving] = useState(false);
   const [docsFor, setDocsFor] = useState<Lead | null>(null);
+  const [converting, setConverting] = useState<string | null>(null); // leadId being converted
 
   const { data, loading, error, refetch } = useApi<Lead[]>("/leads", {
     branch: branchFilter || undefined,
@@ -93,6 +99,34 @@ export default function LeadsPage() {
   };
 
   const closeModal = () => { setShowModal(false); setForm(emptyForm); setErrors({}); };
+
+  const convertLead = async (lead: Lead, action: "to_opportunity" | "to_customer") => {
+    if (converting) return;
+    const confirmMsg = action === "to_opportunity"
+      ? `Convert "${lead.company || lead.name}" to an Opportunity?`
+      : `Convert "${lead.company || lead.name}" to a Customer? This marks the lead as Won.`;
+    if (!confirm(confirmMsg)) return;
+    setConverting(lead.id);
+    try {
+      const res = await api.post<{ data: { message: string; customerNo?: string } }>(
+        `/leads/${lead.id}/convert`, { action }
+      );
+      const msg = action === "to_opportunity"
+        ? "Opportunity created — visible in Opportunities page"
+        : `Customer created (${res.data?.customerNo ?? ""}) — lead marked Won`;
+      toast.success(msg);
+      refetch();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Conversion failed");
+    } finally {
+      setConverting(null);
+    }
+  };
+
+  const openQuotation = (lead: Lead) => {
+    const company = encodeURIComponent(lead.company || lead.name);
+    router.push(`/quotations?fromLead=${lead.id}&company=${company}`);
+  };
 
   const handleExport = () => exportExcel(`Leads_${new Date().toISOString().slice(0,10)}`, leads.map((l) => ({
     "Lead No": l.leadNo,
@@ -150,6 +184,10 @@ export default function LeadsPage() {
             </button>
           </div>
           <div className="flex gap-2">
+            <button onClick={() => setShowImport(true)}
+              className="flex items-center gap-2 border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-medium px-3 py-2 rounded-lg">
+              <Upload size={14} /> Import
+            </button>
             <button onClick={handleExport} disabled={leads.length === 0}
               className="flex items-center gap-2 border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-medium px-3 py-2 rounded-lg disabled:opacity-40">
               <Download size={14} /> Excel
@@ -186,7 +224,7 @@ export default function LeadsPage() {
                     <th className="text-right px-4 py-3">Value</th>
                     <th className="text-left px-4 py-3 hidden lg:table-cell">Assigned To</th>
                     <th className="text-left px-4 py-3 hidden lg:table-cell">Follow Up</th>
-                    <th className="px-4 py-3 w-8"></th>
+                    <th className="px-4 py-3 text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -221,13 +259,38 @@ export default function LeadsPage() {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <button
-                          onClick={() => setDocsFor(lead)}
-                          title="Documents"
-                          className="p-1 rounded hover:bg-indigo-50 text-slate-400 hover:text-indigo-600"
-                        >
-                          <Paperclip size={13} />
-                        </button>
+                        <div className="flex items-center gap-1 justify-center flex-wrap">
+                          <button
+                            onClick={() => convertLead(lead, "to_opportunity")}
+                            disabled={converting === lead.id || lead.status === "WON" || lead.status === "LOST"}
+                            title="Convert to Opportunity"
+                            className="flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed font-medium whitespace-nowrap"
+                          >
+                            <TrendingUp size={10} /> Opp
+                          </button>
+                          <button
+                            onClick={() => convertLead(lead, "to_customer")}
+                            disabled={converting === lead.id || lead.status === "WON"}
+                            title="Convert to Customer"
+                            className="flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-green-50 text-green-700 hover:bg-green-100 disabled:opacity-40 disabled:cursor-not-allowed font-medium whitespace-nowrap"
+                          >
+                            <UserCheck size={10} /> Customer
+                          </button>
+                          <button
+                            onClick={() => openQuotation(lead)}
+                            title="Create Quotation"
+                            className="flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-amber-50 text-amber-700 hover:bg-amber-100 font-medium whitespace-nowrap"
+                          >
+                            <FileText size={10} /> Quote
+                          </button>
+                          <button
+                            onClick={() => setDocsFor(lead)}
+                            title="Documents"
+                            className="p-1 rounded hover:bg-indigo-50 text-slate-400 hover:text-indigo-600"
+                          >
+                            <Paperclip size={13} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -311,6 +374,17 @@ export default function LeadsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {showImport && (
+        <BatchImportModal
+          title="Import Leads"
+          endpoint="/leads/bulk"
+          templateName="zag-leads-template"
+          columns={LEAD_COLUMNS}
+          onClose={() => setShowImport(false)}
+          onDone={() => refetch()}
+        />
       )}
     </div>
   );
