@@ -11,7 +11,7 @@ import DocumentsPanel from "@/components/DocumentsPanel";
 import { Eye, Printer, RefreshCw, X, Plus, Trash2, Pencil, GitBranch, Receipt, Ticket } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { makeClientCode } from "@/lib/utils";
-import { uploadToDrive, driveConfigured } from "@/lib/google-drive";
+import { uploadToDrive, isDriveConfigured } from "@/lib/google-drive";
 import { useToast } from "@/components/Toaster";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -153,7 +153,8 @@ export default function QuotationsPage() {
         // Restore title and archive to Drive after the print dialog opens
         setTimeout(() => {
           document.title = prevTitle;
-          if (driveConfigured()) {
+          void (async () => {
+            if (!(await isDriveConfigured())) return;
             const zone = document.getElementById("zag-print-zone");
             const content = zone?.firstElementChild as HTMLElement | null;
             if (content) {
@@ -163,7 +164,7 @@ export default function QuotationsPage() {
                 .then(() => toast.success(`Archived to Drive: ${pdfName}`))
                 .catch((err: Error) => toast.error(`Drive: ${err.message}`));
             }
-          }
+          })();
         }, 1200);
       }, 500);
     } catch {

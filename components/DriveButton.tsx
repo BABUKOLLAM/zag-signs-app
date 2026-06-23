@@ -1,7 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
-import { uploadToDrive, driveConfigured } from "@/lib/google-drive";
+import { uploadToDrive, isDriveConfigured } from "@/lib/google-drive";
 import { useToast } from "@/components/Toaster";
 
 interface Props {
@@ -17,8 +17,13 @@ type Status = "idle" | "busy" | "done" | "error";
 export default function DriveButton({ filename, rows, blob, mimeHint }: Props) {
   const toast = useToast();
   const [status, setStatus] = useState<Status>("idle");
+  const [show, setShow] = useState(false);
 
-  if (!driveConfigured()) return null;
+  // Resolve Drive config at runtime so the button appears once the env vars are
+  // set in Vercel — no rebuild required.
+  useEffect(() => { isDriveConfigured().then(setShow).catch(() => setShow(false)); }, []);
+
+  if (!show) return null;
 
   const handleClick = async () => {
     if (status === "busy") return;
