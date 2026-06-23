@@ -794,6 +794,18 @@ model CompanySetting {
   @@map("company_settings")
 }
 
+model BranchSetting {
+  id           String   @id // branch code: TVM, KTYM, EKM, CLT, HO
+  bankName     String   @default("")
+  bankBranch   String   @default("")
+  accountNo    String   @default("")
+  ifscCode     String   @default("")
+  accountType  String   @default("Current Account")
+  updatedAt     DateTime @updatedAt
+
+  @@map("branch_settings")
+}
+
 // ─── SYSTEM ───────────────────────────────────────────────────────────────────
 
 model Notification {

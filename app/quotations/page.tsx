@@ -133,14 +133,17 @@ export default function QuotationsPage() {
   const handlePrint = useCallback(async (q: Quotation) => {
     setLoadingPrint(true);
     try {
-      const [fullRes, settingsRes] = await Promise.all([
-        api.get<{ data: QuotationData }>(`/quotations/${q.id}`),
-        api.get<{ data: CompanyConfig & BankConfig }>("/settings").catch(() => ({ data: null })),
-      ]);
+      const fullRes = await api.get<{ data: QuotationData }>(`/quotations/${q.id}`);
       const qData: QuotationData = { ...fullRes.data, customerName: q.customerName };
-      const s = settingsRes.data;
+      const branch = qData.branch || "HO";
+      const [companyRes, branchBankRes] = await Promise.all([
+        api.get<{ data: CompanyConfig }>("/settings").catch(() => ({ data: null })),
+        api.get<{ data: BankConfig }>(`/branch-settings?branch=${branch}`).catch(() => ({ data: null })),
+      ]);
+      const company = companyRes.data;
+      const bankConfig = branchBankRes.data;
       setPrintData(qData);
-      setPrintSettings(s ? { company: s, bank: s } : null);
+      setPrintSettings(company && bankConfig ? { company, bank: bankConfig } : null);
 
       // PDF filename: ZAG-Q-HO-001-BMH (quotation number + client abbreviation)
       const code = qData.clientCode || makeClientCode(q.customerName);

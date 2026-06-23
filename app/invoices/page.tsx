@@ -62,8 +62,18 @@ export default function InvoicesPage() {
   const totalPaid     = invoices.filter((i) => i.status === "PAID").reduce((s, i) => s + i.totalAmount, 0);
   const totalPartial  = invoices.filter((i) => i.status === "PARTIAL").reduce((s, i) => s + i.totalAmount, 0);
 
-  const handlePrint = (inv: Invoice) => {
+  const handlePrint = async (inv: Invoice) => {
     setViewInv(inv);
+    const branch = inv.branch || "HO";
+    try {
+      const branchBankRes = await api.get<{ data: BankConfig }>(`/branch-settings?branch=${branch}`)
+        .catch(() => ({ data: null }));
+      if (branchBankRes.data && printSettings) {
+        setPrintSettings({ ...printSettings, bank: branchBankRes.data });
+      }
+    } catch {
+      // Continue with existing settings if fetch fails
+    }
     setTimeout(() => {
       const prev = document.title;
       document.title = inv.invoiceNo.replace(/\//g, "-");
