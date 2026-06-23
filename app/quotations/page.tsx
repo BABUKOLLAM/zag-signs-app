@@ -144,9 +144,9 @@ export default function QuotationsPage() {
       const branchBank = branchBankRes.data;
 
       // Use branch-specific bank details if available and non-empty, else fall back to company settings
-      let bankConfig = branchBank;
+      let bankConfig: typeof branchBank = branchBank;
       if (!branchBank || (!branchBank.bankName && !branchBank.accountNo)) {
-        bankConfig = company; // fallback to company-wide bank settings
+        bankConfig = company as unknown as typeof branchBank; // fallback to company-wide bank settings
       }
 
       setPrintData(qData);

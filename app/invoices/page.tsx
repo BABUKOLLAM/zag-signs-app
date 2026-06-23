@@ -77,9 +77,10 @@ export default function InvoicesPage() {
       const branchBank = branchBankRes.data;
 
       // Use branch-specific bank details if available and non-empty, else fall back to company settings
-      let bankConfig: BankConfig | null = branchBank;
+      let bankConfig = branchBank;
       if (!branchBank || (!branchBank.bankName && !branchBank.accountNo)) {
-        bankConfig = company as BankConfig; // fallback to company-wide bank settings
+        // Fallback: use company config as bank config (has same bank fields)
+        bankConfig = company as unknown as BankConfig;
       }
 
       if (company && bankConfig) {
