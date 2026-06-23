@@ -11,24 +11,55 @@ const VERSION_DATE = "20/06/2026";
 const PRINT_STYLE = `
   @media print {
     * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
       color: #000 !important;
-      background: white !important;
-    }
-    body {
-      margin: 0;
-      background: white !important;
-      color: #000 !important;
-    }
-    div, p, span, h1, h2, h3, h4, h5, h6, table, tr, td, th {
-      color: #000 !important;
+      background-color: transparent !important;
       background: transparent !important;
     }
-    .no-print { display: none !important; }
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      background: white !important;
+      background-color: white !important;
+      color: #000 !important;
+      width: 100%;
+      height: 100%;
+    }
+    body > div {
+      background: white !important;
+      color: #000 !important;
+    }
+    p, span, h1, h2, h3, h4, h5, h6, li, td, th, div {
+      color: #000 !important;
+      background: transparent !important;
+      background-color: transparent !important;
+    }
+    table {
+      background: white !important;
+      border-collapse: collapse;
+    }
+    tr, td, th {
+      background: white !important;
+      color: #000 !important;
+      border-color: #000 !important;
+    }
+    img {
+      max-width: 100%;
+      opacity: 1 !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .no-print { display: none !important; visibility: hidden !important; }
     .page-break { page-break-before: always; }
     h1, h2, h3 { page-break-after: avoid; }
     .avoid-break { page-break-inside: avoid; }
   }
-  @page { size: A4; margin: 15mm 12mm; }
+  @page {
+    size: A4;
+    margin: 15mm 12mm;
+    background: white !important;
+  }
 `;
 
 // ─── DATA ─────────────────────────────────────────────────────────────────────
