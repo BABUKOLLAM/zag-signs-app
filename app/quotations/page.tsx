@@ -141,7 +141,14 @@ export default function QuotationsPage() {
         api.get<{ data: BankConfig }>(`/branch-settings?branch=${branch}`).catch(() => ({ data: null })),
       ]);
       const company = companyRes.data;
-      const bankConfig = branchBankRes.data;
+      const branchBank = branchBankRes.data;
+
+      // Use branch-specific bank details if available and non-empty, else fall back to company settings
+      let bankConfig = branchBank;
+      if (!branchBank || (!branchBank.bankName && !branchBank.accountNo)) {
+        bankConfig = company; // fallback to company-wide bank settings
+      }
+
       setPrintData(qData);
       setPrintSettings(company && bankConfig ? { company, bank: bankConfig } : null);
 

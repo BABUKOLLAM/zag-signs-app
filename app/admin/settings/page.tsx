@@ -97,22 +97,28 @@ export default function SettingsPage() {
         const companyRes = await api.get<{ data: CompanySettings }>("/settings");
         setForm(f => ({ ...f, ...companyRes.data }));
 
-        const branches: Record<string, BranchSettings> = {};
-        for (const branch of BRANCHES) {
-          try {
-            const res = await api.get<{ data: BranchSettings }>(`/branch-settings?branch=${branch.id}`);
-            branches[branch.id] = res.data;
-          } catch {
-            branches[branch.id] = {
+        // Load all branch settings in parallel
+        const branchPromises = BRANCHES.map(branch =>
+          api.get<{ data: BranchSettings }>(`/branch-settings?branch=${branch.id}`)
+            .then(res => ({ id: branch.id, data: res.data }))
+            .catch(() => ({
               id: branch.id,
-              bankName: "",
-              bankBranch: "",
-              accountNo: "",
-              ifscCode: "",
-              accountType: "Current Account",
-            };
-          }
-        }
+              data: {
+                id: branch.id,
+                bankName: "",
+                bankBranch: "",
+                accountNo: "",
+                ifscCode: "",
+                accountType: "Current Account",
+              },
+            }))
+        );
+
+        const branchResults = await Promise.all(branchPromises);
+        const branches: Record<string, BranchSettings> = {};
+        branchResults.forEach(({ id, data }) => {
+          branches[id] = data;
+        });
         setBranchSettings(branches);
       } catch (err) {
         setError("Failed to load settings");

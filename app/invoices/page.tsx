@@ -65,21 +65,38 @@ export default function InvoicesPage() {
   const handlePrint = async (inv: Invoice) => {
     setViewInv(inv);
     const branch = inv.branch || "HO";
+
+    // Fetch branch-specific bank settings
     try {
-      const branchBankRes = await api.get<{ data: BankConfig }>(`/branch-settings?branch=${branch}`)
-        .catch(() => ({ data: null }));
-      if (branchBankRes.data && printSettings) {
-        setPrintSettings({ ...printSettings, bank: branchBankRes.data });
+      const [companyRes, branchBankRes] = await Promise.all([
+        api.get<{ data: CompanyConfig }>("/settings").catch(() => ({ data: null })),
+        api.get<{ data: BankConfig }>(`/branch-settings?branch=${branch}`).catch(() => ({ data: null })),
+      ]);
+
+      const company = companyRes.data;
+      const branchBank = branchBankRes.data;
+
+      // Use branch-specific bank details if available and non-empty, else fall back to company settings
+      let bankConfig = branchBank;
+      if (!branchBank || (!branchBank.bankName && !branchBank.accountNo)) {
+        bankConfig = company; // fallback to company-wide bank settings
       }
-    } catch {
+
+      if (company && bankConfig) {
+        setPrintSettings({ company, bank: bankConfig });
+      }
+    } catch (e) {
       // Continue with existing settings if fetch fails
+      console.error("Failed to fetch branch bank settings:", e);
     }
+
+    // Print after a delay to allow state update to complete
     setTimeout(() => {
       const prev = document.title;
       document.title = inv.invoiceNo.replace(/\//g, "-");
       window.print();
       document.title = prev;
-    }, 120);
+    }, 300);
   };
 
   const handleMarkPaid = async (inv: Invoice, status: "PAID" | "PARTIAL") => {
