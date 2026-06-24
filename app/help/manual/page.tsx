@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { SCREENS, Caption } from "./Screens";
 import PoweredByBpro from "@/components/PoweredByBpro";
 
@@ -368,6 +368,8 @@ const FAQS = [
 
 // ─── COMPONENT ────────────────────────────────────────────────────────────────
 export default function ManualPage() {
+  const [downloading, setDownloading] = useState(false);
+
   useEffect(() => {
     const style = document.createElement("style");
     style.textContent = PRINT_STYLE;
@@ -375,8 +377,37 @@ export default function ManualPage() {
     return () => { document.head.removeChild(style); };
   }, []);
 
+  const handleDownloadPDF = async () => {
+    if (downloading) return;
+    setDownloading(true);
+
+    try {
+      // Dynamically import html2pdf
+      const html2pdf = (await import("html2pdf.js")).default;
+
+      const element = document.querySelector("[data-manual-content]");
+      if (!element) throw new Error("Manual content not found");
+
+      const opt = {
+        margin: 15,
+        filename: "ZAG-SIGNS-ERP-Manual-v1.2.pdf",
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, logging: false, useCORS: true },
+        jsPDF: { orientation: "portrait", unit: "mm", format: "a4" },
+        pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+      };
+
+      html2pdf().set(opt).from(element).save();
+    } catch (error) {
+      console.error("PDF download failed:", error);
+      alert("Failed to generate PDF. Please try using the Print function instead.");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
-    <div style={{ fontFamily: "Arial, sans-serif", fontSize: "11pt", color: "#000", maxWidth: "100%", width: "100%", margin: "0", padding: "0", backgroundColor: "white", lineHeight: "1.5" }}>
+    <div data-manual-content style={{ fontFamily: "Arial, sans-serif", fontSize: "11pt", color: "#000", maxWidth: "100%", width: "100%", margin: "0", padding: "0", backgroundColor: "white", lineHeight: "1.5" }}>
 
       {/* ── Print button (hidden on print) ── */}
       <div className="no-print" style={{ position: "fixed", top: "16px", right: "16px", zIndex: 50, display: "flex", gap: "8px" }}>
@@ -384,9 +415,13 @@ export default function ManualPage() {
           style={{ background: "#6B7280", color: "#fff", border: "none", borderRadius: "8px", padding: "10px 18px", cursor: "pointer", fontSize: "13px", fontWeight: 600 }}>
           ← Back
         </button>
+        <button onClick={handleDownloadPDF} disabled={downloading}
+          style={{ background: downloading ? "#CCCCCC" : "#10B981", color: "#fff", border: "none", borderRadius: "8px", padding: "10px 18px", cursor: downloading ? "not-allowed" : "pointer", fontSize: "13px", fontWeight: 600 }}>
+          {downloading ? "⏳ Generating..." : "📥 Download PDF"}
+        </button>
         <button onClick={() => window.print()}
           style={{ background: "#4F46E5", color: "#fff", border: "none", borderRadius: "8px", padding: "10px 18px", cursor: "pointer", fontSize: "13px", fontWeight: 600 }}>
-          🖨 Print / Save as PDF
+          🖨 Print
         </button>
       </div>
 
