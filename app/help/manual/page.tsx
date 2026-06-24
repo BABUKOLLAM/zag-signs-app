@@ -10,55 +10,22 @@ const VERSION_DATE = "20/06/2026";
 // Print styles injected at component mount
 const PRINT_STYLE = `
   @media print {
-    * {
-      -webkit-print-color-adjust: exact !important;
-      print-color-adjust: exact !important;
-      color: #000 !important;
-      background-color: transparent !important;
-      background: transparent !important;
+    body, html {
+      margin: 0;
+      padding: 0;
     }
-    html, body {
-      margin: 0 !important;
-      padding: 0 !important;
-      background: white !important;
-      background-color: white !important;
-      color: #000 !important;
-      width: 100%;
-      height: 100%;
+    .no-print {
+      display: none !important;
     }
-    body > div {
-      background: white !important;
-      color: #000 !important;
+    .page-break {
+      page-break-before: always;
     }
-    p, span, h1, h2, h3, h4, h5, h6, li, td, th, div {
-      color: #000 !important;
-      background: transparent !important;
-      background-color: transparent !important;
+    h1, h2, h3 {
+      page-break-after: avoid;
     }
-    table {
-      background: white !important;
-      border-collapse: collapse;
+    .avoid-break {
+      page-break-inside: avoid;
     }
-    tr, td, th {
-      background: white !important;
-      color: #000 !important;
-      border-color: #000 !important;
-    }
-    img {
-      max-width: 100%;
-      opacity: 1 !important;
-      -webkit-print-color-adjust: exact !important;
-      print-color-adjust: exact !important;
-    }
-    .no-print { display: none !important; visibility: hidden !important; }
-    .page-break { page-break-before: always; }
-    h1, h2, h3 { page-break-after: avoid; }
-    .avoid-break { page-break-inside: avoid; }
-  }
-  @page {
-    size: A4;
-    margin: 15mm 12mm;
-    background: white !important;
   }
 `;
 
@@ -376,7 +343,7 @@ export default function ManualPage() {
   }, []);
 
   return (
-    <div style={{ fontFamily: "Arial, Helvetica, sans-serif", fontSize: "11pt", color: "#1a1a1a", maxWidth: "190mm", margin: "0 auto", padding: "0 10mm" }}>
+    <div style={{ fontFamily: "Arial, Helvetica, sans-serif", fontSize: "11pt", color: "#1a1a1a", maxWidth: "190mm", margin: "0 auto", padding: "0 10mm", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}>
 
       {/* ── Print button (hidden on print) ── */}
       <div className="no-print" style={{ position: "fixed", top: "16px", right: "16px", zIndex: 50, display: "flex", gap: "8px" }}>
