@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { SCREENS, Caption } from "./Screens";
 import PoweredByBpro from "@/components/PoweredByBpro";
 
@@ -368,74 +368,12 @@ const FAQS = [
 
 // ─── COMPONENT ────────────────────────────────────────────────────────────────
 export default function ManualPage() {
-  const [downloading, setDownloading] = useState(false);
-
   useEffect(() => {
     const style = document.createElement("style");
     style.textContent = PRINT_STYLE;
     document.head.appendChild(style);
     return () => { document.head.removeChild(style); };
   }, []);
-
-  const handleDownloadPDF = async () => {
-    if (downloading) return;
-    setDownloading(true);
-
-    try {
-      // Use a more robust PDF generation approach
-      const { jsPDF } = await import("jspdf");
-      const html2canvas = (await import("html2canvas")).default;
-
-      const element = document.querySelector("[data-manual-content]");
-      if (!element) throw new Error("Manual content not found");
-
-      // Hide print buttons during capture
-      const noPrint = document.querySelectorAll(".no-print");
-      noPrint.forEach(el => ((el as HTMLElement).style.display = "none"));
-
-      try {
-        const canvas = await html2canvas(element as HTMLElement, {
-          scale: 2,
-          logging: false,
-          useCORS: true,
-          backgroundColor: "#ffffff",
-          allowTaint: true,
-        });
-
-        const imgData = canvas.toDataURL("image/jpeg", 0.95);
-        const pdf = new jsPDF({
-          orientation: "portrait",
-          unit: "mm",
-          format: "a4",
-        });
-
-        const imgWidth = 190;
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        let heightLeft = imgHeight;
-        let position = 0;
-
-        pdf.addImage(imgData, "JPEG", 10, position, imgWidth, imgHeight);
-        heightLeft -= 277;
-
-        while (heightLeft >= 0) {
-          position = heightLeft - imgHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, "JPEG", 10, position, imgWidth, imgHeight);
-          heightLeft -= 277;
-        }
-
-        pdf.save("ZAG-SIGNS-ERP-Manual-v1.2.pdf");
-      } finally {
-        // Show print buttons again
-        noPrint.forEach(el => ((el as HTMLElement).style.display = "flex"));
-      }
-    } catch (error) {
-      console.error("PDF download failed:", error);
-      alert("Failed to generate PDF. Please try using the Print function instead.");
-    } finally {
-      setDownloading(false);
-    }
-  };
 
   return (
     <div data-manual-content style={{ fontFamily: "Arial, sans-serif", fontSize: "11pt", color: "#000", maxWidth: "100%", width: "100%", margin: "0", padding: "0", backgroundColor: "white", lineHeight: "1.5" }}>
@@ -446,10 +384,10 @@ export default function ManualPage() {
           style={{ background: "#6B7280", color: "#fff", border: "none", borderRadius: "8px", padding: "10px 18px", cursor: "pointer", fontSize: "13px", fontWeight: 600 }}>
           ← Back
         </button>
-        <button onClick={handleDownloadPDF} disabled={downloading}
-          style={{ background: downloading ? "#CCCCCC" : "#10B981", color: "#fff", border: "none", borderRadius: "8px", padding: "10px 18px", cursor: downloading ? "not-allowed" : "pointer", fontSize: "13px", fontWeight: 600 }}>
-          {downloading ? "⏳ Generating..." : "📥 Download PDF"}
-        </button>
+        <a href="/api/manual/pdf" download="ZAG-SIGNS-ERP-Manual-v1.2.pdf"
+          style={{ display: "inline-block", background: "#10B981", color: "#fff", border: "none", borderRadius: "8px", padding: "10px 18px", cursor: "pointer", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>
+          📥 Download PDF
+        </a>
         <button onClick={() => window.print()}
           style={{ background: "#4F46E5", color: "#fff", border: "none", borderRadius: "8px", padding: "10px 18px", cursor: "pointer", fontSize: "13px", fontWeight: 600 }}>
           🖨 Print
