@@ -9,16 +9,41 @@ const VERSION_DATE = "20/06/2026";
 
 // Print styles injected at component mount
 const PRINT_STYLE = `
+  * {
+    box-sizing: border-box;
+  }
+  body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    background: white !important;
+    color: black !important;
+  }
+  @media screen {
+    body {
+      background: #f5f5f5;
+    }
+  }
   @media print {
     body, html {
       margin: 0;
       padding: 0;
+      width: 100%;
+      height: 100%;
+      background: white !important;
+    }
+    * {
+      background: transparent !important;
+      color: black !important;
+      box-shadow: none !important;
     }
     .no-print {
       display: none !important;
+      visibility: hidden !important;
     }
     .page-break {
       page-break-before: always;
+      page-break-inside: avoid;
     }
     h1, h2, h3 {
       page-break-after: avoid;
@@ -26,6 +51,14 @@ const PRINT_STYLE = `
     .avoid-break {
       page-break-inside: avoid;
     }
+    a {
+      color: black !important;
+      text-decoration: none;
+    }
+  }
+  @page {
+    size: A4;
+    margin: 15mm;
   }
 `;
 
@@ -343,7 +376,7 @@ export default function ManualPage() {
   }, []);
 
   return (
-    <div style={{ fontFamily: "Arial, Helvetica, sans-serif", fontSize: "11pt", color: "black", maxWidth: "190mm", margin: "0 auto", padding: "10mm", backgroundColor: "white" }}>
+    <div style={{ fontFamily: "Arial, sans-serif", fontSize: "11pt", color: "#000", maxWidth: "100%", width: "100%", margin: "0", padding: "0", backgroundColor: "white", lineHeight: "1.5" }}>
 
       {/* ── Print button (hidden on print) ── */}
       <div className="no-print" style={{ position: "fixed", top: "16px", right: "16px", zIndex: 50, display: "flex", gap: "8px" }}>
