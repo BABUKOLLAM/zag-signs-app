@@ -343,7 +343,7 @@ export default function ManualPage() {
   }, []);
 
   return (
-    <div style={{ fontFamily: "Arial, Helvetica, sans-serif", fontSize: "11pt", color: "#1a1a1a", maxWidth: "190mm", margin: "0 auto", padding: "0 10mm", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}>
+    <div style={{ fontFamily: "Arial, Helvetica, sans-serif", fontSize: "11pt", color: "black", maxWidth: "190mm", margin: "0 auto", padding: "10mm", backgroundColor: "white" }}>
 
       {/* ── Print button (hidden on print) ── */}
       <div className="no-print" style={{ position: "fixed", top: "16px", right: "16px", zIndex: 50, display: "flex", gap: "8px" }}>
