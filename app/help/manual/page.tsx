@@ -382,22 +382,53 @@ export default function ManualPage() {
     setDownloading(true);
 
     try {
-      // Dynamically import html2pdf
-      const html2pdf = (await import("html2pdf.js")).default;
+      // Use a more robust PDF generation approach
+      const { jsPDF } = await import("jspdf");
+      const html2canvas = (await import("html2canvas")).default;
 
       const element = document.querySelector("[data-manual-content]");
       if (!element) throw new Error("Manual content not found");
 
-      const opt = {
-        margin: 15,
-        filename: "ZAG-SIGNS-ERP-Manual-v1.2.pdf",
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2, logging: false, useCORS: true },
-        jsPDF: { orientation: "portrait", unit: "mm", format: "a4" },
-        pagebreak: { mode: ["avoid-all", "css", "legacy"] },
-      };
+      // Hide print buttons during capture
+      const noPrint = document.querySelectorAll(".no-print");
+      noPrint.forEach(el => (el.style.display = "none"));
 
-      html2pdf().set(opt).from(element).save();
+      try {
+        const canvas = await html2canvas(element as HTMLElement, {
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          backgroundColor: "#ffffff",
+          allowTaint: true,
+        });
+
+        const imgData = canvas.toDataURL("image/jpeg", 0.95);
+        const pdf = new jsPDF({
+          orientation: "portrait",
+          unit: "mm",
+          format: "a4",
+        });
+
+        const imgWidth = 190;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        pdf.addImage(imgData, "JPEG", 10, position, imgWidth, imgHeight);
+        heightLeft -= 277;
+
+        while (heightLeft >= 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, "JPEG", 10, position, imgWidth, imgHeight);
+          heightLeft -= 277;
+        }
+
+        pdf.save("ZAG-SIGNS-ERP-Manual-v1.2.pdf");
+      } finally {
+        // Show print buttons again
+        noPrint.forEach(el => (el.style.display = "flex"));
+      }
     } catch (error) {
       console.error("PDF download failed:", error);
       alert("Failed to generate PDF. Please try using the Print function instead.");
