@@ -391,7 +391,7 @@ export default function ManualPage() {
 
       // Hide print buttons during capture
       const noPrint = document.querySelectorAll(".no-print");
-      noPrint.forEach(el => (el.style.display = "none"));
+      noPrint.forEach(el => ((el as HTMLElement).style.display = "none"));
 
       try {
         const canvas = await html2canvas(element as HTMLElement, {
@@ -427,7 +427,7 @@ export default function ManualPage() {
         pdf.save("ZAG-SIGNS-ERP-Manual-v1.2.pdf");
       } finally {
         // Show print buttons again
-        noPrint.forEach(el => (el.style.display = "flex"));
+        noPrint.forEach(el => ((el as HTMLElement).style.display = "flex"));
       }
     } catch (error) {
       console.error("PDF download failed:", error);
