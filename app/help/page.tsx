@@ -669,9 +669,9 @@ export default function HelpPage() {
               </p>
             </div>
             <button
-              onClick={() => router.push("/help/manual")}
+              onClick={() => router.push("/help/manual?print=1")}
               className="flex items-center gap-2 bg-white text-indigo-700 font-semibold text-sm px-5 py-2.5 rounded-xl hover:bg-indigo-50 transition-colors flex-shrink-0">
-              <Printer size={15} /> Open & Print Manual
+              <Printer size={15} /> Download / Save as PDF
             </button>
           </div>
         )}

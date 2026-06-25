@@ -1,5 +1,6 @@
 "use client";
 import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { SCREENS, Caption } from "./Screens";
 import PoweredByBpro from "@/components/PoweredByBpro";
 
@@ -443,12 +444,22 @@ const FAQS = [
 
 // ─── COMPONENT ────────────────────────────────────────────────────────────────
 export default function ManualPage() {
+  const searchParams = useSearchParams();
+
   useEffect(() => {
     const style = document.createElement("style");
     style.textContent = PRINT_STYLE;
     document.head.appendChild(style);
     return () => { document.head.removeChild(style); };
   }, []);
+
+  // Auto-print when ?print=1 is in the URL (e.g. from /api/manual/pdf redirect)
+  useEffect(() => {
+    if (searchParams.get("print") === "1") {
+      const t = setTimeout(() => window.print(), 800);
+      return () => clearTimeout(t);
+    }
+  }, [searchParams]);
 
   return (
     <div data-manual-content style={{ fontFamily: "Arial, sans-serif", fontSize: "11pt", color: "#000", maxWidth: "100%", width: "100%", margin: "0", padding: "0", backgroundColor: "white", lineHeight: "1.5" }}>
@@ -459,10 +470,10 @@ export default function ManualPage() {
           style={{ background: "#6B7280", color: "#fff", border: "none", borderRadius: "8px", padding: "10px 18px", cursor: "pointer", fontSize: "13px", fontWeight: 600 }}>
           ← Back
         </button>
-        <a href="/api/manual/pdf" download="ZAG-SIGNS-ERP-Manual-v1.3.pdf"
-          style={{ display: "inline-block", background: "#10B981", color: "#fff", border: "none", borderRadius: "8px", padding: "10px 18px", cursor: "pointer", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>
-          📥 Download PDF
-        </a>
+        <button onClick={() => window.print()}
+          style={{ background: "#10B981", color: "#fff", border: "none", borderRadius: "8px", padding: "10px 18px", cursor: "pointer", fontSize: "13px", fontWeight: 600 }}>
+          📥 Save as PDF
+        </button>
         <button onClick={() => window.print()}
           style={{ background: "#4F46E5", color: "#fff", border: "none", borderRadius: "8px", padding: "10px 18px", cursor: "pointer", fontSize: "13px", fontWeight: 600 }}>
           🖨 Print
