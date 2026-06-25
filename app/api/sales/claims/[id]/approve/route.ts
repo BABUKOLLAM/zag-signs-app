@@ -6,13 +6,13 @@ const prisma = new PrismaClient();
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await requireSession();
   if (!session) return new Response(JSON.stringify(err("Unauthorized")), { status: 401 });
 
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await req.json();
     const { stage, action, notes, approvedAmount } = body;
 
@@ -28,7 +28,7 @@ export async function POST(
       data: {
         claimId: id,
         stage,
-        approvedBy: session.user.id,
+        approvedBy: (session.user as any).id,
         action, // APPROVED or REJECTED
         notes: notes || null,
       },

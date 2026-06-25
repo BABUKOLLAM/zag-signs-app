@@ -9,7 +9,8 @@ import WorkOrderSlipTemplate, { type WorkOrderSlip, type SlipCompany } from "@/c
 import {
   Plus, RefreshCw, Printer, UserPlus, CheckCircle, Clock, X,
   Trash2, Activity, AlertTriangle, Timer, Users as UsersIcon, Pencil,
-import WhatsAppShare from "@/components/WhatsAppShare";} from "lucide-react";
+} from "lucide-react";
+import WhatsAppShare from "@/components/WhatsAppShare";
 
 // ─── TYPES & CONSTANTS ────────────────────────────────────────────────────────
 interface Ticket {

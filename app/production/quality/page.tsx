@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useApi } from "@/lib/use-api";
+import { api } from "@/lib/api-client";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 
 export default function QualityPage() {
@@ -21,8 +21,6 @@ export default function QualityPage() {
     category: "Color",
   });
 
-  const api = useApi();
-
   useEffect(() => {
     fetchData();
   }, []);
@@ -33,10 +31,10 @@ export default function QualityPage() {
       const [cpResponse, woResponse] = await Promise.all([
         api.get("/api/production/quality/checkpoints"),
         api.get("/api/work-orders"),
-      ]);
+      ]) as any[];
 
-      if (cpResponse.data) setCheckpoints(cpResponse.data);
-      if (woResponse.data) setWorkOrders(woResponse.data);
+      if ((cpResponse as any)?.data) setCheckpoints((cpResponse as any).data);
+      if ((woResponse as any)?.data) setWorkOrders((woResponse as any).data);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {

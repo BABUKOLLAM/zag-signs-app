@@ -12,6 +12,7 @@ interface RowInput {
   plannedQty?: string;
   unit?: string;
   notes?: string;
+  [key: string]: any;
 }
 
 interface RowResult {

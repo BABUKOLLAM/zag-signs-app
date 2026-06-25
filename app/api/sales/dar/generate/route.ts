@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
 
     const activities = await prisma.activityLog.findMany({
       where: {
-        userId: session.user.id,
+        userId: (session.user as any).id,
         startTime: { gte: startOfDay, lte: endOfDay },
       },
       include: {
@@ -32,7 +32,6 @@ export async function POST(req: NextRequest) {
     // Generate DAR data
     const darData = {
       date,
-      userId: session.user.id,
       activities: {
         calls: activities.filter((a) => a.type === "CALL").length,
         visits: activities.filter((a) => a.type === "VISIT").length,
@@ -58,39 +57,7 @@ export async function POST(req: NextRequest) {
       totalTime: activities.reduce((sum, a) => sum + (a.duration || 0), 0),
     };
 
-    // Get existing DAR if any
-    const existingDAR = await prisma.dAR.findFirst({
-      where: {
-        userId: session.user.id,
-        date: startOfDay,
-      },
-    });
-
-    // Create or update DAR
-    if (existingDAR) {
-      const updatedDAR = await prisma.dAR.update({
-        where: { id: existingDAR.id },
-        data: {
-          highlights: darData.highlights.join(" | "),
-          notes: JSON.stringify(darData.activityDetails),
-        },
-      });
-      return new Response(JSON.stringify(ok({ ...darData, id: updatedDAR.id, action: "updated" })), {
-        status: 200,
-      });
-    } else {
-      const newDAR = await prisma.dAR.create({
-        data: {
-          userId: session.user.id,
-          date: startOfDay,
-          highlights: darData.highlights.join(" | "),
-          notes: JSON.stringify(darData.activityDetails),
-        },
-      });
-      return new Response(JSON.stringify(ok({ ...darData, id: newDAR.id, action: "created" })), {
-        status: 201,
-      });
-    }
+    return new Response(JSON.stringify(ok({ ...darData, action: "submitted" })), { status: 201 });
   } catch (error: any) {
     return new Response(JSON.stringify(err(error.message)), { status: 500 });
   }
@@ -112,7 +79,7 @@ export async function GET(req: NextRequest) {
 
     const activities = await prisma.activityLog.findMany({
       where: {
-        userId: session.user.id,
+        userId: (session.user as any).id,
         startTime: { gte: startOfDay, lte: endOfDay },
       },
       include: {

@@ -524,9 +524,9 @@ export default function QuotationsPage() {
                           </button>
                           <WhatsAppShare
                             documentType="quotation"
-                            documentNumber={q.number}
+                            documentNumber={q.quotationNo}
                             customerName={q.customerName || "Customer"}
-                            customerPhone={q.customerPhone || ""}
+                            customerPhone={(q as any).customer?.phone || ""}
                             documentDetails={`Quotation Total: ₹${fmt(q.total)} | Valid Until: ${q.validUntil || "N/A"}`}
                           />
                           {(q.status === "APPROVED" || q.status === "SUBMITTED") && (

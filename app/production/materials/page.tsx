@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useApi } from "@/lib/use-api";
+import { api } from "@/lib/api-client";
 import { MATERIAL_CONSUMPTION_COLUMNS } from "@/lib/import-specs";
 import BatchImportModal from "@/components/BatchImportModal";
 import { Loader2 } from "lucide-react";
@@ -18,8 +18,6 @@ export default function MaterialsPage() {
   const [plannedQty, setPlannedQty] = useState("");
   const [notes, setNotes] = useState("");
 
-  const api = useApi();
-
   useEffect(() => {
     fetchData();
   }, []);
@@ -31,11 +29,11 @@ export default function MaterialsPage() {
         api.get("/api/production/materials/consumption"),
         api.get("/api/work-orders"),
         api.get("/api/inventory"),
-      ]);
+      ]) as any[];
 
-      if (consResponse.data) setConsumptions(consResponse.data);
-      if (woResponse.data) setWorkOrders(woResponse.data);
-      if (matResponse.data) setMaterials(matResponse.data);
+      if ((consResponse as any)?.data) setConsumptions((consResponse as any).data);
+      if ((woResponse as any)?.data) setWorkOrders((woResponse as any).data);
+      if ((matResponse as any)?.data) setMaterials((matResponse as any).data);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {

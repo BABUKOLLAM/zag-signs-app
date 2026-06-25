@@ -18,6 +18,7 @@ interface RowInput {
   hourlyRate?: string;
   capacityPerHour?: string;
   notes?: string;
+  [key: string]: any;
 }
 
 interface RowResult {

@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import TopBar from "@/components/TopBar";
-import { useApi } from "@/lib/use-api";
+import { api } from "@/lib/api-client";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
 
@@ -11,8 +11,6 @@ export default function ProductionPage() {
   const [schedules, setSchedules] = useState<any[]>([]);
   const [checkpoints, setCheckpoints] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const api = useApi();
 
   useEffect(() => {
     fetchData();
@@ -26,12 +24,12 @@ export default function ProductionPage() {
         api.get("/api/production/materials/consumption"),
         api.get("/api/production/schedules"),
         api.get("/api/production/quality/checkpoints"),
-      ]);
+      ]) as any[];
 
-      if (woRes.data) setWorkOrders(woRes.data);
-      if (matRes.data) setMaterials(matRes.data);
-      if (schedRes.data) setSchedules(schedRes.data);
-      if (qcRes.data) setCheckpoints(qcRes.data);
+      if ((woRes as any)?.data) setWorkOrders((woRes as any).data);
+      if ((matRes as any)?.data) setMaterials((matRes as any).data);
+      if ((schedRes as any)?.data) setSchedules((schedRes as any).data);
+      if ((qcRes as any)?.data) setCheckpoints((qcRes as any).data);
     } catch (error) {
       console.error("Error fetching production data:", error);
     } finally {

@@ -6,14 +6,14 @@ const prisma = new PrismaClient();
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await requireSession();
   if (!session) return new Response(JSON.stringify(err("Unauthorized")), { status: 401 });
 
   try {
     const body = await req.json();
-    const { id } = params;
+    const { id } = await params;
 
     const defect = await prisma.qualityDefect.update({
       where: { id },

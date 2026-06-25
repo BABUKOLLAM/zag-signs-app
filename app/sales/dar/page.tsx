@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useApi } from "@/lib/use-api";
+import { api } from "@/lib/api-client";
 import { Loader2, Download, Send } from "lucide-react";
 
 export default function DARPage() {
@@ -9,8 +9,6 @@ export default function DARPage() {
   const [darData, setDarData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-
-  const api = useApi();
 
   const handleGenerateDAR = async () => {
     setLoading(true);

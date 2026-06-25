@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useApi } from "@/lib/use-api";
+import { api as apiClient } from "@/lib/api-client";
 import { MACHINE_COLUMNS } from "@/lib/import-specs";
 import BatchImportModal from "@/components/BatchImportModal";
 import { Loader2, Plus } from "lucide-react";
@@ -23,7 +23,7 @@ export default function MachinesPage() {
     scheduledEndAt: "",
   });
 
-  const api = useApi();
+  const api = apiClient;
 
   useEffect(() => {
     fetchData();
@@ -36,11 +36,11 @@ export default function MachinesPage() {
         api.get("/api/production/machines"),
         api.get("/api/production/schedules"),
         api.get("/api/work-orders"),
-      ]);
+      ]) as any[];
 
-      if (machResponse.data) setMachines(machResponse.data);
-      if (schedResponse.data) setSchedules(schedResponse.data);
-      if (woResponse.data) setWorkOrders(woResponse.data);
+      if ((machResponse as any)?.data) setMachines((machResponse as any).data);
+      if ((schedResponse as any)?.data) setSchedules((schedResponse as any).data);
+      if ((woResponse as any)?.data) setWorkOrders((woResponse as any).data);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {

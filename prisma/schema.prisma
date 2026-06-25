@@ -1176,6 +1176,7 @@ model MaterialConsumption {
   wastageQty        Float    @default(0)
   unit              String   @default("units")
   costValue         Float?
+  notes             String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 

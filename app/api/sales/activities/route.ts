@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
         customerId: body.customerId || null,
         leadId: body.leadId || null,
         opportunityId: body.opportunityId || null,
-        userId: session.user.id,
+        userId: (session.user as any).id,
         startTime: new Date(body.startTime),
         endTime: body.endTime ? new Date(body.endTime) : null,
         duration,

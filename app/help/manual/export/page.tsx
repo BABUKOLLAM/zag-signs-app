@@ -1,6 +1,6 @@
 "use client";
 import { useEffect } from "react";
-import { SCREENS, Caption } from "./Screens";
+import { SCREENS, Caption } from "../Screens";
 import PoweredByBpro from "@/components/PoweredByBpro";
 
 // ── Version (printed on cover, footer & back cover) ──

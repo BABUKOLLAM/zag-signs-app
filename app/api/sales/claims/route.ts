@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
         claimType: body.claimType,
         claimReason: body.claimReason,
         amount: body.amount,
-        submittedByUserId: session.user.id,
+        submittedByUserId: (session.user as any).id,
         submissionWindow: currentMonth,
         status: body.status || "DRAFT", // DRAFT or SUBMITTED
         supportingDetails: body.supportingDetails || null,

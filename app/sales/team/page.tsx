@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useApi } from "@/lib/use-api";
+import { api } from "@/lib/api-client";
 import { Loader2, TrendingUp } from "lucide-react";
 
 export default function TeamPerformancePage() {
@@ -10,8 +10,6 @@ export default function TeamPerformancePage() {
   const [month, setMonth] = useState(
     new Date().toISOString().slice(0, 7)
   );
-
-  const api = useApi();
 
   useEffect(() => {
     fetchTeamData();
@@ -252,7 +250,7 @@ export default function TeamPerformancePage() {
         <p className="font-semibold text-blue-900">💡 Manager Tips</p>
         <ul className="text-sm text-blue-800 mt-2 space-y-1">
           <li>• Target achievement % shows how much of monthly target is completed</li>
-          <li>• Green = on track (100%+), Amber = at risk (80-99%), Red = behind (< 80%)</li>
+          <li>• Green = on track (100%+), Amber = at risk (80–99%), Red = behind (&lt; 80%)</li>
           <li>• Click team member names to see detailed activity logs</li>
           <li>• Review collections regularly to ensure cash flow targets are met</li>
         </ul>
