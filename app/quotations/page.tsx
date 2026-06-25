@@ -9,7 +9,7 @@ import QuotationPrintTemplate, { type QuotationData, type CompanyConfig, type Ba
 import DriveButton from "@/components/DriveButton";
 import DocumentsPanel from "@/components/DocumentsPanel";
 import { Eye, Printer, RefreshCw, X, Plus, Trash2, Pencil, GitBranch, Receipt, Ticket } from "lucide-react";
-import { useRouter } from "next/navigation";
+import WhatsAppShare from "@/components/WhatsAppShare";import { useRouter } from "next/navigation";
 import { makeClientCode } from "@/lib/utils";
 import { uploadToDrive, isDriveConfigured } from "@/lib/google-drive";
 import { useToast } from "@/components/Toaster";
@@ -522,6 +522,13 @@ export default function QuotationsPage() {
                             className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 disabled:opacity-40">
                             <Printer size={12} /> {loadingPrint ? "…" : "PDF"}
                           </button>
+                          <WhatsAppShare
+                            documentType="quotation"
+                            documentNumber={q.number}
+                            customerName={q.customerName || "Customer"}
+                            customerPhone={q.customerPhone || ""}
+                            documentDetails={`Quotation Total: ₹${fmt(q.total)} | Valid Until: ${q.validUntil || "N/A"}`}
+                          />
                           {(q.status === "APPROVED" || q.status === "SUBMITTED") && (
                             <>
                               <button onClick={() => createTicket(q)} title="Open Work Order Ticket"
