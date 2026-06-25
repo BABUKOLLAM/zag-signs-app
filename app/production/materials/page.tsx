@@ -4,9 +4,6 @@ import { useState, useEffect } from "react";
 import { useApi } from "@/lib/use-api";
 import { MATERIAL_CONSUMPTION_COLUMNS } from "@/lib/import-specs";
 import BatchImportModal from "@/components/BatchImportModal";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 
 export default function MaterialsPage() {
@@ -75,16 +72,19 @@ export default function MaterialsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Material Consumption</h1>
           <p className="text-gray-600 mt-2">Track materials used in production jobs</p>
         </div>
-        <Button onClick={() => setShowImport(true)} className="bg-blue-600">
+        <button
+          onClick={() => setShowImport(true)}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
           Import Materials
-        </Button>
+        </button>
       </div>
 
       {/* Tabs */}
@@ -115,11 +115,11 @@ export default function MaterialsPage() {
       {activeTab === "plan" && (
         <div className="space-y-6">
           {/* Add Consumption Form */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Add Material Consumption</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
+            <div className="px-4 py-3 border-b border-gray-100">
+              <h2 className="font-semibold text-gray-900">Add Material Consumption</h2>
+            </div>
+            <div className="p-4 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium">Work Order</label>
@@ -157,45 +157,45 @@ export default function MaterialsPage() {
 
                 <div>
                   <label className="text-sm font-medium">Planned Quantity</label>
-                  <Input
+                  <input
                     type="number"
                     value={plannedQty}
                     onChange={(e) => setPlannedQty(e.target.value)}
                     placeholder="0"
                     min="0"
                     step="0.1"
-                    className="mt-1"
+                    className="w-full border rounded px-3 py-2 mt-1"
                   />
                 </div>
 
                 <div>
                   <label className="text-sm font-medium">Notes</label>
-                  <Input
+                  <input
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Optional notes"
-                    className="mt-1"
+                    className="w-full border rounded px-3 py-2 mt-1"
                   />
                 </div>
               </div>
 
-              <Button
+              <button
                 onClick={handleAddConsumption}
                 disabled={loading}
-                className="w-full bg-green-600"
+                className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
               >
-                {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin inline" />}
                 Add Consumption
-              </Button>
-            </CardContent>
-          </Card>
+              </button>
+            </div>
+          </div>
 
           {/* Work Orders List */}
-          <Card>
-            <CardHeader>
-              <CardTitle>In-Progress Work Orders</CardTitle>
-            </CardHeader>
-            <CardContent>
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
+            <div className="px-4 py-3 border-b border-gray-100">
+              <h2 className="font-semibold text-gray-900">In-Progress Work Orders</h2>
+            </div>
+            <div className="p-4">
               {loading ? (
                 <div className="flex justify-center py-8">
                   <Loader2 className="w-6 h-6 animate-spin" />
@@ -222,18 +222,18 @@ export default function MaterialsPage() {
               ) : (
                 <p className="text-gray-600 text-center py-8">No in-progress work orders</p>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       )}
 
       {/* Report Tab */}
       {activeTab === "report" && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Material Consumption Report</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
+          <div className="px-4 py-3 border-b border-gray-100">
+            <h2 className="font-semibold text-gray-900">Material Consumption Report</h2>
+          </div>
+          <div className="p-4">
             {loading ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin" />
@@ -270,8 +270,8 @@ export default function MaterialsPage() {
             ) : (
               <p className="text-gray-600 text-center py-8">No consumption records</p>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Import Modal */}
