@@ -135,7 +135,7 @@ export default function WhatsAppShare({
                     onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="10-digit number"
-                    maxLength="10"
+                    maxLength={10}
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-1">Enter 10-digit mobile number</p>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useApi } from "@/lib/use-api";
+import { api } from "@/lib/api-client";
 import { Loader2, Plus, TrendingUp } from "lucide-react";
 import Link from "next/link";
 
@@ -12,8 +12,6 @@ export default function SalesDashboard() {
   const [opportunities, setOpportunities] = useState<any[]>([]);
   const [salesOrders, setSalesOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const api = useApi();
 
   useEffect(() => {
     fetchData();
@@ -30,13 +28,13 @@ export default function SalesDashboard() {
         api.get("/api/leads?status=NEW"),
         api.get("/api/opportunities"),
         api.get("/api/sales-orders"),
-      ]);
+      ]) as any[];
 
-      if (actRes.data) setActivities(actRes.data);
-      if (claimsRes.data) setClaims(claimsRes.data);
-      if (leadsRes.data) setLeads(leadsRes.data);
-      if (oppRes.data) setOpportunities(oppRes.data);
-      if (soRes.data) setSalesOrders(soRes.data);
+      if ((actRes as any)?.data) setActivities((actRes as any).data);
+      if ((claimsRes as any)?.data) setClaims((claimsRes as any).data);
+      if ((leadsRes as any)?.data) setLeads((leadsRes as any).data);
+      if ((oppRes as any)?.data) setOpportunities((oppRes as any).data);
+      if ((soRes as any)?.data) setSalesOrders((soRes as any).data);
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     } finally {

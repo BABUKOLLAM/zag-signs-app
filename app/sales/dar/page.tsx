@@ -14,8 +14,8 @@ export default function DARPage() {
     setLoading(true);
     try {
       const res = await api.get(`/api/sales/dar/generate?date=${date}`);
-      if (res.data) {
-        setDarData(res.data);
+      if ((res as any)?.data) {
+        setDarData((res as any).data);
         setSubmitted(false);
       }
     } catch (error) {

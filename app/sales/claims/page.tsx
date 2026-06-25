@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useApi } from "@/lib/use-api";
+import { api } from "@/lib/api-client";
 import { Loader2, Plus, Download } from "lucide-react";
 
 export default function ClaimsPage() {
@@ -17,8 +17,6 @@ export default function ClaimsPage() {
     supportingDetails: "",
   });
 
-  const api = useApi();
-
   useEffect(() => {
     fetchClaims();
   }, []);
@@ -27,7 +25,7 @@ export default function ClaimsPage() {
     setLoading(true);
     try {
       const res = await api.get("/api/sales/claims");
-      if (res.data) setClaims(res.data);
+      if ((res as any)?.data) setClaims((res as any).data);
     } catch (error) {
       console.error("Error fetching claims:", error);
     } finally {

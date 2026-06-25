@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useApi } from "@/lib/use-api";
+import { api } from "@/lib/api-client";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 
 export default function ActivitiesPage() {
@@ -25,8 +25,6 @@ export default function ActivitiesPage() {
     notes: "",
   });
 
-  const api = useApi();
-
   useEffect(() => {
     fetchData();
   }, []);
@@ -39,11 +37,11 @@ export default function ActivitiesPage() {
         api.get(`/api/sales/activities?date=${today}`),
         api.get("/api/customers"),
         api.get("/api/leads"),
-      ]);
+      ]) as any[];
 
-      if (actRes.data) setActivities(actRes.data);
-      if (custRes.data) setCustomers(custRes.data);
-      if (leadsRes.data) setLeads(leadsRes.data);
+      if ((actRes as any)?.data) setActivities((actRes as any).data);
+      if ((custRes as any)?.data) setCustomers((custRes as any).data);
+      if ((leadsRes as any)?.data) setLeads((leadsRes as any).data);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {

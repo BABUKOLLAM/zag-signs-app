@@ -19,7 +19,7 @@ export default function TeamPerformancePage() {
     setLoading(true);
     try {
       const res = await api.get(`/api/sales/team/performance?month=${month}`);
-      if (res.data) setTeamData(res.data);
+      if ((res as any)?.data) setTeamData((res as any).data);
     } catch (error) {
       console.error("Error fetching team data:", error);
     } finally {
