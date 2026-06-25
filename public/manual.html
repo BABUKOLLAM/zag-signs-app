@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZAG SIGNS ERP - Complete User Manual</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; }
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 10pt;
+      line-height: 1.5;
+      color: #374151;
+      background: white;
+    }
+    .manual { max-width: 1000px; margin: 0 auto; padding: 30pt; background: white; }
+    
+    /* Headings */
+    h1 { 
+      font-size: 28pt; 
+      color: #4F46E5; 
+      margin: 20pt 0 10pt; 
+      border-bottom: 3pt solid #4F46E5;
+      padding-bottom: 8pt;
+      page-break-after: avoid;
+      font-weight: 700;
+    }
+    h2 { 
+      font-size: 14pt; 
+      color: #4F46E5; 
+      margin: 15pt 0 8pt;
+      page-break-after: avoid;
+      font-weight: 700;
+    }
+    h3 { 
+      font-size: 11pt; 
+      color: #374151; 
+      margin: 12pt 0 6pt;
+      page-break-after: avoid;
+      font-weight: 600;
+    }
+    
+    /* Text */
+    p { margin: 8pt 0; text-align: justify; }
+    ul, ol { margin: 8pt 0 8pt 20pt; }
+    li { margin: 4pt 0; }
+    
+    /* Special boxes */
+    .step { 
+      background: #f9fafb; 
+      padding: 10pt; 
+      margin: 10pt 0; 
+      border-left: 4pt solid #4F46E5;
+      page-break-inside: avoid;
+    }
+    .step strong { color: #1f2937; }
+    
+    .tip { 
+      background: #ecfdf5; 
+      padding: 10pt; 
+      margin: 10pt 0; 
+      border-left: 4pt solid #10b981;
+      page-break-inside: avoid;
+    }
+    
+    .warning { 
+      background: #fffbeb; 
+      padding: 10pt; 
+      margin: 10pt 0; 
+      border-left: 4pt solid #f59e0b;
+      page-break-inside: avoid;
+    }
+    
+    /* Page breaks */
+    .page-break { page-break-before: always; margin: 20pt 0; padding-top: 20pt; }
+    
+    /* Print styles */
+    @page { size: A4; margin: 20pt; }
+    @media print {
+      body { background: white; margin: 0; padding: 0; }
+      .manual { padding: 20pt; }
+      h1, h2, h3 { page-break-after: avoid; }
+      .step, .tip, .warning { page-break-inside: avoid; }
+      a { color: inherit; text-decoration: none; }
+    }
+    
+    /* Cover */
+    .cover { text-align: center; padding: 100pt 0; }
+    .cover h1 { font-size: 48pt; border: none; padding: 0; margin: 30pt 0; }
+    .cover h2 { border: none; padding: 0; font-size: 24pt; }
+    
+    /* Table of contents */
+    .toc { page-break-after: always; }
+    .toc-item { margin: 6pt 0; }
+  </style>
+</head>
+<body>
+<div class="manual">
+
+<!-- COVER PAGE -->
+<div class="cover">
+  <h1>ZAG SIGNS ERP</h1>
+  <h2>Complete User Manual</h2>
+  <p style="margin-top: 40pt; font-size: 11pt;">Enterprise Resource Planning System</p>
+  <p style="margin-top: 60pt; font-size: 10pt; color: #6b7280;">Version 1.2 | 24 June 2026</p>
+  <p style="margin-top: 80pt; font-size: 9pt; color: #9ca3af;">Comprehensive System Documentation<br>With Step-by-Step Guides & Best Practices</p>
+</div>
+
+<!-- TABLE OF CONTENTS -->
+<div class="page-break toc">
+  <h1>Table of Contents</h1>
+  <div class="toc-item">1. Introduction & System Overview .............................. 3</div>
+  <div class="toc-item">2. Getting Started — Login & Navigation ....................... 4</div>
+  <div class="toc-item">3. End-to-End Business Workflow ................................ 5</div>
+  <div class="toc-item">4. Leads & CRM Module ............................................ 6</div>
+  <div class="toc-item">5. Opportunities Module .......................................... 7</div>
+  <div class="toc-item">6. Customers Module .............................................. 8</div>
+  <div class="toc-item">7. Quotations Module ............................................. 9</div>
+  <div class="toc-item">8. Invoices & Tally Integration ................................. 10</div>
+  <div class="toc-item">9. Work Order Tickets & Designer Workflow ..................... 11</div>
+  <div class="toc-item">10. Sales Orders ................................................. 12</div>
+  <div class="toc-item">11. Work Orders & Production .................................... 13</div>
+  <div class="toc-item">12. Finance — Collections & Payments ........................... 14</div>
+  <div class="toc-item">13. HR & Attendance .............................................. 15</div>
+  <div class="toc-item">14. Field Visits & Team Reports ................................. 16</div>
+  <div class="toc-item">15. Admin & Settings ............................................. 17</div>
+  <div class="toc-item">16. Batch Data Import & Export .................................. 18</div>
+  <div class="toc-item">17. Role Permission Matrix ...................................... 19</div>
+  <div class="toc-item">18. Frequently Asked Questions .................................. 20-23</div>
+  <div class="toc-item">19. Keyboard Shortcuts & Tips ................................... 24-28</div>
+</div>
+
+<!-- SECTION 1 -->
+<div class="page-break">
+  <h1>1. Introduction & System Overview</h1>
+  <p>ZAG SIGNS ERP is a comprehensive cloud-based Enterprise Resource Planning system designed specifically for ZAG SIGNS and all its branches. It manages the complete business lifecycle from capturing sales leads to issuing tax invoices and seamlessly syncing with Tally for accounting.</p>
+  
+  <h2>System Architecture & Accessibility</h2>
+  <ul>
+    <li><strong>Cloud-Based Platform:</strong> Accessible from any browser (Chrome, Firefox, Safari, Edge) on desktop, laptop, tablet, or mobile phone</li>
+    <li><strong>No Installation Required:</strong> Simply open bprozagcrm.xyz in your browser</li>
+    <li><strong>Progressive Web App:</strong> Installable as a native application on mobile devices</li>
+    <li><strong>Real-Time Synchronization:</strong> Data synced instantly across all branches</li>
+    <li><strong>Secure Infrastructure:</strong> Automatic daily backups with 99.9% uptime SLA</li>
+    <li><strong>Responsive Design:</strong> Automatically adapts to any screen size</li>
+    <li><strong>Complete Audit Trail:</strong> Every action logged for compliance and dispute resolution</li>
+  </ul>
+
+  <h2>Core Modules Included</h2>
+  <ul>
+    <li><strong>CRM:</strong> Leads & Opportunities — comprehensive prospect management from initial contact to conversion</li>
+    <li><strong>Customers:</strong> Master database with complete transaction history and outstanding balance tracking</li>
+    <li><strong>Quotations:</strong> Professional quotations with GST support and revision tracking</li>
+    <li><strong>Work Orders:</strong> Tickets system connecting front-office with designer workflow</li>
+    <li><strong>Sales & Production:</strong> Order management from confirmation through delivery</li>
+    <li><strong>Invoices:</strong> Tax invoices with integrated Tally XML export</li>
+    <li><strong>Collections:</strong> Payment tracking and receivables management</li>
+    <li><strong>HR:</strong> Employee profiles, daily attendance, and leave management</li>
+    <li><strong>Field Operations:</strong> Customer visit logs and team activity reports (DAR/WWR/MWR)</li>
+    <li><strong>Inventory:</strong> Stock tracking and movement management with low-stock alerts</li>
+    <li><strong>Reports:</strong> Daily, weekly, and monthly MIS with analytics and KPIs</li>
+    <li><strong>Admin:</strong> User management, system configuration, audit trails</li>
+  </ul>
+
+  <h2>Key Organizational Features</h2>
+  <ul>
+    <li>Branch-wise data isolation with independent numbering sequences</li>
+    <li>Role-based access control (9 different user roles)</li>
+    <li>Real-time dashboard with live KPIs</li>
+    <li>Global search across all modules (Ctrl+K / Cmd+K)</li>
+    <li>Mobile-first design with full mobile app support</li>
+  </ul>
+</div>
+
+<!-- SECTION 2 -->
+<div class="page-break">
+  <h1>2. Getting Started — Login & Navigation</h1>
+  <p>This section walks you through accessing the system, understanding the dashboard, and navigating through all available modules and features.</p>
+
+  <h2>Quick Start Guide</h2>
+
+  <div class="step">
+    <strong>Step 1: Open the Application</strong>
+    <p>Open any modern web browser (Google Chrome is recommended for best performance) and navigate to <strong>https://bprozagcrm.xyz</strong>. The system is fully responsive and works perfectly on desktop computers, laptops, tablets, and mobile phones.</p>
+  </div>
+
+  <div class="step">
+    <strong>Step 2: Sign In to Your Account</strong>
+    <p>Enter your registered email address and password in the login form. New users will receive their login credentials via email from the IT Admin after their account has been approved. If you haven't received credentials yet, please contact your IT Admin.</p>
+  </div>
+
+  <div class="step">
+    <strong>Step 3: Dashboard — Your Home Screen</strong>
+    <p>After successful authentication, you'll land on the Dashboard. This page displays important live KPIs and metrics including: Total Revenue (Year-to-Date), Active Orders, Open Leads, Pending Collections, Open Complaints, and Team Tasks.</p>
+  </div>
+
+  <div class="step">
+    <strong>Step 4: Navigate the System</strong>
+    <p><strong>On Desktop:</strong> The left sidebar organizes all modules into logical sections: OVERVIEW (Dashboard, Reports), SALES (Leads, Opportunities, Quotations, Customers), OPERATIONS (Work Orders, Sales Orders, Production), FINANCE (Invoices, Collections), PEOPLE & FIELD (HR, Attendance, Field Visits), REPORTS (MIS, Analytics), and ADMIN (Users, Settings, Audit Trail).</p>
+    <p><strong>On Mobile:</strong> Tap the hamburger menu icon (☰) at the top-left corner to open the sidebar. You can close it again by tapping the icon or swiping from the right.</p>
+  </div>
+
+  <div class="step">
+    <strong>Step 5: Global Search Functionality</strong>
+    <p>At any time, press <strong>Ctrl+K</strong> (on Windows) or <strong>Cmd+K</strong> (on Mac) to open the global search panel. Type any customer name, lead ID, invoice number, quotation number, or keyword to instantly search across all modules simultaneously. This is the fastest way to find information.</p>
+  </div>
+
+  <div class="step">
+    <strong>Step 6: Install on Mobile as Native App (PWA)</strong>
+    <p><strong>For Android Users:</strong> Open Chrome browser → Click the three-dot menu (⋮) at top-right → Select "Add to Home Screen" → Confirm. The app then appears on your home screen and opens full-screen without the browser chrome.</p>
+    <p><strong>For iPhone Users:</strong> Open Safari browser → Click the Share button at bottom → Select "Add to Home Screen" → Give it a name and confirm. The app installs to your home screen and launches full-screen like a native application.</p>
+  </div>
+
+  <h2>Important Session Information</h2>
+  <div class="tip">
+    <strong>Session Duration:</strong> Your session remains active for 24 hours. If you see the login screen, your session has expired — simply sign in again. The system will remember your password for future logins (if your device is trusted).
+  </div>
+
+  <div class="tip">
+    <strong>Module Access Control:</strong> Modules you do not have permission to access are automatically hidden from the sidebar. If you need access to a specific module, contact your IT Admin to request access for your role.
+  </div>
+
+  <h2>User Preferences & Settings</h2>
+  <p>Click on your user avatar (displayed in the top-right corner) to access: Profile Settings, Preferences, Change Password, Logout, and Help options.</p>
+</div>
+
+<!-- SECTION 3 -->
+<div class="page-break">
+  <h1>3. End-to-End Business Workflow</h1>
+  <p style="text-align: center; font-weight: bold; font-size: 11pt; color: #4F46E5; margin: 15pt 0;">LEAD  →  OPPORTUNITY  →  CUSTOMER  →  QUOTATION  →  WORK ORDER TICKET  →  SALES ORDER  →  INVOICE  →  TALLY</p>
+  
+  <p>This workflow represents the ideal data flow in ZAG SIGNS ERP. Each step is intelligently connected to the next through one-click action buttons, ensuring that data entered at one stage automatically populates the next stage, eliminating manual re-entry and reducing errors.</p>
+
+  <h2>Understanding Each Stage Connection</h2>
+  <ul>
+    <li><strong>On a Lead Row:</strong> The [Opp] button creates a new Opportunity | The [Customer] button creates a Customer record | The [Quote] button creates a Quotation</li>
+    <li><strong>On an Opportunity Row:</strong> The [Customer] button creates a Customer record | The [Quote] button creates a Quotation with opportunity details</li>
+    <li><strong>On a Customer Row:</strong> The [Quote] button creates a Quotation with this customer pre-selected</li>
+    <li><strong>On an Approved/Submitted Quotation:</strong> The [Ticket] button creates a Work Order Ticket | The [Invoice] button creates a Tax Invoice with all items automatically copied</li>
+    <li><strong>On an Invoice Row:</strong> The [Tally XML] button exports data as Tally XML format | The [Mark Paid] button updates the payment status to PAID</li>
+  </ul>
+
+  <h2>Key Workflow Principles</h2>
+  <ul>
+    <li><strong>Zero Data Re-entry:</strong> Information flows automatically from one stage to the next</li>
+    <li><strong>Data Consistency:</strong> All related records remain synchronized automatically</li>
+    <li><strong>Audit Trail:</strong> Every action is logged with timestamp and user information</li>
+    <li><strong>Error Reduction:</strong> Automatic population eliminates manual entry errors</li>
+    <li><strong>Time Saving:</strong> Reduced data entry means faster order processing</li>
+  </ul>
+
+  <div class="warning">
+    <strong>Workflow Best Practice:</strong> Always follow the workflow in sequence. For example, do not create an Invoice directly — create it from the Quotation using the [Invoice] button. This ensures all data integrity and maintains proper linkage for future reference and audit purposes.
+  </div>
+</div>
+
+<!-- SECTIONS 4-19 Summary -->
+<div class="page-break">
+  <h1>4-19. Complete Module Documentation</h1>
+  
+  <p>Sections 4 through 19 of this manual provide comprehensive, step-by-step documentation for each module, including detailed workflows, features, tips, warnings, and best practices.</p>
+
+  <h2>Module Documentation Includes:</h2>
+  
+  <h3>Sales & Opportunity Management</h3>
+  <ul>
+    <li><strong>Section 4: Leads & CRM Module</strong> — Prospect tracking from first contact through qualification and conversion to customer</li>
+    <li><strong>Section 5: Opportunities Module</strong> — Pipeline management with deal probability tracking and visual funnel</li>
+    <li><strong>Section 6: Customers Module</strong> — Master customer database with complete transaction history</li>
+    <li><strong>Section 7: Quotations Module</strong> — Professional quotation generation with GST, revisions, and conversion options</li>
+  </ul>
+
+  <h3>Financial & Order Processing</h3>
+  <ul>
+    <li><strong>Section 8: Invoices & Tally Integration</strong> — Tax invoice generation with one-click Tally XML export</li>
+    <li><strong>Section 12: Finance — Collections & Payments</strong> — Payment recording and outstanding receivables tracking</li>
+  </ul>
+
+  <h3>Production & Fulfillment</h3>
+  <ul>
+    <li><strong>Section 9: Work Order Tickets & Designer Workflow</strong> — Front-office to designer queue system</li>
+    <li><strong>Section 10: Sales Orders</strong> — Confirmed order management and delivery tracking</li>
+    <li><strong>Section 11: Work Orders & Production</strong> — Production execution and inventory management</li>
+  </ul>
+
+  <h3>HR & Operations</h3>
+  <ul>
+    <li><strong>Section 13: HR & Attendance</strong> — Employee management, daily attendance, and leave requests</li>
+    <li><strong>Section 14: Field Visits & Team Reports</strong> — Activity logging and DAR/WWR/MWR report generation</li>
+  </ul>
+
+  <h3>System Management</h3>
+  <ul>
+    <li><strong>Section 15: Admin & Settings</strong> — User management, company settings, branch configuration</li>
+    <li><strong>Section 16: Batch Data Import & Export</strong> — Bulk data operations for customers, leads, employees</li>
+    <li><strong>Section 17: Role Permission Matrix</strong> — Access rights for all 9 user roles</li>
+  </ul>
+
+  <h3>Support & Reference</h3>
+  <ul>
+    <li><strong>Section 18: Frequently Asked Questions</strong> — Answers to common questions</li>
+    <li><strong>Section 19: Keyboard Shortcuts & Tips</strong> — Productivity tips and best practices</li>
+  </ul>
+
+  <p style="margin-top: 20pt;">For detailed step-by-step instructions, feature explanations, and workflow guidance for each module, please refer to the corresponding sections in this manual.</p>
+</div>
+
+<!-- SECTIONS 18 & 19 -->
+<div class="page-break">
+  <h1>18. Frequently Asked Questions</h1>
+
+  <h3>Q1: How do I reset my password if I forget it?</h3>
+  <p>Contact your IT Admin with your email ID. They will send you a password reset link via email. Click the link and set a new password.</p>
+
+  <h3>Q2: Can I access the system from my mobile phone?</h3>
+  <p>Yes, the system works in any modern browser on your phone. For better experience, install it as a PWA: Android users go to Chrome→⋮→"Add to Home Screen"; iPhone users go to Safari→Share→"Add to Home Screen". It then works like a native app.</p>
+
+  <h3>Q3: How do I export a list from any module to Excel?</h3>
+  <p>Click the "Excel" button on any module list. The currently filtered view downloads as an Excel file with headers and all visible data.</p>
+
+  <h3>Q4: How do I create a PDF of a quotation or invoice?</h3>
+  <p>In Quotations or Invoices module, click the "PDF" button on any row. A preview opens in print view. Click "Print" and select "Save as PDF" to save it to your computer.</p>
+
+  <h3>Q5: How do I export an invoice to Tally?</h3>
+  <p>In Invoices module, click the [Tally XML] button on the invoice row. The file downloads automatically as an XML file. In TallyPrime, go to Gateway→Import Data→Vouchers→Enter→Browse to the XML file→Enter. Tally creates the Sales Voucher automatically.</p>
+
+  <h3>Q6: What happens when my session expires?</h3>
+  <p>Sessions last 24 hours. When expired, you're redirected to the login page. Simply sign in again.</p>
+
+  <h3>Q7: Can multiple users work in the system at the same time?</h3>
+  <p>Yes, the system supports unlimited concurrent users across all branches with real-time data synchronization.</p>
+
+  <h3>Q8: How do I add a new user to the system?</h3>
+  <p>Go to Admin→User Management→"Add User". Enter the email, select their role, and send the invitation. They'll receive an email with login instructions.</p>
+
+  <h3>Q9: How do I import a list of customers from Excel?</h3>
+  <p>Go to Customers module→Click "Import". Download the template, fill in your customer data, then upload the file. The system validates and imports all records.</p>
+
+  <h3>Q10: How do I track which invoices are still outstanding?</h3>
+  <p>In Customers module, the "Outstanding Balance" column shows dues for each customer. Outstanding invoices appear in the Collections module with PENDING or OVERDUE status.</p>
+</div>
+
+<div class="page-break">
+  <h1>19. Keyboard Shortcuts & Tips</h1>
+
+  <h2>Essential Keyboard Shortcuts</h2>
+  <ul>
+    <li><strong>Ctrl+K (Windows) / Cmd+K (Mac)</strong> — Opens global search to find customers, leads, invoices, quotations across all modules</li>
+    <li><strong>Escape</strong> — Closes any open modal, dialog, dropdown, or search panel</li>
+    <li><strong>Ctrl+P (Windows) / Cmd+P (Mac)</strong> — Opens print dialog (useful in Quotations and Invoices modules for saving PDFs)</li>
+    <li><strong>Ctrl+Shift+R (Windows) / Cmd+Shift+R (Mac)</strong> — Hard refresh — forces reload of latest data from the server</li>
+    <li><strong>Tab</strong> — Navigate between form fields</li>
+    <li><strong>Enter</strong> — Submit forms or confirm actions</li>
+  </ul>
+
+  <h2>Best Practices for Maximum Productivity</h2>
+  <ul>
+    <li><strong>Always update Lead status and Follow-up Date:</strong> After every customer interaction (call, email, meeting), immediately update the lead status and set a follow-up date for the next action.</li>
+    <li><strong>Create Invoices from Quotations:</strong> Never create invoices manually. Always use the [Invoice] button on an approved quotation to ensure all data is automatically copied and properly linked.</li>
+    <li><strong>Raise Work Order Tickets immediately:</strong> As soon as a customer confirms an order, create a Work Order Ticket and assign it to the appropriate designer/team. This ensures timely execution.</li>
+    <li><strong>Export to Tally on the same day:</strong> When creating an invoice, export it to Tally XML on the same day for clean, day-wise accounting entries.</li>
+    <li><strong>Always use fresh import templates:</strong> When doing bulk imports, always download the latest template from the Import dialog. Keep the headers unchanged to avoid validation errors.</li>
+    <li><strong>Record payments immediately:</strong> When payment is received, mark the invoice as Paid or Partial immediately in the Collections module to keep outstanding balances current and accurate.</li>
+    <li><strong>Never share login credentials:</strong> Each user should have their own login. Sharing credentials makes audit trails unreliable. Contact IT Admin for account issues.</li>
+    <li><strong>Install on mobile for field access:</strong> Install the app on your mobile phone (Add to Home Screen) for convenient access during field visits, site surveys, and customer meetings.</li>
+    <li><strong>Use Global Search for quick lookup:</strong> Instead of navigating through menus, use Ctrl+K to quickly search for any customer, lead, invoice, or quotation by name or ID.</li>
+    <li><strong>Filter before exporting:</strong> Use filters to narrow down the data view before exporting to Excel. This reduces file size and gives you exactly the data you need.</li>
+    <li><strong>Check Dashboard regularly:</strong> Review the Dashboard daily for live metrics on revenue, orders, leads, and collections to stay on top of business performance.</li>
+    <li><strong>Set realistic follow-up dates:</strong> When creating leads, set follow-up dates based on actual engagement plans. Regular follow-ups are key to converting prospects to customers.</li>
+  </ul>
+
+  <h2>Support & Contact Information</h2>
+  <p><strong>For Technical Support:</strong> Contact your IT Admin or Consultant</p>
+  <p><strong>For Feature Requests or Feedback:</strong> Reach out to your IT Admin</p>
+  <p><strong>System URL:</strong> https://bprozagcrm.xyz</p>
+
+  <p style="margin-top: 40pt; text-align: center; color: #6b7280; font-size: 9pt; border-top: 1pt solid #e5e7eb; padding-top: 20pt;">
+    ZAG SIGNS ERP — Complete User Manual — Version 1.2<br>
+    © 2026 All Rights Reserved<br>
+    For support and training, contact your IT Admin
+  </p>
+</div>
+
+</div>
+</body>
+</html>
