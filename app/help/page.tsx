@@ -378,7 +378,7 @@ export default function HelpPage() {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <BookOpen size={24} />
-                <h2 className="text-xl font-bold">ZAG SIGNS ERP — User Manual v1.2</h2>
+                <h2 className="text-xl font-bold">ZAG SIGNS ERP — User Manual v1.3</h2>
               </div>
               <p className="text-indigo-100 text-sm mb-4">
                 Complete guide for all modules. Search below or browse by module. For urgent help, contact IT Admin.
@@ -664,8 +664,8 @@ export default function HelpPage() {
             <div className="text-white">
               <p className="font-bold text-sm">Download the Complete User Manual</p>
               <p className="text-indigo-200 text-xs mt-0.5">
-                VER 1.2 · 20/06/2026 — printable PDF with logo, step-by-step guidance, screen illustrations,
-                FAQ and role guide. Opens in a print-ready view — save as PDF.
+                VER 1.3 · 25/06/2026 — includes FJP, Expense Reports & 3-Tier Approvals. Printable PDF with
+                logo, step-by-step guidance, screen illustrations, FAQ and role guide.
               </p>
             </div>
             <button
@@ -678,9 +678,9 @@ export default function HelpPage() {
 
         {/* ── FOOTER ── */}
         <div className="flex flex-col items-center gap-2 pb-4">
-          <PoweredByBpro variant="light" logoHeight={18} />
+          <PoweredByBpro variant="light" logoHeight={28} />
           <div className="text-center text-xs" style={{ color: "var(--text-muted)" }}>
-            ZAG SIGNS ERP · VER 1.2 · 20/06/2026 · bprozagcrm.xyz · For technical support contact IT Admin
+            ZAG SIGNS ERP · VER 1.3 · 25/06/2026 · bprozagcrm.xyz · For technical support contact IT Admin
           </div>
         </div>
       </div>

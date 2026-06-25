@@ -193,7 +193,7 @@ export default function Sidebar() {
           </button>
         </div>
         <div className="mt-3 pt-3 border-t border-white/10">
-          <PoweredByBpro variant="dark" logoHeight={16} />
+          <PoweredByBpro variant="dark" logoHeight={24} />
         </div>
       </div>
     </aside>

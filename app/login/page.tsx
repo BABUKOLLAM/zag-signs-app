@@ -185,7 +185,7 @@ export default function LoginPage() {
       </div>
 
       <div className="relative mt-6 flex flex-col items-center gap-2">
-        <PoweredByBpro variant="dark" logoHeight={18} />
+        <PoweredByBpro variant="dark" logoHeight={28} />
         <p className="text-xs text-slate-600">© 2026 ZAG SIGNS. Enterprise ERP · All rights reserved.</p>
       </div>
     </div>

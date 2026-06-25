@@ -189,7 +189,7 @@ export default function Landing() {
       <footer className="relative z-10 border-t border-white/10 mt-8">
         <div className="max-w-6xl mx-auto px-5 sm:px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-5">
           <BrandLogo height={28} pill />
-          <PoweredByBpro variant="dark" logoHeight={18} />
+          <PoweredByBpro variant="dark" logoHeight={28} />
           <p className="text-xs text-slate-500">© {new Date().getFullYear()} ZAG SIGNS · All rights reserved.</p>
         </div>
       </footer>

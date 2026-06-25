@@ -4,8 +4,8 @@ import { SCREENS, Caption } from "./Screens";
 import PoweredByBpro from "@/components/PoweredByBpro";
 
 // ── Version (printed on cover, footer & back cover) ──
-const VERSION = "1.2";
-const VERSION_DATE = "20/06/2026";
+const VERSION = "1.3";
+const VERSION_DATE = "25/06/2026";
 
 // Print styles injected at component mount
 const PRINT_STYLE = `
@@ -77,12 +77,15 @@ const TOC = [
   { num: "11", title: "Work Orders & Production" },
   { num: "12", title: "Finance — Collections & Payments" },
   { num: "13", title: "HR & Attendance" },
-  { num: "14", title: "Field Visits & Team Reports" },
-  { num: "15", title: "Admin & Settings" },
-  { num: "16", title: "Batch Data Import & Export" },
-  { num: "17", title: "Role Permission Matrix" },
-  { num: "18", title: "Frequently Asked Questions" },
-  { num: "19", title: "Keyboard Shortcuts & Tips" },
+  { num: "14", title: "Field Visits, Activity Tracker & Team Reports" },
+  { num: "15", title: "Fixed Journey Plan (FJP)" },
+  { num: "16", title: "Expense Reports" },
+  { num: "17", title: "Three-Tier Approval Workflow" },
+  { num: "18", title: "Admin & Settings" },
+  { num: "19", title: "Batch Data Import & Export" },
+  { num: "20", title: "Role Permission Matrix" },
+  { num: "21", title: "Frequently Asked Questions" },
+  { num: "22", title: "Keyboard Shortcuts & Tips" },
 ];
 
 interface ManualStep { step: string; desc: string; note?: string; }
@@ -289,19 +292,80 @@ board gives the manager full control of work-in-progress, turnaround time and in
     tips: ["Attendance can be marked once per employee per day. To correct a mistake, open the existing record and update it."],
   },
   {
-    num: "14", title: "Field Visits & Team Reports",
-    intro: "Log all customer visits and file daily/weekly/monthly activity reports.",
+    num: "14", title: "Field Visits, Activity Tracker & Team Reports",
+    intro: "Log all customer visits, track daily sales activities, and file DAR/WWR/MWR reports for manager review.",
     steps: [
-      { step: "Log field visit", desc: "Field Visits → 'New Visit'. Required: Visit Type, Customer Name, Location, Start Time, End Time, Outcome. Optional: GPS coordinates, Next Action." },
-      { step: "Daily Activity Report (DAR)", desc: "Team Reports → DAR → 'New DAR'. File daily: customer visits, calls made, orders booked, collections, travel, production output. Submit by end of day." },
-      { step: "Weekly Work Report (WWR)", desc: "WWR → 'New WWR'. File weekly: sales target vs achievement, challenges, action plan. Submit by Monday for the previous week." },
-      { step: "Monthly Work Report (MWR)", desc: "MWR → 'New MWR'. File monthly KPIs: sales achievement %, collection %, production efficiency %, complaints resolved." },
-      { step: "Approval workflow", desc: "Reports flow: Submitted → Manager Approved → AVP Approved → MD Approved. Approvers see pending items on their Dashboard." },
+      { step: "Log a field visit", desc: "Field Visits → 'New Visit'. Required: Visit Type, Customer Name, Location, Start Time, End Time, Outcome. Optional: GPS coordinates, Next Action." },
+      { step: "Daily Activity Log", desc: "Sales → Activities → 'Log Activity'. Choose type: Call / Meeting / Demo / Email / WhatsApp. Set customer, outcome, and next follow-up. All activities feed into the DAR automatically." },
+      { step: "Auto-generate DAR", desc: "Sales → DAR → 'Generate Today's DAR'. The system reads today's logged activities and builds the Daily Activity Report pre-filled. Review and submit by 9 PM. An automated reminder is sent at 9 PM daily." },
+      { step: "Weekly Work Report (WWR)", desc: "Team Reports → WWR → 'New WWR'. File weekly: sales target vs achievement, challenges, action plan. Submit by Monday for the previous week." },
+      { step: "Monthly Work Report (MWR)", desc: "Team Reports → MWR → 'New MWR'. File monthly KPIs: sales achievement %, collection %, production efficiency %, complaints resolved." },
+      { step: "Report approval workflow", desc: "Reports flow: Submitted → Manager Approved → AVP Approved → MD Approved. Approvers see pending items on their Dashboard." },
+      { step: "Team Performance Dashboard", desc: "Sales → Team (Manager view). See each executive's activity count, leads generated, orders booked, collections, and comparison against target — in one consolidated view." },
+    ],
+    tips: [
+      "Log every call and visit in the Activity Tracker immediately — the auto-DAR depends on complete activity data.",
+      "Automated reminder email is sent at 9 PM to anyone who has not submitted their DAR for the day.",
+      "Sales claims window reminder email is sent every Saturday and Sunday morning.",
     ],
   },
   {
-    num: "15", title: "Admin & Settings",
-    intro: "User management, company settings and complete audit trail. MD and IT Admin only.",
+    num: "15", title: "Fixed Journey Plan (FJP)",
+    intro: `The Fixed Journey Plan is a mandatory monthly travel schedule submitted by each sales executive before the 27th of the previous month. It lists planned customer visits day-by-day, showing route, mode of travel, estimated km, and purpose. It serves as the reference document for travel expense claims.`,
+    steps: [
+      { step: "Open FJP form", desc: "Sidebar → FIELD SALES → Journey Plan (FJP). A banner shows the submission window status — green if open (days remaining shown), red if the 27th deadline has passed." },
+      { step: "Add journey rows", desc: "Click 'Add Row' to add one day. Fill: Date, From Place, To Place, Customer/Prospect Name, Purpose of Visit, Mode of Travel (Two Wheeler / Four Wheeler / Bus / Train / Flight / Auto), and Estimated KM." },
+      { step: "Save as draft", desc: "Click 'Save Draft' to save progress without submitting. You can return and edit draft FJPs at any time before submitting." },
+      { step: "Submit FJP", desc: "Click 'Submit FJP'. The system assigns a number (FJP-YYYY-MM-NNN) and the record is locked. Submission is only possible on or before the 27th of the month." },
+      { step: "Print the FJP", desc: "In FJP History, click 'Print' on any submitted FJP. The printout includes the full route table, total estimated KM, cost estimate (₹6/km), and signature blocks for executive, HOD, and approval." },
+      { step: "Reference in Expense Claim", desc: "When submitting an expense report, select the relevant FJP from the dropdown. This links the expense to the approved journey plan for audit purposes." },
+    ],
+    tips: [
+      "Submit by the 27th — the window closes automatically after that date and a new submission for that month is not possible.",
+      "The system calculates estimated travel cost at ₹6 per km automatically (this is the minimum rate; actual reimbursement may differ).",
+    ],
+    warning: "FJP submission after the 27th deadline is blocked by the system. Plan ahead and submit at least 2–3 days before the deadline.",
+  },
+  {
+    num: "16", title: "Expense Reports",
+    intro: `Sales executives submit expense reports for all out-of-pocket costs — travel, accommodation, food, client entertainment, communication, and other business expenses. Each report can reference an FJP and must have itemised bills. Approved reports result in reimbursement from Accounts.`,
+    steps: [
+      { step: "Open Expense Reports", desc: "Sidebar → FIELD SALES → Expense Reports. Click 'New Expense' to open the submission form." },
+      { step: "Select expense type and FJP", desc: "Choose Expense Type: TRAVEL, ACCOMMODATION, FOOD, CLIENT_ENTERTAINMENT, COMMUNICATION, or OTHER. For travel, select the related FJP from the dropdown. Add a brief description/purpose." },
+      { step: "Enter expense line items", desc: "Add one row per expense item: Date, Category (Fuel/Toll/Hotel/Food/Train/Auto etc.), Description, From Place, To Place, KM (for travel), Amount (₹), and whether you have a bill (tick/untick)." },
+      { step: "Enter advance received", desc: "If you received a cash advance, enter it in 'Advance Received'. The system auto-calculates Net Payable = Total – Advance." },
+      { step: "Attach supporting documents", desc: "Click 'Choose Files' to select scanned bills, receipts, and tickets. Click 'Upload to Drive' — files are uploaded to Google Drive and the links are saved automatically. The approver can view all attachments from the approval screen." },
+      { step: "Save draft or submit", desc: "'Save Draft' to save without submitting. 'Submit for Approval' to send the report into the HOD → Accounts → CEO approval chain. An Expense No (EXP-YYYY-MM-NNN) is assigned on creation." },
+      { step: "Print the expense voucher", desc: "In the expense list, click 'Print' on any submitted report. The printout includes itemised table, totals, advance deduction, net payable, approval chain history, and signature blocks. Attach original hard copies of all bills to this printout before handing to Accounts." },
+    ],
+    tips: [
+      "Upload all bills to Drive before submitting — once submitted, attachments cannot be added.",
+      "Items without bills (tick = No) are accepted but flagged — Accounts may query them during verification.",
+      "The 'Net Payable' amount is what will be reimbursed. It is the total minus any advance already received.",
+    ],
+    warning: "Always print the expense voucher, attach original hard-copy bills, and physically submit to Accounts — even after the digital approval is complete. This is required for audit compliance.",
+  },
+  {
+    num: "17", title: "Three-Tier Approval Workflow",
+    intro: `Expense reports go through a mandatory three-stage approval before reimbursement. This ensures financial discipline and accountability. The chain is: HOD (Recommend) → Accounts (Verify) → CEO (Approve). Each stage can Approve, Hold, or Reject with a mandatory reason.`,
+    steps: [
+      { step: "HOD stage — Recommend", desc: "After submission, the report lands with the HOD (Business Manager / AVP / MD). The HOD reviews the items, checks FJP linkage, and clicks 'Take Action'. Options: Recommend (moves to Accounts), Hold (with reason — sent back to submitter to clarify), Reject (with reason — claim is declined)." },
+      { step: "Accounts stage — Verify", desc: "Once recommended by HOD, the report moves to the ACCOUNTS role. Accounts verifies bill amounts, GST claims, advance deductions, and policy compliance. Options: Verify (moves to CEO), Hold, Reject." },
+      { step: "CEO stage — Approve", desc: "After Accounts verification, the MD/CEO sees the report and gives the final decision. Options: Approve (reimbursement authorised), Hold, Reject. An Approved Amount is recorded on approval." },
+      { step: "Email notifications", desc: "The submitter and HOD receive an email at every stage action — whether recommended, held, or rejected — with the reason. This keeps everyone informed without needing to check the system constantly." },
+      { step: "Approval dashboard (Approvers)", desc: "Sidebar → FIELD SALES → Approvals. Approvers see a list of expenses pending their action, with a coloured 'Action Required' badge. The HOD → Accounts → CEO chain is visualised as a step-indicator on each card." },
+      { step: "View attachment links", desc: "Expand any expense card in the approvals dashboard → scroll to 'Attached Documents' → click any Drive link to open the bill/receipt in a new tab for verification." },
+    ],
+    tips: [
+      "Hold means 'pause and clarify' — the submitter gets an email with the HOD's question and can resubmit once clarified.",
+      "Rejection at any stage ends the claim — a new expense report must be submitted for the same items if the submitter disagrees.",
+      "Approvers can view the full approval history (who acted, when, and what reason) inside each expense card.",
+    ],
+    warning: "Reasons are mandatory for Hold and Reject actions. The system will not allow an action without a reason — this protects the submitter and ensures accountability.",
+  },
+  {
+    num: "18", title: "Admin & Settings",
+    intro: "User management, company settings and complete audit trail. MD and IT Admin only. Privilege settings allow fine-grained control over which roles access which modules.",
     steps: [
       { step: "Add new user", desc: "Admin → User Management → 'Add User'. Enter Full Name, Email, Role, Branch, Phone. The user receives a Welcome Email with a temporary password. Status starts as PENDING." },
       { step: "Approve user", desc: "In User Management, find the PENDING user → click Approve. Status becomes ACTIVE and the user can sign in." },
@@ -312,7 +376,7 @@ board gives the manager full control of work-in-progress, turnaround time and in
     warning: "Audit log entries are permanent and cannot be deleted or edited — even by the MD or IT Admin.",
   },
   {
-    num: "16", title: "Batch Data Import & Export",
+    num: "19", title: "Batch Data Import & Export",
     intro: `Bulk-load and download data for Customers, Leads, Inventory and Employees using Excel —
 ideal for first-time migration and periodic exports. Each of these pages carries Import and Excel buttons.`,
     screenKey: "BATCH",
@@ -335,20 +399,26 @@ ideal for first-time migration and periodic exports. Each of these pages carries
 const ROLE_MATRIX = {
   roles: ["MD", "AVP", "BM", "Sales", "CRE", "Designer", "Prodn", "Accts", "HR", "IT"],
   modules: [
-    { name: "Dashboard",        access: [1,1,1,1,1,1,1,1,1,1] },
-    { name: "Leads & CRM",      access: [1,1,1,1,1,0,0,0,0,1] },
-    { name: "Customers",        access: [1,1,1,1,1,0,0,1,0,1] },
-    { name: "Quotations",       access: [1,1,1,1,0,0,0,0,0,1] },
+    { name: "Dashboard",          access: [1,1,1,1,1,1,1,1,1,1] },
+    { name: "Leads & CRM",        access: [1,1,1,1,1,0,0,0,0,1] },
+    { name: "Customers",          access: [1,1,1,1,1,0,0,1,0,1] },
+    { name: "Quotations",         access: [1,1,1,1,0,0,0,0,0,1] },
     { name: "Work Order Tickets", access: [1,1,1,1,1,1,0,0,0,1] },
-    { name: "Sales Orders",     access: [1,1,1,1,0,0,1,1,0,1] },
-    { name: "Production",       access: [1,1,0,0,0,0,1,0,0,1] },
-    { name: "Inventory",        access: [1,1,0,0,0,0,1,0,0,1] },
-    { name: "Invoices",         access: [1,1,1,0,0,0,0,1,0,1] },
-    { name: "Collections",      access: [1,1,1,0,0,0,0,1,0,1] },
-    { name: "HR & Attendance",  access: [1,1,0,0,0,0,0,0,1,1] },
-    { name: "Field Visits",     access: [1,1,1,1,1,0,0,0,0,1] },
-    { name: "Reports",          access: [1,1,1,1,1,1,1,1,1,1] },
-    { name: "Admin",            access: [1,0,0,0,0,0,0,0,0,1] },
+    { name: "Sales Orders",       access: [1,1,1,1,0,0,1,1,0,1] },
+    { name: "Production",         access: [1,1,0,0,0,0,1,0,0,1] },
+    { name: "Inventory",          access: [1,1,0,0,0,0,1,0,0,1] },
+    { name: "Invoices",           access: [1,1,1,0,0,0,0,1,0,1] },
+    { name: "Collections",        access: [1,1,1,0,0,0,0,1,0,1] },
+    { name: "HR & Attendance",    access: [1,1,0,0,0,0,0,0,1,1] },
+    { name: "Field Visits",       access: [1,1,1,1,1,0,0,0,0,1] },
+    { name: "Activity / DAR",     access: [1,1,1,1,1,0,0,0,0,1] },
+    { name: "Journey Plan (FJP)", access: [1,1,1,1,0,0,0,0,0,1] },
+    { name: "Expense Reports",    access: [1,1,1,1,0,0,0,0,0,1] },
+    { name: "Approvals — HOD",    access: [1,1,1,0,0,0,0,0,0,0] },
+    { name: "Approvals — Accts",  access: [1,0,0,0,0,0,0,1,0,0] },
+    { name: "Approvals — CEO",    access: [1,0,0,0,0,0,0,0,0,0] },
+    { name: "Reports",            access: [1,1,1,1,1,1,1,1,1,1] },
+    { name: "Admin",              access: [1,0,0,0,0,0,0,0,0,1] },
   ],
 };
 
@@ -364,6 +434,11 @@ const FAQS = [
   { q: "How do I record a partial payment?", a: "On the invoice click 'Partial', then Collections → Record Payment → enter the amount. Record another collection when the balance arrives — the invoice moves to PAID." },
   { q: "Can multiple users log in at the same time?", a: "Yes. Each user has their own secure session and all changes sync in real time across everyone logged in." },
   { q: "The PDF is printing on 2 pages. How do I fix it?", a: "In the print dialog set Margins to 'Minimum', scale to about 90%, and tick 'Background graphics'. For long documents, more than one page is normal." },
+  { q: "What is the FJP deadline and what happens if I miss it?", a: "FJP must be submitted on or before the 27th of the month preceding the travel month (e.g., for July travel, submit by 27th June). After the 27th, the submission window closes automatically and you cannot submit for that month." },
+  { q: "Can I attach receipts to my expense report?", a: "Yes. In the expense form, click 'Choose Files', select your scanned bills or photos, then click 'Upload to Drive'. The files are saved to Google Drive and linked to your expense report. Approvers can view them directly from the approval screen." },
+  { q: "My expense was put 'On Hold' — what do I do?", a: "You will receive an email with the HOD's reason. Review the comment, provide the clarification or correction they asked for, and resubmit a new expense report if required. A Hold does not reject the claim — it is a request for clarification." },
+  { q: "Who can approve expense reports?", a: "Three-stage chain: HOD (Business Manager / AVP / MD) recommends → Accounts verifies → MD/CEO approves. Each has their own login and sees only the items pending their action in the Approvals screen." },
+  { q: "How do I log my daily activities for the DAR?", a: "Sales → Activities → 'Log Activity'. Choose type (Call/Meeting/Demo/Email/WhatsApp), select the customer, enter outcome and next follow-up. At the end of the day, go to Sales → DAR → 'Generate Today's DAR' to auto-build the report from your logged activities." },
 ];
 
 // ─── COMPONENT ────────────────────────────────────────────────────────────────
@@ -384,7 +459,7 @@ export default function ManualPage() {
           style={{ background: "#6B7280", color: "#fff", border: "none", borderRadius: "8px", padding: "10px 18px", cursor: "pointer", fontSize: "13px", fontWeight: 600 }}>
           ← Back
         </button>
-        <a href="/api/manual/pdf" download="ZAG-SIGNS-ERP-Manual-v1.2.pdf"
+        <a href="/api/manual/pdf" download="ZAG-SIGNS-ERP-Manual-v1.3.pdf"
           style={{ display: "inline-block", background: "#10B981", color: "#fff", border: "none", borderRadius: "8px", padding: "10px 18px", cursor: "pointer", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>
           📥 Download PDF
         </a>
@@ -403,7 +478,8 @@ export default function ManualPage() {
         <div style={{ width: "60px", height: "3px", background: "linear-gradient(90deg,#F0563F,#C2298A,#4F46E5)", margin: "0 auto 28px" }} />
         <p style={{ fontSize: "11pt", color: "#374151", lineHeight: 1.7, maxWidth: "125mm" }}>
           This manual covers every module of the ZAG SIGNS ERP — from lead capture and quotations to
-          work-order tickets, tax invoices, Tally sync and bulk data import.
+          work-order tickets, tax invoices, Tally sync, Fixed Journey Plans, expense reports with
+          three-tier approvals, and bulk data import.
         </p>
         <div style={{ marginTop: "34px", fontSize: "11pt", color: "#111827", fontWeight: 700 }}>
           VER {VERSION} · {VERSION_DATE}
@@ -413,7 +489,7 @@ export default function ManualPage() {
           <p style={{ margin: "2px 0" }}>Confidential — Internal Use Only</p>
         </div>
         <div style={{ marginTop: "22px" }}>
-          <PoweredByBpro variant="light" logoHeight={20} />
+          <PoweredByBpro variant="light" logoHeight={32} />
         </div>
       </div>
 
@@ -505,7 +581,7 @@ export default function ManualPage() {
       {/* ── ROLE MATRIX ── */}
       <div className="page-break" style={{ paddingTop: "20px" }}>
         <h2 style={{ fontSize: "15pt", fontWeight: 800, color: "#4F46E5", borderBottom: "2px solid #E5E7EB", paddingBottom: "8px", marginBottom: "14px" }}>
-          17. Role Permission Matrix
+          20. Role Permission Matrix
         </h2>
         <p style={{ fontSize: "10pt", color: "#374151", marginBottom: "14px" }}>
           Which modules each role can access. BM = Business Manager, Sales = Sales Executive, CRE = Customer Relations,
@@ -538,7 +614,7 @@ export default function ManualPage() {
       {/* ── FAQ ── */}
       <div className="page-break" style={{ paddingTop: "20px" }}>
         <h2 style={{ fontSize: "15pt", fontWeight: 800, color: "#4F46E5", borderBottom: "2px solid #E5E7EB", paddingBottom: "8px", marginBottom: "14px" }}>
-          18. Frequently Asked Questions
+          21. Frequently Asked Questions
         </h2>
         {FAQS.map((faq, i) => (
           <div key={i} className="avoid-break" style={{ marginBottom: "14px", paddingBottom: "14px", borderBottom: "1px solid #F3F4F6" }}>
@@ -551,7 +627,7 @@ export default function ManualPage() {
       {/* ── SHORTCUTS ── */}
       <div className="page-break" style={{ paddingTop: "20px" }}>
         <h2 style={{ fontSize: "15pt", fontWeight: 800, color: "#4F46E5", borderBottom: "2px solid #E5E7EB", paddingBottom: "8px", marginBottom: "14px" }}>
-          19. Keyboard Shortcuts & Tips
+          22. Keyboard Shortcuts & Tips
         </h2>
         <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "20px" }}>
           <thead>
@@ -594,7 +670,7 @@ export default function ManualPage() {
           <p style={{ fontSize: "9pt", color: "#9CA3AF", margin: "2px 0" }}>VER {VERSION} · {VERSION_DATE} · bprozagcrm.xyz</p>
           <p style={{ fontSize: "9pt", color: "#9CA3AF", margin: "2px 0" }}>Confidential — Internal Use Only · For technical support, contact your IT Admin.</p>
           <div style={{ marginTop: "12px" }}>
-            <PoweredByBpro variant="light" logoHeight={18} />
+            <PoweredByBpro variant="light" logoHeight={28} />
           </div>
         </div>
       </div>

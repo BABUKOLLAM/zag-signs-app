@@ -26,9 +26,9 @@ export default function PoweredByBpro({
 
   return (
     <div className={`flex items-center justify-center gap-2 ${className}`}>
-      <span className={`text-xs font-medium ${muted}`}>Powered by</span>
+      <span className={`font-semibold ${muted}`} style={{ fontSize: Math.max(11, logoHeight * 0.45) }}>Powered by</span>
       {ok ? (
-        <span className="inline-flex items-center gap-1.5">
+        <span className="inline-flex items-center gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/bpro-logo.png"
@@ -37,13 +37,13 @@ export default function PoweredByBpro({
             className="object-contain block"
             onError={() => setOk(false)}
           />
-          <span className={`text-xs font-semibold ${strong}`}>Team bpro</span>
+          <span className={`font-bold ${strong}`} style={{ fontSize: Math.max(12, logoHeight * 0.5) }}>Team bpro</span>
         </span>
       ) : (
         <span className="inline-flex items-center gap-1">
           <span
             className="font-extrabold tracking-tight text-transparent bg-clip-text"
-            style={{ backgroundImage: "linear-gradient(135deg,#6366F1,#EC4899)", fontSize: logoHeight * 0.9 }}
+            style={{ backgroundImage: "linear-gradient(135deg,#6366F1,#EC4899)", fontSize: Math.max(13, logoHeight * 0.9) }}
           >
             Team&nbsp;bpro
           </span>
