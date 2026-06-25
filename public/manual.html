@@ -257,56 +257,114 @@
 
 <!-- SECTIONS 4-19 Summary -->
 <div class="page-break">
-  <h1>4-19. Complete Module Documentation</h1>
-  
-  <p>Sections 4 through 19 of this manual provide comprehensive, step-by-step documentation for each module, including detailed workflows, features, tips, warnings, and best practices.</p>
-
-  <h2>Module Documentation Includes:</h2>
-  
-  <h3>Sales & Opportunity Management</h3>
-  <ul>
-    <li><strong>Section 4: Leads & CRM Module</strong> — Prospect tracking from first contact through qualification and conversion to customer</li>
-    <li><strong>Section 5: Opportunities Module</strong> — Pipeline management with deal probability tracking and visual funnel</li>
-    <li><strong>Section 6: Customers Module</strong> — Master customer database with complete transaction history</li>
-    <li><strong>Section 7: Quotations Module</strong> — Professional quotation generation with GST, revisions, and conversion options</li>
-  </ul>
-
-  <h3>Financial & Order Processing</h3>
-  <ul>
-    <li><strong>Section 8: Invoices & Tally Integration</strong> — Tax invoice generation with one-click Tally XML export</li>
-    <li><strong>Section 12: Finance — Collections & Payments</strong> — Payment recording and outstanding receivables tracking</li>
-  </ul>
-
-  <h3>Production & Fulfillment</h3>
-  <ul>
-    <li><strong>Section 9: Work Order Tickets & Designer Workflow</strong> — Front-office to designer queue system</li>
-    <li><strong>Section 10: Sales Orders</strong> — Confirmed order management and delivery tracking</li>
-    <li><strong>Section 11: Work Orders & Production</strong> — Production execution and inventory management</li>
-  </ul>
-
-  <h3>HR & Operations</h3>
-  <ul>
-    <li><strong>Section 13: HR & Attendance</strong> — Employee management, daily attendance, and leave requests</li>
-    <li><strong>Section 14: Field Visits & Team Reports</strong> — Activity logging and DAR/WWR/MWR report generation</li>
-  </ul>
-
-  <h3>System Management</h3>
-  <ul>
-    <li><strong>Section 15: Admin & Settings</strong> — User management, company settings, branch configuration</li>
-    <li><strong>Section 16: Batch Data Import & Export</strong> — Bulk data operations for customers, leads, employees</li>
-    <li><strong>Section 17: Role Permission Matrix</strong> — Access rights for all 9 user roles</li>
-  </ul>
-
-  <h3>Support & Reference</h3>
-  <ul>
-    <li><strong>Section 18: Frequently Asked Questions</strong> — Answers to common questions</li>
-    <li><strong>Section 19: Keyboard Shortcuts & Tips</strong> — Productivity tips and best practices</li>
-  </ul>
-
-  <p style="margin-top: 20pt;">For detailed step-by-step instructions, feature explanations, and workflow guidance for each module, please refer to the corresponding sections in this manual.</p>
+<!-- SECTIONS 4-19 DETAILED -->
+<div class="page-break">
+  <h1>4. Leads & CRM Module</h1>
+  <p>Leads & CRM is the entry point for all new sales. Track every prospect from first contact through qualification and conversion to become a valued customer.</p>
+  <h2>Key Features</h2>
+  <ul><li>Status Pipeline: NEW → CONTACTED → QUALIFIED → PROPOSAL → NEGOTIATION → WON/LOST</li><li>Lead Source tracking (Direct, Referral, Social Media, Trade Show, Website, LinkedIn, Phone, Other)</li><li>Follow-up Date scheduling with system highlighting today's follow-ups at the top of the list</li><li>Branch-wise Lead isolation — each branch sees only its own leads</li><li>Communication History in Notes field for tracking all customer interactions</li><li>Estimated Value tracking for revenue forecasting</li><li>Bulk Import/Export capabilities via Excel templates</li><li>Advanced Filtering and Search across Status, Source, Branch</li></ul>
+  <h2>Step-by-Step Workflow</h2>
+  <div class="step"><strong>1. Create Lead</strong><p>Click "New Lead" button or use bulk import. Required: Name, Phone, Branch. Optional: Company, Email, Source, Estimated Value, Follow-up Date, Assigned Executive</p></div>
+  <div class="step"><strong>2. Update Status</strong><p>As you interact with the prospect, update their status from NEW → CONTACTED → QUALIFIED → PROPOSAL → NEGOTIATION → WON or LOST</p></div>
+  <div class="step"><strong>3. Set Follow-up Dates</strong><p>Always schedule a follow-up date for the next action. Today's follow-ups are highlighted at the top</p></div>
+  <div class="step"><strong>4. Convert to Opportunity</strong><p>When prospect shows interest, click [Opp] button to create an Opportunity record</p></div>
+  <div class="step"><strong>5. Convert to Customer</strong><p>When deal is won, click [Customer] to create a permanent Customer record</p></div>
+  <div class="step"><strong>6. Create Quotation</strong><p>Click [Quote] to generate a professional quotation directly from the Lead</p></div>
+  <div class="tip"><strong>Best Practice:</strong> Always update Lead status and Follow-up Date after every customer interaction. This keeps your sales pipeline accurate and ensures no prospect is forgotten.</div>
 </div>
 
-<!-- SECTIONS 18 & 19 -->
+<div class="page-break">
+  <h1>5. Opportunities Module</h1>
+  <p>Track deals in progress with a visual pipeline funnel showing probability and deal value.</p>
+  <h2>Features</h2>
+  <ul><li>Pipeline Funnel at the top showing opportunities by stage with deal counts and total value</li><li>Stages with Probabilities: Qualification (20%) → Proposal Sent (40%) → Negotiation (65%) → Verbal Commitment (85%) → Closed Won (100%)</li><li>Probability auto-updates when you change stage</li><li>Clickable stage buttons to filter opportunities by stage</li><li>Expected Close Date tracking for each deal</li></ul>
+</div>
+
+<div class="page-break">
+  <h1>6. Customers Module</h1>
+  <p>Master database of all customers with complete transaction history and outstanding balance tracking.</p>
+  <h2>Features</h2>
+  <ul><li>Auto-generated Customer ID: C001, C002, etc. (unique per branch)</li><li>Required: Name, Company, Phone, Branch</li><li>Optional: Email, GST No, Billing/Shipping Address, Credit Limit, Payment Terms</li><li>Complete Transaction History: all quotations, orders, invoices, complaints, collections linked</li><li>Outstanding Balance auto-updates with each invoice and collection</li><li>Bulk Import/Export of customer database</li></ul>
+</div>
+
+<div class="page-break">
+  <h1>7. Quotations Module</h1>
+  <p>Professional quotations with GST support, revision tracking, and one-click conversion to work orders and invoices.</p>
+  <h2>Features</h2>
+  <ul><li>Auto-numbered: ZAG/Q/BRANCH/001 (branch-wise, never resets)</li><li>Professional PDF with Company Logo, Letterhead, GSTIN, Bank Details</li><li>Line Items: Description, Qty, Unit (Nos/Sqft/Rft/Mtr/Job/Set/Box), Rate per Unit</li><li>GST Calculation: Enter GST % and system auto-calculates CGST and SGST</li><li>Discount: Apply at line item or total level</li><li>Status Workflow: DRAFT → SENT → SUBMITTED → APPROVED → REJECTED</li><li>Revision History: Create revisions as R1, R2, etc. with change notes</li><li>Valid Until Date with auto-expiration</li><li>Quick Actions: [PDF] [Revise] [Ticket] [Invoice]</li></ul>
+  <h2>Step-by-Step Process</h2>
+  <div class="step"><strong>1. Create</strong><p>Click "New Quotation" → Select Customer → Enter Description → Add line items</p></div>
+  <div class="step"><strong>2. Calculate GST</strong><p>Enter GST % → System auto-splits as CGST/SGST</p></div>
+  <div class="step"><strong>3. Preview PDF</strong><p>Click "PDF" to see professional quotation before sending</p></div>
+  <div class="step"><strong>4. Update Status</strong><p>Change status as quotation progresses (SENT, SUBMITTED, APPROVED)</p></div>
+  <div class="step"><strong>5. Revise if Needed</strong><p>Use "Revise" for modifications → Creates new quote with -R1, -R2, etc.</p></div>
+  <div class="step"><strong>6. Convert</strong><p>Click [Ticket] for Work Order or [Invoice] for Tax Invoice (auto-copies all items)</p></div>
+</div>
+
+<div class="page-break">
+  <h1>8. Invoices & Tally Integration</h1>
+  <p>Tax invoices with automatic Tally sync for seamless accounting integration.</p>
+  <h2>Features</h2>
+  <ul><li>Auto-numbered: ZAG/INV/BRANCH/001</li><li>CGST/SGST with HSN/SAC codes</li><li>Items auto-copied from quotations</li><li>Status: DRAFT → SUBMITTED → PAID/PARTIAL/OVERDUE</li><li>Tally XML export with one click</li><li>Bank details and payment instructions</li><li>Collection status tracking</li></ul>
+</div>
+
+<div class="page-break">
+  <h1>9. Work Order Tickets & Designer Workflow</h1>
+  <p>Front-office to designer workflow for production and design management.</p>
+  <h2>Features</h2>
+  <ul><li>Ticket ID: ZAG/TKT/BRANCH/001</li><li>Designer assignment and queue management</li><li>Status: NEW → ASSIGNED → IN PROGRESS → COMPLETED</li><li>Printable work slip for production floor</li><li>Item details with specifications and delivery date</li><li>Designer notes and instructions</li></ul>
+</div>
+
+<div class="page-break">
+  <h1>10-11. Sales Orders & Work Orders & Production</h1>
+  <p>Manage confirmed orders through production to delivery with complete tracking.</p>
+  <h2>Sales Orders</h2>
+  <ul><li>Order ID: ZAG/SO/BRANCH/001</li><li>Auto-created from approved quotations</li><li>Status: DRAFT → CONFIRMED → PARTIAL → FULFILLED</li><li>Delivery address and date tracking</li></ul>
+  <h2>Work Orders & Production</h2>
+  <ul><li>Work Order ID: ZAG/WO/BRANCH/001</li><li>Production status tracking from assignment to completion</li><li>Quality check integration</li><li>Daily production logs and updates</li><li>Delivery scheduling and fulfillment tracking</li></ul>
+</div>
+
+<div class="page-break">
+  <h1>12. Finance — Collections & Payments</h1>
+  <p>Record and track all payments with outstanding balance management.</p>
+  <h2>Features</h2>
+  <ul><li>Record payments against invoices</li><li>Payment modes: Cash, Cheque, NEFT, UPI, Bank Transfer</li><li>Invoice status: PENDING → PARTIAL → PAID → OVERDUE</li><li>Customer outstanding balance auto-updating</li><li>Collection summary by mode and date range</li><li>UTR/Reference tracking for electronic payments</li></ul>
+</div>
+
+<div class="page-break">
+  <h1>13. HR & Attendance</h1>
+  <p>Employee management with daily attendance and leave tracking.</p>
+  <h2>Features</h2>
+  <ul><li>Employee master records with designation and department</li><li>Daily attendance (Present/Absent/Half Day/On Leave/Holiday)</li><li>Leave requests with approval workflow</li><li>Leave types: Casual, Sick, Earned</li><li>Attendance reports and analytics</li></ul>
+</div>
+
+<div class="page-break">
+  <h1>14. Field Visits & Team Reports</h1>
+  <p>Log customer visits and generate activity reports.</p>
+  <h2>Report Types</h2>
+  <ul><li>Field Visits: Location, time, purpose, outcome, next action</li><li>Daily Activity Report (DAR): Daily summary of visits and calls</li><li>Weekly Work Report (WWR): Weekly progress and challenges</li><li>Monthly MIS Report (MWR): Monthly KPIs and achievement</li></ul>
+</div>
+
+<div class="page-break">
+  <h1>15. Admin & Settings</h1>
+  <p>System administration and company configuration.</p>
+  <h2>Admin Functions</h2>
+  <ul><li>User management and role assignment</li><li>Company settings (logo, address, bank details, GST)</li><li>Branch configuration</li><li>Numbering sequence setup</li><li>Backup and restore options</li><li>Audit trail access</li></ul>
+</div>
+
+<div class="page-break">
+  <h1>16. Batch Data Import & Export</h1>
+  <p>Bulk-load and export data across all modules.</p>
+  <h2>Supported Operations</h2>
+  <ul><li>Customers import/export</li><li>Leads import/export</li><li>Employees import/export</li><li>Inventory items import/export</li><li>Export any module data as Excel</li></ul>
+</div>
+
+<div class="page-break">
+  <h1>17. Role Permission Matrix</h1>
+  <p>Access rights by user role:</p>
+  <ul><li><strong>MD:</strong> Full access to all modules</li><li><strong>AVP:</strong> Dashboard, Reports, Admin</li><li><strong>Business Manager:</strong> SALES, OPERATIONS, FINANCE</li><li><strong>Sales Executive:</strong> Leads, Opportunities, Quotations</li><li><strong>CRES:</strong> Customers, Collections, Field Visits</li><li><strong>Production:</strong> Work Orders, Production, Inventory</li><li><strong>Designer:</strong> Work Tickets, Quotations (read-only)</li><li><strong>Accounts:</strong> Invoices, Collections, Reports</li><li><strong>HR:</strong> HR, Attendance, Employees</li></ul>
+</div>
+
 <div class="page-break">
   <h1>18. Frequently Asked Questions</h1>
 
