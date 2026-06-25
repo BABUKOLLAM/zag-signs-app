@@ -265,6 +265,7 @@ const FAQS = [
 ];
 
 export default function ManualContent({ showButtons = true, printTo }: { showButtons?: boolean; printTo?: string }) {
+  const handleDownload = () => { window.open("/api/manual/pdf", "_blank"); };
   const handlePrint = () => {
     if (printTo) { window.location.href = printTo; } else { window.print(); }
   };
@@ -285,9 +286,9 @@ export default function ManualContent({ showButtons = true, printTo }: { showBut
             style={{ background: "#6B7280", color: "#fff", border: "none", borderRadius: "8px", padding: "10px 18px", cursor: "pointer", fontSize: "13px", fontWeight: 600 }}>
             ← Back
           </button>
-          <button onClick={handlePrint}
+          <button onClick={handleDownload}
             style={{ background: "#10B981", color: "#fff", border: "none", borderRadius: "8px", padding: "10px 18px", cursor: "pointer", fontSize: "13px", fontWeight: 600 }}>
-            📥 Save as PDF
+            📥 Download PDF
           </button>
           <button onClick={handlePrint}
             style={{ background: "#4F46E5", color: "#fff", border: "none", borderRadius: "8px", padding: "10px 18px", cursor: "pointer", fontSize: "13px", fontWeight: 600 }}>

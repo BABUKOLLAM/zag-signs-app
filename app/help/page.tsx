@@ -385,7 +385,7 @@ export default function HelpPage() {
               </p>
             </div>
             <button
-              onClick={() => router.push("/help/manual")}
+              onClick={() => window.open("/api/manual/pdf", "_blank")}
               className="flex items-center gap-2 bg-white text-indigo-700 font-semibold text-sm px-4 py-2.5 rounded-xl hover:bg-indigo-50 transition-colors flex-shrink-0"
             >
               <Download size={15} /> Download PDF Manual
@@ -669,9 +669,9 @@ export default function HelpPage() {
               </p>
             </div>
             <button
-              onClick={() => router.push("/manual-print")}
+              onClick={() => window.open("/api/manual/pdf", "_blank")}
               className="flex items-center gap-2 bg-white text-indigo-700 font-semibold text-sm px-5 py-2.5 rounded-xl hover:bg-indigo-50 transition-colors flex-shrink-0">
-              <Printer size={15} /> Download / Save as PDF
+              <Download size={15} /> Download PDF
             </button>
           </div>
         )}
