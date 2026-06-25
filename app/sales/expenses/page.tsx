@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { api } from "@/lib/api-client";
-import { Plus, Trash2, Printer, Send, Loader2, Paperclip, CheckCircle, Clock, XCircle, AlertCircle } from "lucide-react";
+import { uploadToDrive, isDriveConfigured } from "@/lib/google-drive";
+import { Plus, Trash2, Printer, Send, Loader2, Paperclip, CheckCircle, Clock, XCircle, AlertCircle, Upload, ExternalLink } from "lucide-react";
 
 const EXPENSE_TYPES = ["TRAVEL", "ACCOMMODATION", "FOOD", "CLIENT_ENTERTAINMENT", "COMMUNICATION", "OTHER"];
 const CATEGORIES = ["Fuel", "Toll", "Parking", "Hotel", "Food", "Client Lunch/Dinner", "Train", "Bus", "Flight", "Auto/Taxi", "Other"];
@@ -44,8 +45,33 @@ export default function ExpensesPage() {
   });
   const [items, setItems] = useState([newItem()]);
   const [files, setFiles] = useState<FileList | null>(null);
+  const [uploadedLinks, setUploadedLinks] = useState<{ name: string; url: string }[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [driveReady, setDriveReady] = useState(false);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(); checkDrive(); }, []);
+
+  const checkDrive = async () => {
+    const ok = await isDriveConfigured();
+    setDriveReady(ok);
+  };
+
+  const handleUploadFiles = async () => {
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    const links: { name: string; url: string }[] = [];
+    for (const file of Array.from(files)) {
+      try {
+        const url = await uploadToDrive(`Expense_${Date.now()}_${file.name}`, file);
+        links.push({ name: file.name, url });
+      } catch (e: any) {
+        alert(`Failed to upload ${file.name}: ${e.message}`);
+      }
+    }
+    setUploadedLinks(prev => [...prev, ...links]);
+    setFiles(null);
+    setUploading(false);
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -78,10 +104,11 @@ export default function ExpensesPage() {
     if (items.some(i => !i.date || !i.category || !i.amount)) { alert("Fill all expense item fields."); return; }
     setSubmitting(true);
     try {
-      await api.post("/api/sales/expenses", { ...form, items, status });
+      await api.post("/api/sales/expenses", { ...form, items, attachments: uploadedLinks, status });
       alert(status === "DRAFT" ? "Draft saved." : "Expense submitted successfully!");
       setShowForm(false);
       setItems([newItem()]);
+      setUploadedLinks([]);
       setForm({ expenseType: "TRAVEL", description: "", fjpId: "", advanceReceived: "" });
       fetchData();
     } catch { alert("Submission failed."); }
@@ -319,15 +346,37 @@ export default function ExpensesPage() {
               </div>
             </div>
 
-            {/* File Upload */}
+            {/* File Upload via Google Drive */}
             <div>
               <label className="text-xs font-medium text-gray-600 flex items-center gap-1">
                 <Paperclip className="w-3 h-3" /> Attach Supporting Documents
               </label>
-              <input type="file" multiple accept="image/*,application/pdf"
-                onChange={e => setFiles(e.target.files)}
-                className="mt-1 w-full text-sm text-gray-500 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
-              <p className="text-xs text-gray-400 mt-1">Upload scanned bills, receipts, tickets. Max 10 files.</p>
+              <div className="mt-1 flex items-center gap-3">
+                <input type="file" multiple accept="image/*,application/pdf"
+                  onChange={e => setFiles(e.target.files)}
+                  className="flex-1 text-sm text-gray-500 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                {files && files.length > 0 && (
+                  <button type="button" onClick={handleUploadFiles} disabled={uploading || !driveReady}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 disabled:opacity-50 whitespace-nowrap">
+                    {uploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
+                    {uploading ? "Uploading…" : `Upload ${files.length} file${files.length > 1 ? "s" : ""} to Drive`}
+                  </button>
+                )}
+              </div>
+              {!driveReady && <p className="text-xs text-amber-600 mt-1">Google Drive not configured — contact admin.</p>}
+              {uploadedLinks.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {uploadedLinks.map((f, i) => (
+                    <div key={i} className="flex items-center gap-2 text-xs text-green-700 bg-green-50 px-2 py-1 rounded">
+                      <CheckCircle className="w-3 h-3" />
+                      <a href={f.url} target="_blank" rel="noopener noreferrer" className="underline hover:text-green-900 flex items-center gap-1">
+                        {f.name} <ExternalLink className="w-2.5 h-2.5" />
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p className="text-xs text-gray-400 mt-1">Scanned bills, receipts, tickets — uploaded to Google Drive.</p>
             </div>
 
             {/* Note about hard copy */}

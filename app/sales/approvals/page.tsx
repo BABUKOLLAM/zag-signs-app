@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api-client";
-import { CheckCircle, XCircle, AlertCircle, Clock, ChevronDown, ChevronUp, Loader2, Printer } from "lucide-react";
+import { CheckCircle, XCircle, AlertCircle, Clock, ChevronDown, ChevronUp, Loader2, Paperclip, ExternalLink } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 type Tab = "pending" | "reviewed" | "all";
@@ -327,6 +327,23 @@ export default function ApprovalsPage() {
                                 {a.reason && <p className="text-xs text-gray-700 mt-1 italic">"{a.reason}"</p>}
                               </div>
                             </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Attachments */}
+                    {exp.attachments?.length > 0 && (
+                      <div>
+                        <h4 className="text-xs font-semibold text-gray-500 uppercase mb-2 flex items-center gap-1">
+                          <Paperclip className="w-3 h-3" /> Attached Documents
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {exp.attachments.map((a: any, i: number) => (
+                            <a key={i} href={a.fileUrl} target="_blank" rel="noopener noreferrer"
+                              className="flex items-center gap-1 text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100">
+                              <Paperclip className="w-3 h-3" /> {a.fileName} <ExternalLink className="w-2.5 h-2.5" />
+                            </a>
                           ))}
                         </div>
                       </div>

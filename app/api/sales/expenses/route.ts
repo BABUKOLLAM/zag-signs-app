@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { expenseType, description, fjpId, items = [], advanceReceived = 0, status = "SUBMITTED" } = body;
+    const { expenseType, description, fjpId, items = [], attachments = [], advanceReceived = 0, status = "SUBMITTED" } = body;
     const userId = (session.user as any).id;
 
     if (!expenseType || !description) {
@@ -94,6 +94,13 @@ export async function POST(req: NextRequest) {
             km: parseFloat(i.km) || 0,
             amount: parseFloat(i.amount) || 0,
             billAvailable: i.billAvailable !== false,
+          })),
+        },
+        attachments: {
+          create: attachments.map((a: any) => ({
+            fileName: a.name,
+            fileUrl: a.url,
+            fileType: a.name?.split(".").pop()?.toLowerCase() || "file",
           })),
         },
       },
