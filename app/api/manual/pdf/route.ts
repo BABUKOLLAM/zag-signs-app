@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 // The static PDF was v1.2 — this ensures the download is always current.
 export async function GET(_request: NextRequest) {
   return NextResponse.redirect(
-    new URL("/help/manual?print=1", _request.url),
+    new URL("/manual-print", _request.url),
     { status: 302 }
   );
 }
