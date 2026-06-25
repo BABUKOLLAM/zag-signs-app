@@ -165,3 +165,74 @@ export async function sendClaimsReminderEmail(
     return { success: false, error: error.message };
   }
 }
+
+interface ExpenseApprovalEmailData {
+  toEmail: string;
+  toName: string;
+  expenseNo: string;
+  stage: string;
+  action: string;
+  reason?: string;
+  amount: number;
+}
+
+const ACTION_LABELS: Record<string, string> = {
+  RECOMMENDED: "Recommended by HOD",
+  VERIFIED: "Verified by Accounts",
+  APPROVED: "Approved by CEO",
+  HOLD: "Placed on Hold",
+  REJECTED: "Rejected",
+};
+
+const ACTION_COLORS: Record<string, string> = {
+  RECOMMENDED: "#16a34a",
+  VERIFIED: "#2563eb",
+  APPROVED: "#16a34a",
+  HOLD: "#d97706",
+  REJECTED: "#dc2626",
+};
+
+export async function sendExpenseApprovalEmail(data: ExpenseApprovalEmailData) {
+  try {
+    const label = ACTION_LABELS[data.action] || data.action;
+    const color = ACTION_COLORS[data.action] || "#374151";
+
+    const html = `
+      <h2 style="color:${color};">Expense Report ${label}</h2>
+      <p>Hi ${data.toName},</p>
+      <p>Your expense report <strong>${data.expenseNo}</strong> has been updated.</p>
+
+      <div style="background:#f3f4f6;padding:15px;border-radius:8px;margin:20px 0;">
+        <p><strong>Expense No:</strong> ${data.expenseNo}</p>
+        <p><strong>Amount:</strong> ₹${data.amount.toLocaleString("en-IN")}</p>
+        <p><strong>Stage:</strong> ${data.stage}</p>
+        <p><strong>Status:</strong> <span style="color:${color};font-weight:bold;">${label}</span></p>
+        ${data.reason ? `<p><strong>Reason:</strong> ${data.reason}</p>` : ""}
+      </div>
+
+      ${data.action === "HOLD" || data.action === "REJECTED"
+        ? `<p style="color:#dc2626;">Please review the reason above and contact your HOD for clarification.</p>`
+        : `<p style="color:#16a34a;">Your expense is progressing through the approval chain.</p>`}
+
+      <p>
+        <a href="${process.env.NEXT_PUBLIC_APP_URL}/sales/expenses"
+           style="background:${color};color:white;padding:10px 20px;border-radius:5px;text-decoration:none;">
+          View Expense Report
+        </a>
+      </p>
+      <p>Best regards,<br/>ZAG SIGNS ERP</p>
+    `;
+
+    await transporter.sendMail({
+      from: `ZAG SIGNS <${process.env.EMAIL_USER}>`,
+      to: data.toEmail,
+      subject: `Expense ${data.expenseNo}: ${label}`,
+      html,
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Email send error:", error);
+    return { success: false, error: error.message };
+  }
+}

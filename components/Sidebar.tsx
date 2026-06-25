@@ -51,6 +51,14 @@ const sections = [
     ],
   },
   {
+    label: "FIELD SALES",
+    items: [
+      { href: "/sales/fjp",       label: "Journey Plan (FJP)", icon: MapPin },
+      { href: "/sales/expenses",  label: "Expense Reports",    icon: Receipt },
+      { href: "/sales/approvals", label: "Approvals",          icon: CheckSquare },
+    ],
+  },
+  {
     label: "PEOPLE & FIELD",
     items: [
       { href: "/complaints",    label: "Complaints",       icon: AlertCircle },

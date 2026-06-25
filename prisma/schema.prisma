@@ -234,6 +234,9 @@ model User {
   claimsSubmitted    SalesClaim[] @relation("SalesClaimsSubmitted")
   claimApprovals     ClaimApprovalHistory[]
   salesTargets       SalesTarget[]
+  fjpSubmissions     FJP[] @relation("FJPSubmissions")
+  expenseSubmissions ExpenseReport[] @relation("ExpenseSubmissions")
+  expenseApprovals   ExpenseApproval[] @relation("ExpenseApprovals")
 
   // Production Phase 2 Relations
   machineSchedulesAsOperator MachineSchedule[]
@@ -1070,6 +1073,133 @@ model SalesTarget {
   @@unique([userId, month])
   @@index([userId])
   @@map("sales_targets")
+}
+
+// ─── FJP & EXPENSE APPROVAL SYSTEM ───────────────────────────────────────────
+
+// Fixed Journey Plan — submitted by 27th of previous month
+model FJP {
+  id            String   @id @default(cuid())
+  fjpNo         String   @unique              // e.g. FJP-2026-07-001
+  userId        String
+  user          User     @relation("FJPSubmissions", fields: [userId], references: [id])
+  forMonth      String                        // YYYY-MM (the month the plan covers)
+  submittedDate DateTime @default(now())
+  status        String   @default("DRAFT")   // DRAFT, SUBMITTED, APPROVED, REJECTED
+  totalDays     Int      @default(0)
+  totalKm       Float    @default(0)
+  estimatedCost Float    @default(0)
+  notes         String?
+  routes        FJPRoute[]
+  expenses      ExpenseReport[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+  @@index([forMonth])
+  @@map("fjp")
+}
+
+// Individual route/day entries in the FJP
+model FJPRoute {
+  id          String   @id @default(cuid())
+  fjpId       String
+  fjp         FJP      @relation(fields: [fjpId], references: [id], onDelete: Cascade)
+  dayDate     DateTime @db.Date
+  fromPlace   String
+  toPlace     String
+  purpose     String
+  customerOrProspect String?
+  estimatedKm Float    @default(0)
+  modeOfTravel String  @default("Two Wheeler") // Two Wheeler, Four Wheeler, Bus, Train, Flight
+  createdAt   DateTime @default(now())
+
+  @@index([fjpId])
+  @@map("fjp_routes")
+}
+
+// Expense / Travel Claim Report (replaces ad-hoc SalesClaim for structured submissions)
+model ExpenseReport {
+  id              String   @id @default(cuid())
+  expenseNo       String   @unique             // e.g. EXP-2026-07-001
+  userId          String
+  user            User     @relation("ExpenseSubmissions", fields: [userId], references: [id])
+  fjpId           String?                      // optional link to FJP for travel claims
+  fjp             FJP?     @relation(fields: [fjpId], references: [id])
+  expenseType     String                       // TRAVEL, ACCOMMODATION, FOOD, CLIENT_ENTERTAINMENT, COMMUNICATION, OTHER
+  forMonth        String                       // YYYY-MM
+  submittedDate   DateTime @default(now())
+  description     String
+  totalAmount     Float
+  advanceReceived Float    @default(0)
+  netPayable      Float    @default(0)         // totalAmount - advanceReceived
+  status          String   @default("DRAFT")   // DRAFT, SUBMITTED, HOD_REVIEW, HOD_RECOMMENDED, HOD_HOLD, HOD_REJECTED, ACCOUNTS_VERIFY, ACCOUNTS_VERIFIED, ACCOUNTS_HOLD, CEO_REVIEW, APPROVED, REJECTED, HOLD
+  holdReason      String?
+  rejectionReason String?
+  approvedAmount  Float?
+  paymentDate     DateTime?
+  paymentRef      String?
+  printedAt       DateTime?
+  items           ExpenseItem[]
+  attachments     ExpenseAttachment[]
+  approvals       ExpenseApproval[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([forMonth])
+  @@map("expense_reports")
+}
+
+// Line items in an expense report
+model ExpenseItem {
+  id            String        @id @default(cuid())
+  expenseId     String
+  expense       ExpenseReport @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  date          DateTime      @db.Date
+  category      String        // Fuel, Toll, Parking, Hotel, Food, Client Lunch, Train, Bus, Flight, Other
+  description   String
+  fromPlace     String?
+  toPlace       String?
+  km            Float         @default(0)
+  amount        Float
+  billAvailable Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+
+  @@index([expenseId])
+  @@map("expense_items")
+}
+
+// Uploaded proof documents for expense reports
+model ExpenseAttachment {
+  id          String        @id @default(cuid())
+  expenseId   String
+  expense     ExpenseReport @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  fileName    String
+  fileUrl     String
+  fileType    String        // image/jpeg, application/pdf, etc.
+  uploadedAt  DateTime      @default(now())
+
+  @@index([expenseId])
+  @@map("expense_attachments")
+}
+
+// Three-tier approval chain: HOD → Accounts → CEO
+model ExpenseApproval {
+  id          String        @id @default(cuid())
+  expenseId   String
+  expense     ExpenseReport @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  stage       String        // HOD, ACCOUNTS, CEO
+  actionById  String
+  actionBy    User          @relation("ExpenseApprovals", fields: [actionById], references: [id])
+  action      String        // RECOMMENDED, VERIFIED, APPROVED, REJECTED, HOLD
+  reason      String?       // required for REJECTED or HOLD
+  createdAt   DateTime      @default(now())
+
+  @@index([expenseId])
+  @@index([stage])
+  @@map("expense_approvals")
 }
 
 // ─── PRODUCTION PHASE 2 ────────────────────────────────────────────────────────
