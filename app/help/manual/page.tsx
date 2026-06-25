@@ -14,5 +14,5 @@ export default function ManualPage() {
     }
   }, [searchParams, router]);
 
-  return <ManualContent showButtons={false} printTo="/manual-print" />;
+  return <ManualContent printTo="/manual-print" />;
 }

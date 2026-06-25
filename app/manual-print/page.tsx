@@ -7,7 +7,7 @@ import ManualContent from "@/app/help/manual/ManualContent";
 export default function ManualPrintPage() {
   // Auto-trigger print dialog once the page has fully rendered
   useEffect(() => {
-    const t = setTimeout(() => window.print(), 900);
+    const t = setTimeout(() => window.print(), 1500);
     return () => clearTimeout(t);
   }, []);
 
