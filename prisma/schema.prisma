@@ -229,6 +229,12 @@ model User {
   createdTickets     WorkOrderTicket[] @relation("TicketCreator")
   ticketEvents       WorkOrderTicketEvent[]
 
+  // Sales Module Relations
+  activityLogs       ActivityLog[] @relation("ActivityLogs")
+  claimsSubmitted    SalesClaim[] @relation("SalesClaimsSubmitted")
+  claimApprovals     ClaimApprovalHistory[]
+  salesTargets       SalesTarget[]
+
   // Production Phase 2 Relations
   machineSchedulesAsOperator MachineSchedule[]
   qualityCheckpointsAsInspector QualityCheckpoint[]
@@ -274,6 +280,7 @@ model Lead {
 
   opportunities Opportunity[]
   quotations    Quotation[]
+  activityLogs  ActivityLog[]
 
   @@map("leads")
 }
@@ -301,6 +308,7 @@ model Customer {
   fieldVisits  FieldVisit[]
   invoices     Invoice[]
   tickets      WorkOrderTicket[]
+  activityLogs ActivityLog[]
 
   @@map("customers")
 }
@@ -320,6 +328,8 @@ model Opportunity {
 
   leadId String?
   lead   Lead?   @relation(fields: [leadId], references: [id])
+
+  activityLogs ActivityLog[]
 
   @@map("opportunities")
 }
@@ -931,6 +941,135 @@ model WorkOrderTicketEvent {
 
   @@index([ticketId, createdAt])
   @@map("work_order_ticket_events")
+}
+
+// ─── SALES MODULE ──────────────────────────────────────────────────────────────
+// Activity tracking, claims management, sales targets
+
+model ActivityLog {
+  id                String   @id @default(cuid())
+  activityNo        String   @unique
+  type              String   // CALL, VISIT, EMAIL, FOLLOW_UP, OTHER
+  customerId        String?
+  customer          Customer? @relation(fields: [customerId], references: [id])
+  leadId            String?
+  lead              Lead? @relation(fields: [leadId], references: [id])
+  opportunityId     String?
+  opportunity       Opportunity? @relation(fields: [opportunityId], references: [id])
+  userId            String
+  user              User @relation("ActivityLogs", fields: [userId], references: [id])
+  startTime         DateTime
+  endTime           DateTime?
+  duration          Int?     // minutes
+  purpose           String?
+  outcome           String?
+  nextActionRequired Boolean  @default(false)
+  nextActionDate    DateTime?
+  nextActionDescription String?
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  reminders         FollowUpReminder[]
+
+  @@index([userId, createdAt])
+  @@index([customerId])
+  @@index([leadId])
+  @@index([opportunityId])
+  @@map("activity_logs")
+}
+
+model FollowUpReminder {
+  id                String   @id @default(cuid())
+  activityLogId     String
+  activityLog       ActivityLog @relation(fields: [activityLogId], references: [id], onDelete: Cascade)
+  reminderDate      DateTime
+  reminderType      String   // CALL, EMAIL, VISIT, VISIT_IF_NO_RESPONSE
+  isDone            Boolean  @default(false)
+  completedAt       DateTime?
+  completedNotes    String?
+  createdAt         DateTime @default(now())
+
+  @@index([reminderDate])
+  @@index([activityLogId])
+  @@map("follow_up_reminders")
+}
+
+model SalesClaim {
+  id                String   @id @default(cuid())
+  claimNo           String   @unique
+  claimType         String   // INCENTIVE, TRAVEL, MEETING_EXPENSE, CHARGEBACK
+  claimReason       String
+  amount            Float
+  submittedByUserId String
+  submittedBy       User @relation("SalesClaimsSubmitted", fields: [submittedByUserId], references: [id])
+  submissionWindow  String   // e.g., "2026-05"
+  submittedDate     DateTime @default(now())
+  status            String   @default("DRAFT")  // DRAFT, SUBMITTED, MANAGER_REVIEW, MANAGER_APPROVED, AVP_REVIEW, AVP_APPROVED, MD_FINAL_REVIEW, APPROVED, REJECTED
+  supportingDetails String?
+  rejectionReason   String?
+  resubmissionAllowed Boolean  @default(false)
+  approvedAmount    Float?
+  paymentDate       DateTime?
+  paymentMethod     String?
+  reference         String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  approvalHistory   ClaimApprovalHistory[]
+  attachments       ClaimAttachment[]
+
+  @@index([submittedByUserId])
+  @@index([status])
+  @@index([submissionWindow])
+  @@map("sales_claims")
+}
+
+model ClaimApprovalHistory {
+  id                String   @id @default(cuid())
+  claimId           String
+  claim             SalesClaim @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  stage             String   // MANAGER, AVP, MD
+  approvedBy        String
+  approver          User @relation(fields: [approvedBy], references: [id])
+  action            String   // APPROVED, REJECTED
+  notes             String?
+  createdAt         DateTime @default(now())
+
+  @@index([claimId])
+  @@map("claim_approval_history")
+}
+
+model ClaimAttachment {
+  id                String   @id @default(cuid())
+  claimId           String
+  claim             SalesClaim @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  url               String
+  fileName          String
+  fileType          String
+  uploadedAt        DateTime @default(now())
+
+  @@index([claimId])
+  @@map("claim_attachments")
+}
+
+model SalesTarget {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  month             String   // YYYY-MM format
+  callsTarget       Int      @default(0)
+  visitsTarget      Int      @default(0)
+  followUpsTarget   Int      @default(0)
+  ordersTarget      Int      @default(0)
+  collectionTarget  Float    @default(0)
+  revenueTarget     Float    @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([userId, month])
+  @@index([userId])
+  @@map("sales_targets")
 }
 
 // ─── PRODUCTION PHASE 2 ────────────────────────────────────────────────────────
