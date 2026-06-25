@@ -60,9 +60,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 2. Send DAR reminder emails to all sales staff daily at 6 PM
+    // 2. Send DAR reminder emails to all sales staff daily at 9 PM
     const currentHour = new Date().getHours();
-    if (currentHour === 18) {
+    if (currentHour === 21) {
       const salesUsers = await prisma.user.findMany({
         where: {
           role: { in: ["SALES_EXECUTIVE", "CRES", "BUSINESS_MANAGER"] },
@@ -96,16 +96,17 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 3. Send claims window reminder when 2-3 days left
-    const dayOfMonth = today.getDate();
-    if (dayOfMonth === 8 || dayOfMonth === 9) {
+    // 3. Send claims window reminder every weekend
+    const dayOfWeek = today.getDay();
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
       const salesUsers = await prisma.user.findMany({
         where: {
           role: { in: ["SALES_EXECUTIVE", "CRES", "BUSINESS_MANAGER"] },
         },
       });
 
-      const daysLeft = 11 - dayOfMonth;
+      const dayOfMonth = today.getDate();
+      const daysLeft = Math.max(11 - dayOfMonth, 0);
 
       for (const user of salesUsers) {
         const pendingClaims = await prisma.salesClaim.count({

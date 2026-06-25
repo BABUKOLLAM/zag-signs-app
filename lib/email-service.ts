@@ -130,7 +130,7 @@ export async function sendClaimsReminderEmail(
 
       <div style="background-color: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0;">
         <p><strong>⏰ Window Closes:</strong> 10th of this month</p>
-        <p><strong>Days Left:</strong> ${daysLeft}</p>
+        <p><strong>Days Left:</strong> ${daysLeft > 0 ? daysLeft : 'Closed'}</p>
         <p><strong>Pending Claims:</strong> ${pendingClaimsCount}</p>
       </div>
 
