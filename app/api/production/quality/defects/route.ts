@@ -1,0 +1,60 @@
+import { NextRequest } from "next/server";
+import { requireSession, ok, err } from "@/lib/api-helpers";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
+export async function GET(req: NextRequest) {
+  const session = await requireSession();
+  if (!session) return new Response(JSON.stringify(err("Unauthorized")), { status: 401 });
+
+  try {
+    const searchParams = req.nextUrl.searchParams;
+    const checkpointId = searchParams.get("checkpointId");
+    const severity = searchParams.get("severity");
+
+    const where: any = {};
+    if (checkpointId) where.checkpointId = checkpointId;
+    if (severity) where.severity = severity;
+
+    const defects = await prisma.qualityDefect.findMany({
+      where,
+      include: {
+        checkpoint: { include: { workOrder: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 300,
+    });
+
+    return new Response(JSON.stringify(ok(defects)), { status: 200 });
+  } catch (error: any) {
+    return new Response(JSON.stringify(err(error.message)), { status: 500 });
+  }
+}
+
+export async function POST(req: NextRequest) {
+  const session = await requireSession();
+  if (!session) return new Response(JSON.stringify(err("Unauthorized")), { status: 401 });
+
+  try {
+    const body = await req.json();
+
+    const defect = await prisma.qualityDefect.create({
+      data: {
+        checkpointId: body.checkpointId,
+        description: body.description,
+        severity: body.severity,
+        category: body.category,
+        correctionRequired: body.correctionRequired || true,
+        notes: body.notes || null,
+      },
+      include: {
+        checkpoint: true,
+      },
+    });
+
+    return new Response(JSON.stringify(ok(defect)), { status: 201 });
+  } catch (error: any) {
+    return new Response(JSON.stringify(err(error.message)), { status: 500 });
+  }
+}

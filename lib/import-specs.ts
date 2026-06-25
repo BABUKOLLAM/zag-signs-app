@@ -46,3 +46,23 @@ export const EMPLOYEE_COLUMNS: ColumnSpec[] = [
   { key: "dateOfJoining", label: "Date of Joining", example: "2024-04-01", hint: "Format YYYY-MM-DD." },
   { key: "salary",        label: "Salary",        example: "28000", hint: "Monthly salary, number only." },
 ];
+
+export const MACHINE_COLUMNS: ColumnSpec[] = [
+  { key: "name",         label: "Machine Name",   required: true, example: "PrintPress-01",    hint: "Equipment name / identifier." },
+  { key: "type",         label: "Type",          required: true, example: "Printing",          hint: "Machine type: Printing, Cutting, Laminating, Binding, etc." },
+  { key: "printType",    label: "Print Type",     example: "Vinyl",                            hint: "For printing machines: Cloth, Vinyl, Sticker, Paper. Leave blank for others." },
+  { key: "model",        label: "Model",          example: "HP DesignJet T-series" },
+  { key: "location",     label: "Location",       example: "Production Floor A" },
+  { key: "branch",       label: "Branch",        required: true, example: "TVM",               hint: "One of TVM, KTYM, EKM, CLT." },
+  { key: "hourlyRate",   label: "Hourly Rate",    example: "500",                              hint: "Operating cost per hour, number only." },
+  { key: "capacityPerHour", label: "Capacity/Hour", example: "10",                             hint: "Output units per hour." },
+  { key: "notes",        label: "Notes",          example: "Recently serviced" },
+];
+
+export const MATERIAL_CONSUMPTION_COLUMNS: ColumnSpec[] = [
+  { key: "workOrderId",  label: "Work Order ID", required: true, example: "WO-001",           hint: "Link to the work order." },
+  { key: "materialId",   label: "Material ID",   required: true, example: "MAT-005",          hint: "Link to the material." },
+  { key: "plannedQty",   label: "Planned Qty",   required: true, example: "10",                hint: "Estimated material needed." },
+  { key: "unit",         label: "Unit",           example: "Mtr",                              hint: "Units, Mtr, Sqft, Kg, etc. Defaults to units." },
+  { key: "notes",        label: "Notes",          example: "Vinyl with 3mm border" },
+];

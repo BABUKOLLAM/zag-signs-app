@@ -229,6 +229,11 @@ model User {
   createdTickets     WorkOrderTicket[] @relation("TicketCreator")
   ticketEvents       WorkOrderTicketEvent[]
 
+  // Production Phase 2 Relations
+  machineSchedulesAsOperator MachineSchedule[]
+  qualityCheckpointsAsInspector QualityCheckpoint[]
+  productionRejectionsApprovals ProductionRejection[]
+
   @@map("users")
 }
 
@@ -419,6 +424,10 @@ model WorkOrder {
   salesOrder   SalesOrder? @relation(fields: [salesOrderId], references: [id])
 
   productionLogs ProductionLog[]
+  materialConsumptions MaterialConsumption[]
+  schedules MachineSchedule[]
+  qualityCheckpoints QualityCheckpoint[]
+  rejections ProductionRejection[]
 
   @@map("work_orders")
 }
@@ -456,6 +465,7 @@ model Material {
   updatedAt    DateTime @updatedAt
 
   stockMovements StockMovement[]
+  consumptions MaterialConsumption[]
 
   @@map("materials")
 }
@@ -921,4 +931,178 @@ model WorkOrderTicketEvent {
 
   @@index([ticketId, createdAt])
   @@map("work_order_ticket_events")
+}
+
+// ─── PRODUCTION PHASE 2 ────────────────────────────────────────────────────────
+// Material consumption, machine scheduling, quality control
+
+model Machine {
+  id                String   @id @default(cuid())
+  machineNo         String   @unique
+  name              String
+  type              String   // e.g., "Printing", "Cutting", "Laminating"
+  printType         String?  // For printing machines: "Cloth", "Vinyl", "Sticker", "Paper"
+  model             String?
+  location          String?
+  status            String   @default("ACTIVE")  // ACTIVE, MAINTENANCE, RETIRED
+  hourlyRate        Float    @default(0)
+  capacityPerHour   Float?
+  maintenanceDueAt  DateTime?
+  branch            String   // TVM, KTYM, EKM, CLT
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  schedules         MachineSchedule[]
+  hours             MachineHours[]
+  maintenance       MachineMaintenance[]
+
+  @@index([status])
+  @@index([type])
+  @@index([branch])
+  @@map("machines")
+}
+
+model MachineSchedule {
+  id                String   @id @default(cuid())
+  scheduleNo        String   @unique
+  workOrderId       String
+  machineId         String
+  scheduledStartAt  DateTime
+  scheduledEndAt    DateTime
+  actualStartAt     DateTime?
+  actualEndAt       DateTime?
+  estimatedOutput   Int?
+  actualOutput      Int?
+  operatorId        String?
+  status            String   @default("SCHEDULED")  // SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  workOrder         WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  machine           Machine @relation(fields: [machineId], references: [id])
+  operator          User? @relation(fields: [operatorId], references: [id])
+
+  @@index([workOrderId])
+  @@index([machineId])
+  @@index([status])
+  @@map("machine_schedules")
+}
+
+model MachineHours {
+  id                String   @id @default(cuid())
+  machineId         String
+  date              DateTime @db.Date
+  totalHours        Float    @default(8)
+  productiveHours   Float    @default(0)
+  downtimeHours     Float    @default(0)
+  downtimeReason    String?
+  performancePercent Float   @default(0)
+  notes             String?
+  createdAt         DateTime @default(now())
+
+  machine           Machine @relation(fields: [machineId], references: [id], onDelete: Cascade)
+
+  @@index([machineId])
+  @@index([date])
+  @@map("machine_hours")
+}
+
+model MachineMaintenance {
+  id                String   @id @default(cuid())
+  maintenanceNo     String   @unique
+  machineId         String
+  type              String   // PREVENTIVE, CORRECTIVE, BREAKDOWN
+  dueDate           DateTime
+  completedAt       DateTime?
+  cost              Float    @default(0)
+  notes             String?
+  createdAt         DateTime @default(now())
+
+  machine           Machine @relation(fields: [machineId], references: [id], onDelete: Cascade)
+
+  @@index([machineId])
+  @@index([type])
+  @@map("machine_maintenance")
+}
+
+model MaterialConsumption {
+  id                String   @id @default(cuid())
+  consumptionNo     String   @unique
+  workOrderId       String
+  materialId        String
+  plannedQty        Float
+  actualQty         Float?
+  wastageQty        Float    @default(0)
+  unit              String   @default("units")
+  costValue         Float?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  workOrder         WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  material          Material @relation(fields: [materialId], references: [id])
+
+  @@index([workOrderId])
+  @@index([materialId])
+  @@map("material_consumptions")
+}
+
+model QualityCheckpoint {
+  id                String   @id @default(cuid())
+  checkpointNo      String   @unique
+  workOrderId       String
+  stage             String   // PRE_PRODUCTION, MID_PRODUCTION, PRE_DELIVERY
+  inspectorId       String
+  checkedAt         DateTime @default(now())
+  status            String   // PASS, FAIL, CONDITIONAL_PASS
+  remarks           String?
+  createdAt         DateTime @default(now())
+
+  workOrder         WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  inspector         User @relation(fields: [inspectorId], references: [id])
+  defects           QualityDefect[]
+
+  @@index([workOrderId])
+  @@index([stage])
+  @@index([status])
+  @@map("quality_checkpoints")
+}
+
+model QualityDefect {
+  id                String   @id @default(cuid())
+  checkpointId      String
+  description       String
+  severity          String   // MINOR, MAJOR, CRITICAL
+  category          String   // Color, Dimension, Surface, Assembly, Alignment, etc.
+  correctionRequired Boolean  @default(true)
+  correctedAt       DateTime?
+  notes             String?
+  createdAt         DateTime @default(now())
+
+  checkpoint        QualityCheckpoint @relation(fields: [checkpointId], references: [id], onDelete: Cascade)
+
+  @@index([checkpointId])
+  @@index([severity])
+  @@map("quality_defects")
+}
+
+model ProductionRejection {
+  id                String   @id @default(cuid())
+  rejectionNo       String   @unique
+  workOrderId       String
+  reason            String
+  quantity          Int
+  action            String   // REWORK, SCRAP, REPLACE
+  costImpact        Float    @default(0)
+  approvedBy        String?
+  notes             String?
+  createdAt         DateTime @default(now())
+
+  workOrder         WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  approver          User? @relation(fields: [approvedBy], references: [id])
+
+  @@index([workOrderId])
+  @@index([action])
+  @@map("production_rejections")
 }
