@@ -267,7 +267,6 @@ const FAQS = [
 ];
 
 export default function ManualContent({ showButtons = true }: { showButtons?: boolean }) {
-  const handleDownload = () => { window.open("/api/manual/pdf", "_blank"); };
   const handlePrint = () => {
     window.open("/manual-print", "zag_manual_print",
       "width=1024,height=768,toolbar=0,menubar=0,scrollbars=1,resizable=1");
@@ -289,9 +288,9 @@ export default function ManualContent({ showButtons = true }: { showButtons?: bo
             style={{ background: "#6B7280", color: "#fff", border: "none", borderRadius: "8px", padding: "10px 18px", cursor: "pointer", fontSize: "13px", fontWeight: 600 }}>
             ← Back
           </button>
-          <button onClick={handleDownload}
+          <button onClick={handlePrint}
             style={{ background: "#10B981", color: "#fff", border: "none", borderRadius: "8px", padding: "10px 18px", cursor: "pointer", fontSize: "13px", fontWeight: 600 }}>
-            📥 Download PDF
+            📥 Save as PDF
           </button>
           <button onClick={handlePrint}
             style={{ background: "#4F46E5", color: "#fff", border: "none", borderRadius: "8px", padding: "10px 18px", cursor: "pointer", fontSize: "13px", fontWeight: 600 }}>
