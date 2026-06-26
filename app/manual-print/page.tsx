@@ -1,7 +1,8 @@
 "use client";
 // Standalone print page — bare route (no AppShell/sidebar).
 // Opened in a popup by the Print button on /help/manual.
-// Waits for all images to load before triggering print so logos appear.
+// ManualContent's PRINT_STYLE overrides globals.css visibility rules.
+// Content renders visibly so the browser fully paints it before print fires.
 import { useEffect } from "react";
 import ManualContent from "@/app/help/manual/ManualContent";
 
@@ -24,14 +25,9 @@ export default function ManualPrintPage() {
         img.addEventListener("error", onSettle, { once: true });
       });
     };
-    // Give React a moment to fully render before checking images
     const t = setTimeout(triggerPrint, 800);
     return () => clearTimeout(t);
   }, []);
 
-  return (
-    <div id="zag-print-zone">
-      <ManualContent showButtons={false} />
-    </div>
-  );
+  return <ManualContent showButtons={false} />;
 }

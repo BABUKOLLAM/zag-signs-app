@@ -8,7 +8,7 @@ const VERSION_DATE = "25/06/2026";
 
 const PRINT_STYLE = `
   * { box-sizing: border-box; }
-  body, html { margin: 0; padding: 0; width: 100%; background: white !important; color: black !important; }
+  body, html { margin: 0; padding: 0; width: 100%; background: white !important; }
   @media screen { body { background: #f5f5f5; } }
   @media print {
     body * { visibility: visible !important; }
