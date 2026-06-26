@@ -12,6 +12,7 @@ const PRINT_STYLE = `
   @media screen { body { background: #f5f5f5; } }
   @media print {
     body * { visibility: visible !important; }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: white !important; }
     * { box-shadow: none !important; }
     .no-print { display: none !important; }
