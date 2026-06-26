@@ -11,9 +11,10 @@ const PRINT_STYLE = `
   body, html { margin: 0; padding: 0; width: 100%; background: white !important; color: black !important; }
   @media screen { body { background: #f5f5f5; } }
   @media print {
+    body * { visibility: visible !important; }
     body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: white !important; }
     * { box-shadow: none !important; }
-    .no-print { display: none !important; visibility: hidden !important; }
+    .no-print { display: none !important; }
     nav, aside, header, footer, [class*="sidebar"], [class*="Sidebar"], [class*="topbar"], [class*="TopBar"], [class*="bottom-nav"] { display: none !important; }
     .lg\\:ml-64 { margin-left: 0 !important; }
     .page-break { page-break-before: always; page-break-inside: avoid; }
