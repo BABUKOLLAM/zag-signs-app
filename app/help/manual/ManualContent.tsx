@@ -266,7 +266,10 @@ const FAQS = [
 
 export default function ManualContent({ showButtons = true }: { showButtons?: boolean }) {
   const handleDownload = () => { window.open("/api/manual/pdf", "_blank"); };
-  const handlePrint = () => { window.print(); };
+  const handlePrint = () => {
+    window.open("/manual-print", "zag_manual_print",
+      "width=1024,height=768,toolbar=0,menubar=0,scrollbars=1,resizable=1");
+  };
   useEffect(() => {
     const style = document.createElement("style");
     style.textContent = PRINT_STYLE;
