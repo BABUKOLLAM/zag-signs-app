@@ -264,11 +264,9 @@ const FAQS = [
   { q: "How do I log my daily activities for the DAR?", a: "Sales → Activities → 'Log Activity'. At end of day go to Sales → DAR → 'Generate Today's DAR' to auto-build the report from your logged activities." },
 ];
 
-export default function ManualContent({ showButtons = true, printTo }: { showButtons?: boolean; printTo?: string }) {
+export default function ManualContent({ showButtons = true }: { showButtons?: boolean }) {
   const handleDownload = () => { window.open("/api/manual/pdf", "_blank"); };
-  const handlePrint = () => {
-    if (printTo) { window.location.href = printTo; } else { window.print(); }
-  };
+  const handlePrint = () => { window.print(); };
   useEffect(() => {
     const style = document.createElement("style");
     style.textContent = PRINT_STYLE;

@@ -1,18 +1,18 @@
 "use client";
-import { useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
 import ManualContent from "./ManualContent";
 
 export default function ManualPage() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
+  return (
+    <>
+      {/* Screen view — with buttons */}
+      <ManualContent />
 
-  // ?print=1 → redirect to the bare print page instead of printing here (sidebar would appear)
-  useEffect(() => {
-    if (searchParams.get("print") === "1") {
-      router.replace("/manual-print");
-    }
-  }, [searchParams, router]);
-
-  return <ManualContent printTo="/manual-print" />;
+      {/* Print zone — same pattern as quotations/invoices.
+          Invisible on screen (global CSS pushes it off-screen).
+          During window.print(): body * hidden, only this div visible. */}
+      <div id="zag-print-zone">
+        <ManualContent showButtons={false} />
+      </div>
+    </>
+  );
 }
