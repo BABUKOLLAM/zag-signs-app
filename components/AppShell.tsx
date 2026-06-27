@@ -24,7 +24,7 @@ function ShellContent({ children }: { children: React.ReactNode }) {
   }, [open]);
 
   // Public, full-screen pages render without the sidebar/topbar chrome.
-  const BARE_ROUTES = ["/", "/login", "/signup", "/manual-print"];
+  const BARE_ROUTES = ["/", "/login", "/signup", "/manual-print", "/auth/approve"];
   if (BARE_ROUTES.includes(pathname)) return <>{children}</>;
 
   return (

@@ -5,7 +5,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { sendApprovalEmail } from "@/lib/email";
 
-const VALID_ROLES = ["MD","AVP","BUSINESS_MANAGER","SALES_EXECUTIVE","CRES","PRODUCTION","ACCOUNTS","HR","IT_ADMIN"];
+const VALID_ROLES = ["MD","AVP","BUSINESS_MANAGER","SALES_EXECUTIVE","CRES","PRODUCTION","ACCOUNTS","HR","IT_ADMIN","DESIGNER"];
 const VALID_BRANCHES = ["TVM","KTYM","EKM","CLT"];
 const ALL_BRANCH_ROLES = ["MD","AVP","HR","IT_ADMIN"];
 
@@ -13,6 +13,7 @@ const ROLE_LABELS: Record<string, string> = {
   MD:"MD", AVP:"AVP", BUSINESS_MANAGER:"Business Manager",
   SALES_EXECUTIVE:"Sales Executive", CRES:"CRES",
   PRODUCTION:"Production", ACCOUNTS:"Accounts", HR:"HR", IT_ADMIN:"IT Admin",
+  DESIGNER:"Designer",
 };
 
 export async function POST(request: NextRequest) {
@@ -83,9 +84,9 @@ export async function POST(request: NextRequest) {
       })
     ));
   } else {
-    // No active approvers in DB yet — log link to console
-    sendApprovalEmail({
-      toEmail:        "admin@zagsigns.com",
+    // No active approvers in DB yet — fall back to system email account
+    await sendApprovalEmail({
+      toEmail:        process.env.EMAIL_USER ?? "admin@zagsigns.com",
       toName:         "Admin",
       applicantName:  name.trim(),
       applicantEmail: normalEmail,
