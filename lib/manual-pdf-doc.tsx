@@ -175,6 +175,7 @@ const SECTIONS: Section[] = [
     ],
     tips: ["Your session stays active for 24 hours.", "Modules you do not have access to are automatically hidden from the sidebar."] },
   { num: "3", title: "End-to-End Business Workflow",
+    screen: "workflow",
     intro: "The complete business workflow follows this chain:\n\nLEAD → OPPORTUNITY → CUSTOMER → QUOTATION → WORK ORDER → SALES ORDER → INVOICE → TALLY\n\nEach step is connected. Action buttons on every row let you move forward without re-entering data:\n• Lead row: [Opp] → Opportunity | [Customer] → Customer | [Quote] → Quotation\n• Opportunity row: [Customer] → Customer | [Quote] → Quotation\n• Customer row: [Quote] → Quotation\n• Approved Quotation: [Ticket] → Work Order Ticket | [Invoice] → Tax Invoice\n• Invoice: [Tally XML] → Tally import file | [Mark Paid] → updates payment status\n\nThis design ensures zero data re-entry from lead capture to final accounting." },
   { num: "4", title: "Leads & CRM Module",
     screen: "leads",
@@ -190,6 +191,7 @@ const SECTIONS: Section[] = [
     tips: ["Leads with today's Follow-up Date appear highlighted at the top.", "Use Source = 'Referral' and note the referrer's name in Notes."],
     warning: "Do not mark a lead as WON without creating the Customer record — it breaks linkage for future orders." },
   { num: "5", title: "Opportunities Module",
+    screen: "opportunities",
     intro: "Track deal probability and pipeline value with visual funnel stages.",
     steps: [
       { step: "View the pipeline funnel", desc: "Opportunities page shows clickable stage buttons at the top with deal counts and total value." },
@@ -198,6 +200,7 @@ const SECTIONS: Section[] = [
       { step: "Convert to Customer or Quotation", desc: "Use the 'Customer' and 'Quote' action buttons on each opportunity row." },
     ], tips: ["Closed Lost deals are hidden by default. Click the 'Lost' stage filter to review them."] },
   { num: "6", title: "Customers Module",
+    screen: "customers",
     intro: "Customer master records with full transaction history.",
     steps: [
       { step: "Add a customer", desc: "Customers → 'Add Customer'. Required: Name, Company, Phone, Branch. Optional: Email, GST No, Address, Credit Limit." },
@@ -219,6 +222,7 @@ const SECTIONS: Section[] = [
     tips: ["GST: Enter GST %. CGST and SGST are each half.", "Valid Until date auto-expires the quotation."],
     warning: "Do not create multiple root quotations for the same deal. Use 'Revise' to create revised versions." },
   { num: "8", title: "Invoices & Tally Integration",
+    screen: "invoices",
     intro: "Generate Tax Invoices and sync to Tally with one click.",
     steps: [
       { step: "Create an invoice", desc: "On an approved quotation, click 'Invoice'. All data is auto-copied. Invoice No: ZAG/INV/HO/001." },
@@ -243,6 +247,7 @@ const SECTIONS: Section[] = [
     tips: ["Priority = High for rush jobs — they sort to the top of every designer's queue.", "Every status change is timestamped for turnaround time tracking."],
     warning: "Half-Done requires a reason and Done requires remarks — enforced so no job is closed without a note." },
   { num: "10", title: "Sales Orders",
+    screen: "sales-orders",
     intro: "Manage confirmed customer orders through production to delivery.",
     steps: [
       { step: "Create order", desc: "Sales Orders → 'New Order'. Link to Customer and optional Quotation. Set Delivery Date and Total Amount." },
@@ -250,6 +255,7 @@ const SECTIONS: Section[] = [
       { step: "Link work order", desc: "Once Confirmed, create a Work Order linked to this Sales Order for production tracking." },
     ], tips: ["Paid Amount updates automatically as Collections are recorded."] },
   { num: "11", title: "Work Orders & Production",
+    screen: "production",
     intro: "Job execution tracking, production logs, machine scheduling and inventory management.",
     steps: [
       { step: "Create work order", desc: "Work Orders → 'New Work Order'. Link to Sales Order. Set Description, Start Date, Due Date, Priority." },
@@ -259,6 +265,7 @@ const SECTIONS: Section[] = [
       { step: "Quality checkpoints", desc: "Production → Quality → 'New Checkpoint'. Select stage. Mark PASS, FAIL, or CONDITIONAL PASS. Log defects if failed." },
     ], tips: ["Work orders link to sales orders — sales executive sees real-time production status."] },
   { num: "12", title: "Finance — Collections & Payments",
+    screen: "collections",
     intro: "Record all payments received and track outstanding dues.",
     steps: [
       { step: "Record a payment (collection)", desc: "Collections → 'Record Payment'. Select: Customer, Invoice, Amount, Payment Mode (Cash / Cheque / NEFT / UPI), Reference No, Date." },
@@ -267,6 +274,7 @@ const SECTIONS: Section[] = [
     ],
     tips: ["Always enter UTR/reference number for NEFT and UPI payments.", "Outstanding balance updates automatically with each collection."] },
   { num: "13", title: "HR & Attendance",
+    screen: "hr",
     intro: "Employee profiles, daily attendance and leave management.",
     steps: [
       { step: "Add employee", desc: "HR & Attendance → Employees → 'Add Employee'. Required: Name, Designation, Department, Branch." },
@@ -275,6 +283,7 @@ const SECTIONS: Section[] = [
       { step: "Leave request & approval", desc: "Leave Requests → 'New Request'. HR/MD see Approve / Reject on PENDING requests." },
     ], tips: ["Attendance can be marked once per employee per day."] },
   { num: "14", title: "Field Visits, Activity Tracker & Team Reports",
+    screen: "field-visits",
     intro: "Log all customer visits, track daily sales activities, and file DAR/WWR/MWR reports for manager review.",
     steps: [
       { step: "Log a field visit", desc: "Field Visits → 'New Visit'. Required: Visit Type, Customer Name, Location, Start Time, End Time, Outcome." },
@@ -286,6 +295,7 @@ const SECTIONS: Section[] = [
     ],
     tips: ["Log every call and visit immediately — the auto-DAR depends on complete activity data.", "Automated reminder email at 9 PM for anyone who has not submitted their DAR.", "Claims window reminder email sent every Saturday and Sunday morning."] },
   { num: "15", title: "Fixed Journey Plan (FJP)",
+    screen: "fjp",
     intro: "The Fixed Journey Plan is a mandatory monthly travel schedule submitted by each sales executive before the 27th of the previous month. It lists planned customer visits day-by-day, showing route, mode of travel, estimated km, and purpose. It serves as the reference document for travel expense claims.",
     steps: [
       { step: "Open FJP form", desc: "Sidebar → FIELD SALES → Journey Plan (FJP). A banner shows the submission window status — green if open, red if the 27th deadline has passed." },
@@ -298,6 +308,7 @@ const SECTIONS: Section[] = [
     tips: ["Submit by the 27th — window closes automatically after that.", "Estimated travel cost calculated at Rs.6 per km (minimum rate)."],
     warning: "FJP submission after the 27th deadline is blocked by the system. Submit at least 2-3 days before the deadline." },
   { num: "16", title: "Expense Reports",
+    screen: "expenses",
     intro: "Sales executives submit expense reports for all out-of-pocket costs — travel, accommodation, food, client entertainment, communication, and other business expenses. Each report can reference an FJP and must have itemised bills.",
     steps: [
       { step: "Open Expense Reports", desc: "Sidebar → FIELD SALES → Expense Reports. Click 'New Expense' to open the submission form." },
@@ -311,6 +322,7 @@ const SECTIONS: Section[] = [
     tips: ["Upload all bills to Drive before submitting — attachments cannot be added after submission.", "Items without bills are accepted but flagged — Accounts may query them."],
     warning: "Always print the expense voucher, attach original hard-copy bills, and physically submit to Accounts — required for audit compliance." },
   { num: "17", title: "Three-Tier Approval Workflow",
+    screen: "approvals",
     intro: "Expense reports go through a mandatory three-stage approval before reimbursement. The chain is: HOD (Recommend) → Accounts (Verify) → CEO (Approve). Each stage can Approve, Hold, or Reject with a mandatory reason.",
     steps: [
       { step: "HOD stage — Recommend", desc: "After submission, the report lands with the HOD (Business Manager / AVP / MD). Options: Recommend (moves to Accounts), Hold (with reason), Reject (with reason)." },
@@ -323,6 +335,7 @@ const SECTIONS: Section[] = [
     tips: ["Hold means 'pause and clarify' — the submitter can clarify and resubmit if required.", "Approvers can view full approval history inside each expense card."],
     warning: "Reasons are mandatory for Hold and Reject actions. The system will not allow an action without a reason." },
   { num: "18", title: "Admin & Settings",
+    screen: "admin",
     intro: "User management, company settings and complete audit trail. MD and IT Admin only.",
     steps: [
       { step: "Add new user", desc: "Admin → User Management → 'Add User'. Enter Full Name, Email, Role, Branch, Phone. User receives a Welcome Email. Status starts as PENDING." },
@@ -333,6 +346,7 @@ const SECTIONS: Section[] = [
     ],
     warning: "Audit log entries are permanent and cannot be deleted or edited — even by the MD or IT Admin." },
   { num: "19", title: "Batch Data Import & Export",
+    screen: "import",
     intro: "Bulk-load and download data for Customers, Leads, Inventory and Employees using Excel.",
     steps: [
       { step: "Download the template", desc: "On Customers, Leads, Inventory or HR → click 'Import' → 'Download Template (.xlsx)'. Data sheet with headers ready to fill + Instructions sheet." },
@@ -562,11 +576,451 @@ function TicketsScreen() {
   );
 }
 
+function WorkflowScreen() {
+  const pipeline = [
+    { label: "Lead",        color: "#7C3AED", bg: "#EDE9FE" },
+    { label: "Opportunity", color: "#1D4ED8", bg: "#DBEAFE" },
+    { label: "Customer",    color: "#065F46", bg: "#D1FAE5" },
+    { label: "Quotation",   color: "#92400E", bg: "#FEF3C7" },
+    { label: "Work Order",  color: "#9D174D", bg: "#FCE7F3" },
+    { label: "Invoice",     color: "#374151", bg: "#F3F4F6" },
+    { label: "Tally",       color: "#14532D", bg: "#BBF7D0" },
+  ];
+  return (
+    <View wrap={false}>
+      <Text style={[s.subTitle, { marginTop: 6 }]}>Business Pipeline Flow</Text>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 2, marginBottom: 4 }}>
+        {pipeline.map((p, i) => (
+          <View key={p.label} style={{ flexDirection: "row", alignItems: "center" }}>
+            <View style={{ backgroundColor: p.bg, borderWidth: 0.5, borderColor: p.color, borderRadius: 4, paddingHorizontal: 5, paddingVertical: 4 }}>
+              <Text style={{ fontSize: 6.5, color: p.color, fontFamily: "Helvetica-Bold" }}>{p.label}</Text>
+            </View>
+            {i < pipeline.length - 1 && (
+              <Text style={{ fontSize: 9, color: c.gray4, marginHorizontal: 1 }}>›</Text>
+            )}
+          </View>
+        ))}
+      </View>
+      <Text style={s.screenCaption}>Every step is connected. Action buttons on each row let you move forward without re-entering data.</Text>
+    </View>
+  );
+}
+
+function OpportunitiesScreen() {
+  const rows = [
+    { no: "OPP-007", company: "Hotel Leela",    value: "₹2,10,000", stage: "NEGOTIATION", prob: "65%", stageC: "#92400E", stageBg: "#FEF3C7" },
+    { no: "OPP-006", company: "Metro Builders", value: "₹85,000",   stage: "PROPOSAL",    prob: "40%", stageC: "#1E40AF", stageBg: "#DBEAFE" },
+    { no: "OPP-005", company: "Anil Menon",     value: "₹38,500",   stage: "WON",         prob: "100%", stageC: "#14532D", stageBg: "#BBF7D0" },
+  ];
+  const filters = ["Qualification ₹1.2L","Proposal ₹85K","Negotiation ₹2.1L","Won ₹38.5K"];
+  return (
+    <AppWin url="opportunities" active="Leads" title="Opportunities Pipeline"
+      caption="Stage buttons at the top show deal count and total pipeline value. 'Closed Lost' is hidden by default.">
+      <View style={{ flexDirection: "row", gap: 3, marginBottom: 5 }}>
+        {filters.map((f, i) => (
+          <View key={f} style={{ backgroundColor: i === 2 ? c.indigo : "#F3F4F6", borderRadius: 10, paddingHorizontal: 5, paddingVertical: 2 }}>
+            <Text style={{ fontSize: 5.5, color: i === 2 ? "#fff" : c.gray2 }}>{f}</Text>
+          </View>
+        ))}
+      </View>
+      <View style={s.tblHead}>
+        {["Opp No","Company","Value","Stage","Prob","Actions"].map(h => <Text key={h} style={s.tblHCell}>{h}</Text>)}
+      </View>
+      {rows.map(r => (
+        <View key={r.no} style={s.tblRow}>
+          <Text style={[s.tblCell, { color: c.indigo, fontFamily: "Helvetica-Bold" }]}>{r.no}</Text>
+          <Text style={s.tblCell}>{r.company}</Text>
+          <Text style={[s.tblCell, { fontFamily: "Helvetica-Bold" }]}>{r.value}</Text>
+          <View style={s.tblCell}><Badge label={r.stage} color={r.stageC} bg={r.stageBg} /></View>
+          <Text style={s.tblCell}>{r.prob}</Text>
+          <Text style={[s.tblCell, { color: c.indigo }]}>Customer · Quote</Text>
+        </View>
+      ))}
+    </AppWin>
+  );
+}
+
+function CustomersScreen() {
+  const rows = [
+    { no: "C-001", name: "Hotel Leela",    phone: "0471-234567",  gst: "32AAACH8145R1ZL", branch: "TVM" },
+    { no: "C-002", name: "Metro Builders", phone: "94471 22113",  gst: "32AABCM4456L1Z4", branch: "EKM" },
+    { no: "C-003", name: "Anil Menon",     phone: "98470 12345",  gst: "—",               branch: "TVM" },
+  ];
+  return (
+    <AppWin url="customers" active="Leads" title="Customers"
+      caption="Customer master list. 'Quote' on any row opens a new quotation pre-filled with customer details.">
+      <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 3, marginBottom: 4 }}>
+        {["Import","Excel","+ Add Customer"].map((btn, i) => (
+          <View key={btn} style={{ backgroundColor: i === 2 ? c.indigo : "#fff", borderRadius: 3, borderWidth: 0.5, borderColor: i === 2 ? c.indigo : c.gray5, paddingHorizontal: 5, paddingVertical: 2 }}>
+            <Text style={{ fontSize: 5.5, color: i === 2 ? "#fff" : c.gray2, fontFamily: "Helvetica-Bold" }}>{btn}</Text>
+          </View>
+        ))}
+      </View>
+      <View style={s.tblHead}>
+        {["Cust No","Name","Phone","GST No","Branch","Actions"].map(h => <Text key={h} style={s.tblHCell}>{h}</Text>)}
+      </View>
+      {rows.map(r => (
+        <View key={r.no} style={s.tblRow}>
+          <Text style={[s.tblCell, { color: c.indigo, fontFamily: "Helvetica-Bold" }]}>{r.no}</Text>
+          <Text style={[s.tblCell, { fontFamily: "Helvetica-Bold" }]}>{r.name}</Text>
+          <Text style={s.tblCell}>{r.phone}</Text>
+          <Text style={s.tblCell}>{r.gst}</Text>
+          <Text style={s.tblCell}>{r.branch}</Text>
+          <Text style={[s.tblCell, { color: c.indigo }]}>View · Quote</Text>
+        </View>
+      ))}
+    </AppWin>
+  );
+}
+
+function InvoicesScreen() {
+  const rows = [
+    { no: "ZAG/INV/TVM/007", cust: "Hotel Leela",    date: "21 Jun 2026", amt: "₹1,45,800", status: "PAID",    sc: "#14532D", sb: "#BBF7D0" },
+    { no: "ZAG/INV/TVM/006", cust: "Anil Menon",     date: "18 Jun 2026", amt: "₹44,840",  status: "OVERDUE", sc: "#991B1B", sb: "#FEE2E2" },
+    { no: "ZAG/INV/EKM/012", cust: "Metro Builders", date: "15 Jun 2026", amt: "₹2,46,600", status: "PENDING", sc: "#92400E", sb: "#FEF3C7" },
+  ];
+  return (
+    <AppWin url="invoices" active="Quotations" title="Tax Invoices"
+      caption="'Tally XML' downloads the import file ready for TallyPrime. 'Mark Paid' updates payment status instantly.">
+      <View style={s.tblHead}>
+        {["Invoice No","Customer","Date","Amount","Status","Actions"].map(h => <Text key={h} style={s.tblHCell}>{h}</Text>)}
+      </View>
+      {rows.map(r => (
+        <View key={r.no} style={s.tblRow}>
+          <Text style={[s.tblCell, { color: c.indigo, fontFamily: "Helvetica-Bold" }]}>{r.no}</Text>
+          <Text style={s.tblCell}>{r.cust}</Text>
+          <Text style={s.tblCell}>{r.date}</Text>
+          <Text style={[s.tblCell, { fontFamily: "Helvetica-Bold" }]}>{r.amt}</Text>
+          <View style={s.tblCell}><Badge label={r.status} color={r.sc} bg={r.sb} /></View>
+          <Text style={[s.tblCell, { color: c.indigo }]}>PDF · Tally XML · Pay</Text>
+        </View>
+      ))}
+    </AppWin>
+  );
+}
+
+function SalesOrdersScreen() {
+  const rows = [
+    { no: "SO-007", cust: "Hotel Leela",    delivery: "30 Jun 2026", amt: "₹1,24,500", status: "IN PRODUCTION", sc: "#9D174D", sb: "#FCE7F3" },
+    { no: "SO-006", cust: "Metro Builders", delivery: "25 Jun 2026", amt: "₹2,10,000", status: "READY",         sc: "#065F46", sb: "#D1FAE5" },
+    { no: "SO-005", cust: "Anil Menon",     delivery: "20 Jun 2026", amt: "₹38,500",  status: "INVOICED",      sc: "#1E40AF", sb: "#DBEAFE" },
+  ];
+  return (
+    <AppWin url="sales-orders" active="Quotations" title="Sales Orders"
+      caption="Tracks confirmed orders from production through installation to billing. Status updates in real time.">
+      <View style={s.tblHead}>
+        {["Order No","Customer","Delivery","Amount","Status","Actions"].map(h => <Text key={h} style={s.tblHCell}>{h}</Text>)}
+      </View>
+      {rows.map(r => (
+        <View key={r.no} style={s.tblRow}>
+          <Text style={[s.tblCell, { color: c.indigo, fontFamily: "Helvetica-Bold" }]}>{r.no}</Text>
+          <Text style={s.tblCell}>{r.cust}</Text>
+          <Text style={s.tblCell}>{r.delivery}</Text>
+          <Text style={[s.tblCell, { fontFamily: "Helvetica-Bold" }]}>{r.amt}</Text>
+          <View style={s.tblCell}><Badge label={r.status} color={r.sc} bg={r.sb} /></View>
+          <Text style={[s.tblCell, { color: c.indigo }]}>View · Invoice</Text>
+        </View>
+      ))}
+    </AppWin>
+  );
+}
+
+function ProductionScreen() {
+  const rows = [
+    { no: "WO-007", cust: "Hotel Leela",    job: "3D Channel Letters", machine: "Printer-1", qc: "PASS",    status: "DISPATCH READY", sc: "#065F46", sb: "#D1FAE5" },
+    { no: "WO-006", cust: "Metro Builders", job: "Vinyl Wrap",          machine: "Press-2",   qc: "PENDING", status: "IN PROGRESS",    sc: "#9D174D", sb: "#FCE7F3" },
+    { no: "WO-005", cust: "Anil Menon",     job: "Flex Banner",         machine: "Press-1",   qc: "FAIL",    status: "REWORK",         sc: "#991B1B", sb: "#FEE2E2" },
+  ];
+  return (
+    <AppWin url="production" active="Work Orders" title="Work Orders & Production"
+      caption="Production board. Each job shows machine assigned, materials consumed, and QC checkpoint status.">
+      <View style={s.tblHead}>
+        {["WO No","Customer","Job","Machine","QC","Status"].map(h => <Text key={h} style={s.tblHCell}>{h}</Text>)}
+      </View>
+      {rows.map(r => (
+        <View key={r.no} style={s.tblRow}>
+          <Text style={[s.tblCell, { color: c.indigo, fontFamily: "Helvetica-Bold" }]}>{r.no}</Text>
+          <Text style={s.tblCell}>{r.cust}</Text>
+          <Text style={s.tblCell}>{r.job}</Text>
+          <Text style={s.tblCell}>{r.machine}</Text>
+          <Text style={[s.tblCell, { color: r.qc === "PASS" ? "#065F46" : r.qc === "FAIL" ? "#991B1B" : c.gray3, fontFamily: "Helvetica-Bold" }]}>{r.qc}</Text>
+          <View style={s.tblCell}><Badge label={r.status} color={r.sc} bg={r.sb} /></View>
+        </View>
+      ))}
+    </AppWin>
+  );
+}
+
+function CollectionsScreen() {
+  const rows = [
+    { ref: "COL-021", cust: "Hotel Leela",    inv: "ZAG/INV/TVM/007", amt: "₹1,45,800", mode: "NEFT",   mC: "#1E40AF", mB: "#DBEAFE", date: "21 Jun 26" },
+    { ref: "COL-020", cust: "Anil Menon",     inv: "ZAG/INV/TVM/005", amt: "₹22,000",  mode: "UPI",    mC: "#065F46", mB: "#D1FAE5", date: "19 Jun 26" },
+    { ref: "COL-019", cust: "Metro Builders", inv: "ZAG/INV/EKM/010", amt: "₹50,000",  mode: "CHEQUE", mC: "#374151", mB: "#F3F4F6", date: "16 Jun 26" },
+  ];
+  return (
+    <AppWin url="collections" active="Quotations" title="Finance — Collections"
+      caption="All payments received, newest first. Invoice balances update automatically after each collection entry.">
+      <View style={{ flexDirection: "row", justifyContent: "flex-end", marginBottom: 4 }}>
+        <View style={{ backgroundColor: c.indigo, borderRadius: 3, paddingHorizontal: 5, paddingVertical: 2 }}>
+          <Text style={{ fontSize: 5.5, color: "#fff", fontFamily: "Helvetica-Bold" }}>+ Record Payment</Text>
+        </View>
+      </View>
+      <View style={s.tblHead}>
+        {["Ref No","Customer","Invoice","Amount","Mode","Date"].map(h => <Text key={h} style={s.tblHCell}>{h}</Text>)}
+      </View>
+      {rows.map(r => (
+        <View key={r.ref} style={s.tblRow}>
+          <Text style={[s.tblCell, { color: c.indigo, fontFamily: "Helvetica-Bold" }]}>{r.ref}</Text>
+          <Text style={s.tblCell}>{r.cust}</Text>
+          <Text style={[s.tblCell, { fontSize: 5 }]}>{r.inv}</Text>
+          <Text style={[s.tblCell, { fontFamily: "Helvetica-Bold" }]}>{r.amt}</Text>
+          <View style={s.tblCell}><Badge label={r.mode} color={r.mC} bg={r.mB} /></View>
+          <Text style={s.tblCell}>{r.date}</Text>
+        </View>
+      ))}
+    </AppWin>
+  );
+}
+
+function HRScreen() {
+  const rows = [
+    { emp: "Rahul Kumar",  date: "27 Jun 2026", status: "PRESENT",  sc: "#065F46", sb: "#D1FAE5" },
+    { emp: "Anitha Menon", date: "27 Jun 2026", status: "ON LEAVE", sc: "#1E40AF", sb: "#DBEAFE" },
+    { emp: "Sanjay Pillai",date: "27 Jun 2026", status: "ABSENT",   sc: "#991B1B", sb: "#FEE2E2" },
+  ];
+  return (
+    <AppWin url="hr" active="HR" title="HR & Attendance"
+      caption="Mark daily attendance per employee. Leave requests are approved by HR before the attendance record updates.">
+      <View style={{ flexDirection: "row", justifyContent: "flex-end", marginBottom: 4 }}>
+        <View style={{ backgroundColor: c.indigo, borderRadius: 3, paddingHorizontal: 5, paddingVertical: 2 }}>
+          <Text style={{ fontSize: 5.5, color: "#fff", fontFamily: "Helvetica-Bold" }}>+ Mark Attendance</Text>
+        </View>
+      </View>
+      <View style={s.tblHead}>
+        {["Employee","Date","Status","Leave Balance","Action"].map(h => <Text key={h} style={s.tblHCell}>{h}</Text>)}
+      </View>
+      {rows.map((r, i) => (
+        <View key={r.emp} style={s.tblRow}>
+          <Text style={[s.tblCell, { fontFamily: "Helvetica-Bold" }]}>{r.emp}</Text>
+          <Text style={s.tblCell}>{r.date}</Text>
+          <View style={s.tblCell}><Badge label={r.status} color={r.sc} bg={r.sb} /></View>
+          <Text style={s.tblCell}>{i === 1 ? "0 remaining" : "8 days"}</Text>
+          <Text style={[s.tblCell, { color: c.indigo }]}>Edit</Text>
+        </View>
+      ))}
+    </AppWin>
+  );
+}
+
+function FieldVisitsScreen() {
+  const rows = [
+    { type: "Sales Visit", cust: "Hotel Leela",   loc: "Kovalam",  time: "10:00–11:30", outcome: "Demo done" },
+    { type: "Follow-up",   cust: "Metro Builders",loc: "Edapally", time: "13:00–14:00", outcome: "Quote requested" },
+    { type: "Cold Call",   cust: "New Prospect",  loc: "Vyttila",  time: "15:00–15:30", outcome: "Callback next week" },
+  ];
+  return (
+    <AppWin url="field-visits" active="HR" title="Field Visits"
+      caption="Every logged visit feeds into the Daily Activity Report (DAR) automatically. Log immediately after each visit.">
+      <View style={{ flexDirection: "row", justifyContent: "flex-end", marginBottom: 4 }}>
+        <View style={{ backgroundColor: c.indigo, borderRadius: 3, paddingHorizontal: 5, paddingVertical: 2 }}>
+          <Text style={{ fontSize: 5.5, color: "#fff", fontFamily: "Helvetica-Bold" }}>+ New Visit</Text>
+        </View>
+      </View>
+      <View style={s.tblHead}>
+        {["Type","Customer","Location","Time","Outcome"].map(h => <Text key={h} style={s.tblHCell}>{h}</Text>)}
+      </View>
+      {rows.map((r, i) => (
+        <View key={i} style={s.tblRow}>
+          <Text style={[s.tblCell, { color: c.indigo }]}>{r.type}</Text>
+          <Text style={s.tblCell}>{r.cust}</Text>
+          <Text style={s.tblCell}>{r.loc}</Text>
+          <Text style={s.tblCell}>{r.time}</Text>
+          <Text style={s.tblCell}>{r.outcome}</Text>
+        </View>
+      ))}
+    </AppWin>
+  );
+}
+
+function FJPScreen() {
+  const rows = [
+    { date: "01 Jul", from: "Trivandrum", to: "Kovalam",  cust: "Hotel Leela",    purpose: "Demo & Quote", mode: "Car", km: "28" },
+    { date: "02 Jul", from: "Kovalam",    to: "Attingal", cust: "Attingal Stores",purpose: "Follow-up",    mode: "Car", km: "35" },
+    { date: "03 Jul", from: "Trivandrum", to: "Varkala",  cust: "New Prospect",   purpose: "Cold Call",    mode: "Car", km: "52" },
+  ];
+  return (
+    <AppWin url="fjp" active="HR" title="Fixed Journey Plan — July 2026"
+      caption="Submit the monthly visit schedule before the 27th. System blocks late submission. Cost estimated at ₹6/km.">
+      <View style={s.tblHead}>
+        {["Date","From","To","Customer","Purpose","Mode","KM"].map(h => <Text key={h} style={s.tblHCell}>{h}</Text>)}
+      </View>
+      {rows.map((r, i) => (
+        <View key={i} style={s.tblRow}>
+          <Text style={[s.tblCell, { fontFamily: "Helvetica-Bold" }]}>{r.date}</Text>
+          <Text style={s.tblCell}>{r.from}</Text>
+          <Text style={s.tblCell}>{r.to}</Text>
+          <Text style={s.tblCell}>{r.cust}</Text>
+          <Text style={s.tblCell}>{r.purpose}</Text>
+          <Text style={s.tblCell}>{r.mode}</Text>
+          <Text style={[s.tblCell, { fontFamily: "Helvetica-Bold" }]}>{r.km}</Text>
+        </View>
+      ))}
+      <View style={{ flexDirection: "row", justifyContent: "flex-end", marginTop: 4, gap: 10 }}>
+        <Text style={{ fontSize: 6, color: c.gray2 }}>Total: 115 km</Text>
+        <Text style={{ fontSize: 6, fontFamily: "Helvetica-Bold", color: c.indigo }}>Est. Cost: ₹690</Text>
+      </View>
+    </AppWin>
+  );
+}
+
+function ExpensesScreen() {
+  const rows = [
+    { date: "01 Jul", type: "Travel",       desc: "Trivandrum → Kovalam",  km: "28 km", amt: "₹168" },
+    { date: "01 Jul", type: "Food",         desc: "Client lunch — Hotel Leela", km: "—",  amt: "₹850" },
+    { date: "02 Jul", type: "Travel",       desc: "Kovalam → Attingal",    km: "35 km", amt: "₹210" },
+  ];
+  return (
+    <AppWin url="expenses" active="HR" title="Expense Report — July 2026"
+      caption="Itemised expense claim with bill upload to Google Drive. Flows to HOD → Accounts → CEO for approval.">
+      <View style={s.tblHead}>
+        {["Date","Type","Description","KM","Amount"].map(h => <Text key={h} style={s.tblHCell}>{h}</Text>)}
+      </View>
+      {rows.map((r, i) => (
+        <View key={i} style={s.tblRow}>
+          <Text style={s.tblCell}>{r.date}</Text>
+          <Text style={[s.tblCell, { color: c.indigo }]}>{r.type}</Text>
+          <Text style={s.tblCell}>{r.desc}</Text>
+          <Text style={s.tblCell}>{r.km}</Text>
+          <Text style={[s.tblCell, { fontFamily: "Helvetica-Bold" }]}>{r.amt}</Text>
+        </View>
+      ))}
+      <View style={{ flexDirection: "row", justifyContent: "flex-end", marginTop: 4, gap: 8, borderTopWidth: 0.5, borderTopColor: c.gray5, paddingTop: 3 }}>
+        <Text style={{ fontSize: 6, color: c.gray2 }}>Total: ₹1,228</Text>
+        <Text style={{ fontSize: 6, color: c.gray2 }}>Advance: ₹500</Text>
+        <Text style={{ fontSize: 6, fontFamily: "Helvetica-Bold", color: c.indigo }}>Net Payable: ₹728</Text>
+      </View>
+    </AppWin>
+  );
+}
+
+function ApprovalsScreen() {
+  const stages = [
+    { abbr: "HOD", label: "HOD",      role: "Business Manager", status: "RECOMMENDED", date: "22 Jun", sc: "#065F46", sb: "#D1FAE5" },
+    { abbr: "AC",  label: "Accounts", role: "Accounts Dept",    status: "VERIFIED",    date: "23 Jun", sc: "#1E40AF", sb: "#DBEAFE" },
+    { abbr: "MD",  label: "CEO / MD", role: "Final Approver",   status: "PENDING",     date: "—",      sc: "#92400E", sb: "#FEF3C7" },
+  ];
+  return (
+    <AppWin url="approvals" active="HR" title="Expense Approval — EXP-021"
+      caption="Three mandatory stages: HOD (Recommend) → Accounts (Verify) → CEO (Approve). Reasons required for Hold/Reject.">
+      <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-around", paddingVertical: 6 }}>
+        {stages.map((st, i) => (
+          <View key={st.label} style={{ flexDirection: "row", alignItems: "flex-start" }}>
+            <View style={{ alignItems: "center", width: 65 }}>
+              <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: st.sb, borderWidth: 1, borderColor: st.sc, alignItems: "center", justifyContent: "center", marginBottom: 3 }}>
+                <Text style={{ fontSize: 7.5, fontFamily: "Helvetica-Bold", color: st.sc }}>{st.abbr}</Text>
+              </View>
+              <Text style={{ fontSize: 6.5, fontFamily: "Helvetica-Bold", color: c.gray1, textAlign: "center" }}>{st.label}</Text>
+              <Text style={{ fontSize: 5.5, color: c.gray3, textAlign: "center", marginBottom: 3 }}>{st.role}</Text>
+              <View style={{ backgroundColor: st.sb, borderRadius: 3, paddingHorizontal: 4, paddingVertical: 2, marginBottom: 2 }}>
+                <Text style={{ fontSize: 5.5, color: st.sc, fontFamily: "Helvetica-Bold" }}>{st.status}</Text>
+              </View>
+              <Text style={{ fontSize: 5.5, color: c.gray4 }}>{st.date}</Text>
+            </View>
+            {i < stages.length - 1 && (
+              <View style={{ paddingTop: 10, paddingHorizontal: 4 }}>
+                <Text style={{ fontSize: 12, color: c.gray4 }}>›</Text>
+              </View>
+            )}
+          </View>
+        ))}
+      </View>
+      <View style={{ backgroundColor: "#FFFBEB", borderWidth: 0.5, borderColor: "#FDE68A", borderRadius: 3, padding: 5, marginTop: 2 }}>
+        <Text style={{ fontSize: 6, color: "#92400E" }}>⚠  CEO action pending — ₹1,228 claim by Rahul Kumar awaiting final approval.</Text>
+      </View>
+    </AppWin>
+  );
+}
+
+function AdminScreen() {
+  const rows = [
+    { name: "Rahul Kumar",  email: "rahul@zagsigns.com",  role: "SALES",    branch: "TVM", status: "ACTIVE",  sc: "#065F46", sb: "#D1FAE5" },
+    { name: "Anitha Menon", email: "anitha@zagsigns.com", role: "DESIGNER", branch: "TVM", status: "ACTIVE",  sc: "#065F46", sb: "#D1FAE5" },
+    { name: "New User",     email: "new@zagsigns.com",    role: "SALES",    branch: "EKM", status: "PENDING", sc: "#92400E", sb: "#FEF3C7" },
+  ];
+  return (
+    <AppWin url="admin/users" active="Dashboard" title="Admin — User Management"
+      caption="Add users, assign roles and branches. PENDING users must be approved before they can log in.">
+      <View style={{ flexDirection: "row", justifyContent: "flex-end", marginBottom: 4 }}>
+        <View style={{ backgroundColor: c.indigo, borderRadius: 3, paddingHorizontal: 5, paddingVertical: 2 }}>
+          <Text style={{ fontSize: 5.5, color: "#fff", fontFamily: "Helvetica-Bold" }}>+ Add User</Text>
+        </View>
+      </View>
+      <View style={s.tblHead}>
+        {["Name","Email","Role","Branch","Status","Actions"].map(h => <Text key={h} style={s.tblHCell}>{h}</Text>)}
+      </View>
+      {rows.map(r => (
+        <View key={r.name} style={s.tblRow}>
+          <Text style={[s.tblCell, { fontFamily: "Helvetica-Bold" }]}>{r.name}</Text>
+          <Text style={[s.tblCell, { fontSize: 5.5 }]}>{r.email}</Text>
+          <Text style={[s.tblCell, { color: c.indigo }]}>{r.role}</Text>
+          <Text style={s.tblCell}>{r.branch}</Text>
+          <View style={s.tblCell}><Badge label={r.status} color={r.sc} bg={r.sb} /></View>
+          <Text style={[s.tblCell, { color: c.indigo }]}>Edit · Approve</Text>
+        </View>
+      ))}
+    </AppWin>
+  );
+}
+
+function ImportScreen() {
+  const previewRows = [
+    ["Priya Nair",    "94952 33110", "Hotel Leela",    "TVM", "Walk-in"],
+    ["Sanjay Pillai", "98470 55120", "Metro Builders", "EKM", "Referral"],
+  ];
+  return (
+    <AppWin url="customers?import=1" active="Leads" title="Batch Import — Customers"
+      caption="Step 1: Download template. Step 2: Fill data. Step 3: Upload and preview. Step 4: Click Import.">
+      <View style={{ borderWidth: 1.5, borderStyle: "dashed", borderColor: c.indigo, borderRadius: 4, padding: 8, alignItems: "center", marginBottom: 5, backgroundColor: "#F5F3FF" }}>
+        <Text style={{ fontSize: 7, color: c.indigo, fontFamily: "Helvetica-Bold", marginBottom: 2 }}>Drop Excel file here or click to choose</Text>
+        <Text style={{ fontSize: 6, color: c.gray3 }}>Maximum 2,000 rows · .xlsx format only</Text>
+      </View>
+      <Text style={{ fontSize: 6, fontFamily: "Helvetica-Bold", color: c.gray1, marginBottom: 2 }}>Preview — 2 rows ready · 0 errors</Text>
+      <View style={s.tblHead}>
+        {["Name","Phone","Company","Branch","Source"].map(h => <Text key={h} style={s.tblHCell}>{h}</Text>)}
+      </View>
+      {previewRows.map((row, i) => (
+        <View key={i} style={[s.tblRow, { backgroundColor: i % 2 === 1 ? "#F9FAFB" : "#fff" }]}>
+          {row.map((cell, j) => <Text key={j} style={s.tblCell}>{cell}</Text>)}
+        </View>
+      ))}
+      <View style={{ flexDirection: "row", justifyContent: "flex-end", marginTop: 5 }}>
+        <View style={{ backgroundColor: c.indigo, borderRadius: 3, paddingHorizontal: 8, paddingVertical: 3 }}>
+          <Text style={{ fontSize: 6.5, color: "#fff", fontFamily: "Helvetica-Bold" }}>Import 2 Records</Text>
+        </View>
+      </View>
+    </AppWin>
+  );
+}
+
 function ScreenForSection({ screen }: { screen: string }) {
-  if (screen === "dashboard")  return <DashboardScreen />;
-  if (screen === "leads")      return <LeadsScreen />;
-  if (screen === "quotations") return <QuotationsScreen />;
-  if (screen === "tickets")    return <TicketsScreen />;
+  if (screen === "dashboard")    return <DashboardScreen />;
+  if (screen === "leads")        return <LeadsScreen />;
+  if (screen === "quotations")   return <QuotationsScreen />;
+  if (screen === "tickets")      return <TicketsScreen />;
+  if (screen === "workflow")     return <WorkflowScreen />;
+  if (screen === "opportunities") return <OpportunitiesScreen />;
+  if (screen === "customers")    return <CustomersScreen />;
+  if (screen === "invoices")     return <InvoicesScreen />;
+  if (screen === "sales-orders") return <SalesOrdersScreen />;
+  if (screen === "production")   return <ProductionScreen />;
+  if (screen === "collections")  return <CollectionsScreen />;
+  if (screen === "hr")           return <HRScreen />;
+  if (screen === "field-visits") return <FieldVisitsScreen />;
+  if (screen === "fjp")          return <FJPScreen />;
+  if (screen === "expenses")     return <ExpensesScreen />;
+  if (screen === "approvals")    return <ApprovalsScreen />;
+  if (screen === "admin")        return <AdminScreen />;
+  if (screen === "import")       return <ImportScreen />;
   return null;
 }
 
