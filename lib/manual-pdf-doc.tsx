@@ -40,6 +40,43 @@ const s = StyleSheet.create({
   coverMeta:     { fontSize: 8.5, color: c.gray4, marginBottom: 2, textAlign: "center" },
   coverFooter:   { fontSize: 8, color: c.gray3, marginTop: 20 },
 
+  // Cover banner
+  coverBand:     { position: "absolute", top: 0, left: 0, right: 0, height: 10, backgroundColor: c.indigo },
+  coverBandBot:  { position: "absolute", bottom: 0, left: 0, right: 0, height: 6, backgroundColor: c.indigo },
+
+  // Screen mockup
+  appWin:        { borderWidth: 0.5, borderColor: c.gray5, borderRadius: 4, overflow: "hidden", marginBottom: 10 },
+  titleBar:      { backgroundColor: "#1F2937", flexDirection: "row", padding: 4, paddingHorizontal: 6, alignItems: "center" },
+  trafficR:      { width: 5, height: 5, borderRadius: 2.5, backgroundColor: "#EF4444", marginRight: 3 },
+  trafficY:      { width: 5, height: 5, borderRadius: 2.5, backgroundColor: "#F59E0B", marginRight: 3 },
+  trafficG:      { width: 5, height: 5, borderRadius: 2.5, backgroundColor: "#10B981", marginRight: 6 },
+  urlBar:        { flex: 1, backgroundColor: "#374151", borderRadius: 2, padding: 2, paddingHorizontal: 5 },
+  urlTxt:        { fontSize: 5, color: "#9CA3AF" },
+  appBody:       { flexDirection: "row" },
+  sideNav:       { width: 52, backgroundColor: "#111827", padding: 5 },
+  sideTitle:     { color: "#FFFFFF", fontSize: 6, fontFamily: "Helvetica-Bold", marginBottom: 5 },
+  navRow:        { borderRadius: 2, padding: 2, paddingHorizontal: 3, marginBottom: 2 },
+  navRowOn:      { backgroundColor: c.indigo },
+  navTxt:        { fontSize: 5, color: "#94A3B8" },
+  navTxtOn:      { fontSize: 5, color: "#FFFFFF", fontFamily: "Helvetica-Bold" },
+  appContent:    { flex: 1, padding: 7, backgroundColor: "#F8FAFC" },
+  appCtTitle:    { fontSize: 7, fontFamily: "Helvetica-Bold", color: "#111827", marginBottom: 5 },
+  kpiRow:        { flexDirection: "row", gap: 4, marginBottom: 5 },
+  kpiCard:       { flex: 1, borderWidth: 0.5, borderColor: c.gray5, borderRadius: 3, padding: 4, backgroundColor: "#fff" },
+  kpiLbl:        { fontSize: 5.5, color: c.gray3, marginBottom: 2 },
+  kpiVal:        { fontSize: 8, fontFamily: "Helvetica-Bold", color: "#111827" },
+  kpiBar:        { height: 1.5, borderRadius: 1, marginTop: 3 },
+  chartRow:      { flexDirection: "row", alignItems: "flex-end", gap: 3, marginTop: 3 },
+  chartBar:      { width: 16, borderRadius: 1 },
+  chartLbl:      { fontSize: 5, color: c.gray4, marginTop: 2 },
+  tblHead:       { flexDirection: "row", backgroundColor: "#F9FAFB", borderBottomWidth: 0.5, borderBottomColor: c.gray5, padding: 3, paddingHorizontal: 4 },
+  tblHCell:      { flex: 1, fontSize: 6, color: c.gray3, fontFamily: "Helvetica-Bold" },
+  tblRow:        { flexDirection: "row", borderBottomWidth: 0.5, borderBottomColor: "#F3F4F6", padding: 3, paddingHorizontal: 4 },
+  tblCell:       { flex: 1, fontSize: 6, color: c.gray2 },
+  badge:         { borderRadius: 3, paddingHorizontal: 4, paddingVertical: 1.5 },
+  badgeTxt:      { fontSize: 5.5, fontFamily: "Helvetica-Bold" },
+  screenCaption: { fontSize: 7.5, color: c.gray3, fontStyle: "italic", textAlign: "center", marginTop: 2, marginBottom: 8 },
+
   // Section headings
   sectionTitle:  { fontSize: 14, fontFamily: "Helvetica-Bold", color: c.indigo, paddingBottom: 5, borderBottomWidth: 1.5, borderBottomColor: c.gray5, marginBottom: 10 },
   subTitle:      { fontSize: 9, fontFamily: "Helvetica-Bold", color: c.gray2, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 7 },
@@ -120,12 +157,13 @@ const TOC = [
 ];
 
 interface Step { step: string; desc: string; }
-interface Section { num: string; title: string; intro: string; steps?: Step[]; tips?: string[]; warning?: string; }
+interface Section { num: string; title: string; intro: string; steps?: Step[]; tips?: string[]; warning?: string; screen?: string; }
 
 const SECTIONS: Section[] = [
   { num: "1", title: "Introduction & System Overview",
     intro: "ZAG SIGNS ERP is a cloud-based Enterprise Resource Planning system built exclusively for ZAG SIGNS and its branches. It manages the complete business lifecycle — from capturing a sales lead to issuing a Tax Invoice and syncing with Tally — in one integrated platform.\n\nThe system is accessible at bprozagcrm.xyz from any browser (desktop, mobile, tablet). No installation is required.\n\nModules covered: CRM (Leads & Opportunities), Customers, Quotations, Invoices (with Tally XML export), Work Order Tickets & Designer workflow, Sales Orders, Production, Inventory, Finance (Collections), HR & Attendance, Field Visits, Activity Tracker, Fixed Journey Plans (FJP), Expense Reports, Three-Tier Approval Workflow, Team Reports (DAR/WWR/MWR), Batch Data Import/Export, Admin & User Management, and Audit Trail." },
   { num: "2", title: "Getting Started — Login & Navigation",
+    screen: "dashboard",
     intro: "Login and navigate the system in a few steps.",
     steps: [
       { step: "Open the application", desc: "Open any modern browser and go to bprozagcrm.xyz. Recommended: Google Chrome (latest version)." },
@@ -139,6 +177,7 @@ const SECTIONS: Section[] = [
   { num: "3", title: "End-to-End Business Workflow",
     intro: "The complete business workflow follows this chain:\n\nLEAD → OPPORTUNITY → CUSTOMER → QUOTATION → WORK ORDER → SALES ORDER → INVOICE → TALLY\n\nEach step is connected. Action buttons on every row let you move forward without re-entering data:\n• Lead row: [Opp] → Opportunity | [Customer] → Customer | [Quote] → Quotation\n• Opportunity row: [Customer] → Customer | [Quote] → Quotation\n• Customer row: [Quote] → Quotation\n• Approved Quotation: [Ticket] → Work Order Ticket | [Invoice] → Tax Invoice\n• Invoice: [Tally XML] → Tally import file | [Mark Paid] → updates payment status\n\nThis design ensures zero data re-entry from lead capture to final accounting." },
   { num: "4", title: "Leads & CRM Module",
+    screen: "leads",
     intro: "Track every sales prospect from first contact to conversion.",
     steps: [
       { step: "Add a new lead", desc: "Leads & CRM → 'New Lead'. Required: Name, Phone, Branch, Source. Optional: Company, Email, Estimated Value, Follow-up Date, Assigned Executive." },
@@ -167,6 +206,7 @@ const SECTIONS: Section[] = [
       { step: "View transaction history", desc: "Click any customer row to see all linked quotations, orders, invoices, complaints and collections." },
     ], tips: ["Customers converted from leads already have all their history linked."] },
   { num: "7", title: "Quotations Module",
+    screen: "quotations",
     intro: "Create, send, revise and convert professional quotations with full GST support.",
     steps: [
       { step: "Create a quotation", desc: "Quotations → 'New Quotation'. Select Customer. Add line items: Description, Qty, Unit, Rate. Set GST % and Discount." },
@@ -190,6 +230,7 @@ const SECTIONS: Section[] = [
     tips: ["Always export Tally XML on the invoice date.", "Verify in Tally Day Book after import."],
     warning: "Never import the same Tally XML file twice — it creates a duplicate Sales Voucher." },
   { num: "9", title: "Work Order Tickets & Designer Workflow",
+    screen: "tickets",
     intro: "A branch-level ticketing system. The front office raises a work order from a customer requirement — direct visit, phone or WhatsApp — or straight from an approved quotation. The ticket is assigned to a designer who completes the first phase before the job moves to production and billing.",
     steps: [
       { step: "Raise a ticket (front office)", desc: "Work Order Tickets → 'New Ticket'. Choose Source (Walk-in / Phone / WhatsApp / From Quotation). Enter Customer, Nature of Work, ETA and Priority." },
@@ -348,6 +389,187 @@ const FAQS = [
   { q: "How do I log my daily activities for the DAR?", a: "Sales → Activities → 'Log Activity'. At end of day go to Sales → DAR → 'Generate Today's DAR' to auto-build the report from your logged activities." },
 ];
 
+// ── Screen mockup helpers ─────────────────────────────────────────────────────
+const NAV = ["Dashboard","Leads","Quotations","Invoices","Work Orders","HR"];
+
+function AppWin({ url, active, title, caption, children }: {
+  url: string; active: string; title: string; caption: string; children: React.ReactNode;
+}) {
+  return (
+    <View wrap={false}>
+      <View style={s.appWin}>
+        <View style={s.titleBar}>
+          <View style={s.trafficR}/><View style={s.trafficY}/><View style={s.trafficG}/>
+          <View style={s.urlBar}><Text style={s.urlTxt}>bprozagcrm.xyz/{url}</Text></View>
+        </View>
+        <View style={s.appBody}>
+          <View style={s.sideNav}>
+            <Text style={s.sideTitle}>ZAG</Text>
+            {NAV.map(n => (
+              <View key={n} style={n === active ? [s.navRow, s.navRowOn] : s.navRow}>
+                <Text style={n === active ? s.navTxtOn : s.navTxt}>{n}</Text>
+              </View>
+            ))}
+          </View>
+          <View style={s.appContent}>
+            <Text style={s.appCtTitle}>{title}</Text>
+            {children}
+          </View>
+        </View>
+      </View>
+      <Text style={s.screenCaption}>{caption}</Text>
+    </View>
+  );
+}
+
+function Badge({ label, color, bg }: { label: string; color: string; bg: string }) {
+  return (
+    <View style={[s.badge, { backgroundColor: bg }]}>
+      <Text style={[s.badgeTxt, { color }]}>{label}</Text>
+    </View>
+  );
+}
+
+function DashboardScreen() {
+  const kpis = [
+    { label: "Revenue",     value: "₹42.8L", bar: "#6366F1", w: 70 },
+    { label: "Open Leads",  value: "126",     bar: "#F59E0B", w: 50 },
+    { label: "Work Orders", value: "38",      bar: "#EC4899", w: 40 },
+    { label: "Collections", value: "₹6.1L",  bar: "#10B981", w: 55 },
+  ];
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul"];
+  const heights = [20, 28, 18, 32, 22, 35, 26];
+  return (
+    <AppWin url="dashboard" active="Dashboard" title="Dashboard"
+      caption="The Dashboard — your home screen after signing in. Live KPIs update in real time.">
+      <View style={s.kpiRow}>
+        {kpis.map(k => (
+          <View key={k.label} style={s.kpiCard}>
+            <Text style={s.kpiLbl}>{k.label}</Text>
+            <Text style={s.kpiVal}>{k.value}</Text>
+            <View style={[s.kpiBar, { backgroundColor: k.bar, width: `${k.w}%` }]} />
+          </View>
+        ))}
+      </View>
+      <View style={{ backgroundColor: "#fff", borderRadius: 3, borderWidth: 0.5, borderColor: c.gray5, padding: 5 }}>
+        <View style={s.chartRow}>
+          {months.map((m, i) => (
+            <View key={m}>
+              <View style={[s.chartBar, { height: heights[i], backgroundColor: "#7C3AED" }]} />
+              <Text style={s.chartLbl}>{m}</Text>
+            </View>
+          ))}
+        </View>
+        <Text style={{ fontSize: 5, color: c.gray4, marginTop: 2 }}>Monthly sales · all branches</Text>
+      </View>
+    </AppWin>
+  );
+}
+
+function LeadsScreen() {
+  const rows = [
+    { no: "L007", name: "Anil Menon",   phone: "98470 12345", status: "QUALIFIED", statusC: "#065F46", statusBg: "#D1FAE5" },
+    { no: "L006", name: "Priya Nair",   phone: "94952 33110", status: "NEW",       statusC: "#1E40AF", statusBg: "#DBEAFE" },
+    { no: "L005", name: "Hotel Leela",  phone: "90487 55621", status: "WON",       statusC: "#14532D", statusBg: "#BBF7D0" },
+  ];
+  return (
+    <AppWin url="leads" active="Leads" title="Leads & CRM"
+      caption="Leads list with the New Lead, Import and Excel actions, and per-row convert buttons.">
+      <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 3, marginBottom: 4 }}>
+        {["Import","Excel","+ New Lead"].map((b, i) => (
+          <View key={b} style={{ backgroundColor: i === 2 ? c.indigo : "#fff", borderRadius: 3, borderWidth: 0.5, borderColor: i === 2 ? c.indigo : c.gray5, paddingHorizontal: 5, paddingVertical: 2 }}>
+            <Text style={{ fontSize: 5.5, color: i === 2 ? "#fff" : c.gray2, fontFamily: "Helvetica-Bold" }}>{b}</Text>
+          </View>
+        ))}
+      </View>
+      <View style={s.tblHead}>
+        {["Lead No","Name","Phone","Status","Actions"].map(h => (
+          <Text key={h} style={s.tblHCell}>{h}</Text>
+        ))}
+      </View>
+      {rows.map(r => (
+        <View key={r.no} style={s.tblRow}>
+          <Text style={[s.tblCell, { color: c.indigo, fontFamily: "Helvetica-Bold" }]}>{r.no}</Text>
+          <Text style={s.tblCell}>{r.name}</Text>
+          <Text style={s.tblCell}>{r.phone}</Text>
+          <View style={s.tblCell}><Badge label={r.status} color={r.statusC} bg={r.statusBg} /></View>
+          <Text style={[s.tblCell, { color: c.indigo }]}>Opp · Customer · Quote</Text>
+        </View>
+      ))}
+    </AppWin>
+  );
+}
+
+function QuotationsScreen() {
+  const rows = [
+    { no: "ZAG/Q/TVM/007", cust: "Hotel Leela",     amt: "₹1,24,500", status: "APPROVED", sc: "#14532D", sb: "#BBF7D0" },
+    { no: "ZAG/Q/TVM/006", cust: "Anil Menon",      amt: "₹38,200",  status: "SENT",     sc: "#1E40AF", sb: "#DBEAFE" },
+    { no: "ZAG/Q/EKM/012", cust: "Metro Builders",  amt: "₹2,10,000", status: "DRAFT",    sc: "#374151", sb: "#F3F4F6" },
+  ];
+  return (
+    <AppWin url="quotations" active="Quotations" title="Quotations"
+      caption="Quotations list — auto-numbered by branch. Actions: PDF, Revise, Invoice, Ticket.">
+      <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 3, marginBottom: 4 }}>
+        {["+ New Quotation"].map(b => (
+          <View key={b} style={{ backgroundColor: c.indigo, borderRadius: 3, paddingHorizontal: 5, paddingVertical: 2 }}>
+            <Text style={{ fontSize: 5.5, color: "#fff", fontFamily: "Helvetica-Bold" }}>{b}</Text>
+          </View>
+        ))}
+      </View>
+      <View style={s.tblHead}>
+        {["Quote No","Customer","Amount","Status","Actions"].map(h => (
+          <Text key={h} style={s.tblHCell}>{h}</Text>
+        ))}
+      </View>
+      {rows.map(r => (
+        <View key={r.no} style={s.tblRow}>
+          <Text style={[s.tblCell, { color: c.indigo, fontFamily: "Helvetica-Bold" }]}>{r.no}</Text>
+          <Text style={s.tblCell}>{r.cust}</Text>
+          <Text style={[s.tblCell, { fontFamily: "Helvetica-Bold" }]}>{r.amt}</Text>
+          <View style={s.tblCell}><Badge label={r.status} color={r.sc} bg={r.sb} /></View>
+          <Text style={[s.tblCell, { color: c.indigo }]}>PDF · Revise · Invoice</Text>
+        </View>
+      ))}
+    </AppWin>
+  );
+}
+
+function TicketsScreen() {
+  const rows = [
+    { no: "TKT-001", cust: "Hotel Leela",    work: "3D Channel Letters", pri: "HIGH",   priC: "#991B1B", priBg: "#FEE2E2", dsgn: "Rahul K", status: "IN PROGRESS" },
+    { no: "TKT-002", cust: "Metro Builders",  work: "Vinyl Branding",     pri: "NORMAL", priC: "#1E40AF", priBg: "#DBEAFE", dsgn: "Anitha M", status: "NEW" },
+    { no: "TKT-003", cust: "Anil Menon",      work: "Flex Banner",        pri: "NORMAL", priC: "#1E40AF", priBg: "#DBEAFE", dsgn: "Rahul K", status: "DONE" },
+  ];
+  return (
+    <AppWin url="work-order-tickets" active="Work Orders" title="Work Order Tickets"
+      caption="Ticket queue — HIGH priority jobs sort to the top. Each ticket tracks from NEW to DONE.">
+      <View style={s.tblHead}>
+        {["Ticket No","Customer","Work","Priority","Designer","Status"].map(h => (
+          <Text key={h} style={s.tblHCell}>{h}</Text>
+        ))}
+      </View>
+      {rows.map(r => (
+        <View key={r.no} style={s.tblRow}>
+          <Text style={[s.tblCell, { color: c.indigo, fontFamily: "Helvetica-Bold" }]}>{r.no}</Text>
+          <Text style={s.tblCell}>{r.cust}</Text>
+          <Text style={s.tblCell}>{r.work}</Text>
+          <View style={s.tblCell}><Badge label={r.pri} color={r.priC} bg={r.priBg} /></View>
+          <Text style={s.tblCell}>{r.dsgn}</Text>
+          <Text style={[s.tblCell, { color: c.gray3 }]}>{r.status}</Text>
+        </View>
+      ))}
+    </AppWin>
+  );
+}
+
+function ScreenForSection({ screen }: { screen: string }) {
+  if (screen === "dashboard")  return <DashboardScreen />;
+  if (screen === "leads")      return <LeadsScreen />;
+  if (screen === "quotations") return <QuotationsScreen />;
+  if (screen === "tickets")    return <TicketsScreen />;
+  return null;
+}
+
 // ── Sub-components ────────────────────────────────────────────────────────────
 function PageFooter({ title }: { title: string }) {
   return (
@@ -398,6 +620,8 @@ function SectionPage({ section }: { section: Section }) {
           ))}
         </View>
       )}
+
+      {section.screen && <ScreenForSection screen={section.screen} />}
     </Page>
   );
 }
@@ -413,6 +637,8 @@ export function ManualPDFDocument() {
     >
       {/* ── COVER PAGE ── */}
       <Page size="A4" style={s.coverPage}>
+        {/* Colored top band */}
+        <View style={s.coverBand} />
         <Image src={LOGO_URL} style={s.coverLogo} />
         <Text style={s.coverTitle}>ZAG SIGNS ERP</Text>
         <Text style={s.coverSub}>User Manual — Complete Guide</Text>
@@ -426,6 +652,8 @@ export function ManualPDFDocument() {
         <Text style={s.coverMeta}>bprozagcrm.xyz</Text>
         <Text style={s.coverMeta}>Confidential — Internal Use Only</Text>
         <Text style={s.coverFooter}>Powered by Team bpro</Text>
+        {/* Colored bottom band */}
+        <View style={s.coverBandBot} />
       </Page>
 
       {/* ── TABLE OF CONTENTS ── */}
