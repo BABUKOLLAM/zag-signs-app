@@ -851,6 +851,44 @@ model BranchSetting {
   @@map("branch_settings")
 }
 
+// ─── ORGANISATIONAL STRUCTURE ─────────────────────────────────────────────────
+
+model Division {
+  id          String       @id @default(cuid())
+  code        String       @unique  // e.g. "TVM-SALES"
+  name        String
+  branch      String       // TVM | KTYM | EKM | CLT | HO
+  headName    String       @default("")
+  headEmail   String       @default("")
+  headPhone   String       @default("")
+  notes       String       @default("")
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  departments Department[]
+
+  @@index([branch])
+  @@map("divisions")
+}
+
+model Department {
+  id          String   @id @default(cuid())
+  name        String
+  divisionId  String
+  division    Division @relation(fields: [divisionId], references: [id], onDelete: Cascade)
+  headName    String   @default("")
+  headEmail   String   @default("")
+  headPhone   String   @default("")
+  notes       String   @default("")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([divisionId])
+  @@map("departments")
+}
+
 // ─── SYSTEM ───────────────────────────────────────────────────────────────────
 
 model Notification {

@@ -1,0 +1,56 @@
+import { NextRequest } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { ok, err, requireSession } from "@/lib/api-helpers";
+
+const GUARD = ["MD", "IT_ADMIN"];
+
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const session = await requireSession();
+  if (!session) return err("Unauthorized", 401);
+
+  const role = (session.user as any).role;
+  if (!GUARD.includes(role)) return err("Forbidden", 403);
+
+  const body = await req.json();
+
+  try {
+    const division = await prisma.division.update({
+      where: { id: params.id },
+      data: {
+        name:      body.name?.trim(),
+        headName:  body.headName  ?? undefined,
+        headEmail: body.headEmail ?? undefined,
+        headPhone: body.headPhone ?? undefined,
+        notes:     body.notes     ?? undefined,
+        isActive:  body.isActive  ?? undefined,
+      },
+      include: { departments: true },
+    });
+    return ok(division);
+  } catch (e: any) {
+    if (e.code === "P2025") return err("Division not found", 404);
+    return err(e.message, 500);
+  }
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const session = await requireSession();
+  if (!session) return err("Unauthorized", 401);
+
+  const role = (session.user as any).role;
+  if (!GUARD.includes(role)) return err("Forbidden", 403);
+
+  try {
+    await prisma.division.delete({ where: { id: params.id } });
+    return ok({ deleted: true });
+  } catch (e: any) {
+    if (e.code === "P2025") return err("Division not found", 404);
+    return err(e.message, 500);
+  }
+}
