@@ -62,7 +62,7 @@ export default function ApprovalsPage() {
   const fetchExpenses = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/api/sales/expenses") as any;
+      const res = await api.get("/sales/expenses") as any;
       if (res?.data) setExpenses(res.data);
     } finally {
       setLoading(false);

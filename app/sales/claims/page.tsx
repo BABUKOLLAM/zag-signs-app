@@ -24,7 +24,7 @@ export default function ClaimsPage() {
   const fetchClaims = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/api/sales/claims");
+      const res = await api.get("/sales/claims");
       if ((res as any)?.data) setClaims((res as any).data);
     } catch (error) {
       console.error("Error fetching claims:", error);
@@ -41,7 +41,7 @@ export default function ClaimsPage() {
 
     setLoading(true);
     try {
-      await api.post("/api/sales/claims", {
+      await api.post("/sales/claims", {
         ...formData,
         amount: parseFloat(formData.amount),
         status: "SUBMITTED",

@@ -25,7 +25,7 @@ export default function FJPPage() {
   const fetchFJPs = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/api/sales/fjp");
+      const res = await api.get("/sales/fjp");
       if ((res as any)?.data) {
         setFjps((res as any).data.fjps);
         setWindow_((res as any).data.window);
@@ -52,7 +52,7 @@ export default function FJPPage() {
     }
     setSubmitting(true);
     try {
-      await api.post("/api/sales/fjp", { routes, notes, status: "SUBMITTED" });
+      await api.post("/sales/fjp", { routes, notes, status: "SUBMITTED" });
       alert("FJP submitted successfully!");
       setRoutes([newRoute()]);
       setNotes("");
@@ -67,7 +67,7 @@ export default function FJPPage() {
   const handleSaveDraft = async () => {
     setSubmitting(true);
     try {
-      await api.post("/api/sales/fjp", { routes, notes, status: "DRAFT" });
+      await api.post("/sales/fjp", { routes, notes, status: "DRAFT" });
       alert("Draft saved.");
       fetchFJPs();
     } finally {

@@ -77,8 +77,8 @@ export default function ExpensesPage() {
     setLoading(true);
     try {
       const [expRes, fjpRes] = await Promise.all([
-        api.get("/api/sales/expenses"),
-        api.get("/api/sales/fjp"),
+        api.get("/sales/expenses"),
+        api.get("/sales/fjp"),
       ]) as any[];
       if (expRes?.data) setExpenses(expRes.data);
       if (fjpRes?.data?.fjps) setFjps(fjpRes.data.fjps);
@@ -104,7 +104,7 @@ export default function ExpensesPage() {
     if (items.some(i => !i.date || !i.category || !i.amount)) { alert("Fill all expense item fields."); return; }
     setSubmitting(true);
     try {
-      await api.post("/api/sales/expenses", { ...form, items, attachments: uploadedLinks, status });
+      await api.post("/sales/expenses", { ...form, items, attachments: uploadedLinks, status });
       alert(status === "DRAFT" ? "Draft saved." : "Expense submitted successfully!");
       setShowForm(false);
       setItems([newItem()]);

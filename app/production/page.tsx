@@ -20,10 +20,10 @@ export default function ProductionPage() {
     setLoading(true);
     try {
       const [woRes, matRes, schedRes, qcRes] = await Promise.all([
-        api.get("/api/work-orders"),
-        api.get("/api/production/materials/consumption"),
-        api.get("/api/production/schedules"),
-        api.get("/api/production/quality/checkpoints"),
+        api.get("/work-orders"),
+        api.get("/production/materials/consumption"),
+        api.get("/production/schedules"),
+        api.get("/production/quality/checkpoints"),
       ]) as any[];
 
       if ((woRes as any)?.data) setWorkOrders((woRes as any).data);

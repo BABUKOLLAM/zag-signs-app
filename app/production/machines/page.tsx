@@ -33,9 +33,9 @@ export default function MachinesPage() {
     setLoading(true);
     try {
       const [machResponse, schedResponse, woResponse] = await Promise.all([
-        api.get("/api/production/machines"),
-        api.get("/api/production/schedules"),
-        api.get("/api/work-orders"),
+        api.get("/production/machines"),
+        api.get("/production/schedules"),
+        api.get("/work-orders"),
       ]) as any[];
 
       if ((machResponse as any)?.data) setMachines((machResponse as any).data);
@@ -56,7 +56,7 @@ export default function MachinesPage() {
 
     setLoading(true);
     try {
-      await api.post("/api/production/machines", newMachine);
+      await api.post("/production/machines", newMachine);
       setNewMachine({ name: "", type: "", branch: "TVM" });
       setShowMachineForm(false);
       await fetchData();
@@ -76,7 +76,7 @@ export default function MachinesPage() {
 
     setLoading(true);
     try {
-      await api.post("/api/production/schedules", {
+      await api.post("/production/schedules", {
         workOrderId: scheduleData.workOrderId,
         machineId: scheduleData.machineId,
         scheduledStartAt: scheduleData.scheduledStartAt,

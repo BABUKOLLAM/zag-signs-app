@@ -29,8 +29,8 @@ export default function QualityPage() {
     setLoading(true);
     try {
       const [cpResponse, woResponse] = await Promise.all([
-        api.get("/api/production/quality/checkpoints"),
-        api.get("/api/work-orders"),
+        api.get("/production/quality/checkpoints"),
+        api.get("/work-orders"),
       ]) as any[];
 
       if ((cpResponse as any)?.data) setCheckpoints((cpResponse as any).data);
@@ -68,7 +68,7 @@ export default function QualityPage() {
 
     setLoading(true);
     try {
-      await api.post("/api/production/quality/checkpoints", {
+      await api.post("/production/quality/checkpoints", {
         workOrderId: selectedWorkOrder,
         stage,
         inspectorId: "current-user-id",

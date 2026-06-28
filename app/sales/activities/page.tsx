@@ -35,8 +35,8 @@ export default function ActivitiesPage() {
       const today = new Date().toISOString().split("T")[0];
       const [actRes, custRes, leadsRes] = await Promise.all([
         api.get(`/api/sales/activities?date=${today}`),
-        api.get("/api/customers"),
-        api.get("/api/leads"),
+        api.get("/customers"),
+        api.get("/leads"),
       ]) as any[];
 
       if ((actRes as any)?.data) setActivities((actRes as any).data);
@@ -57,7 +57,7 @@ export default function ActivitiesPage() {
 
     setLoading(true);
     try {
-      await api.post("/api/sales/activities", {
+      await api.post("/sales/activities", {
         ...formData,
         customerId: formData.customerId || null,
         leadId: formData.leadId || null,

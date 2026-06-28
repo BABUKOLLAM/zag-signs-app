@@ -24,10 +24,10 @@ export default function SalesDashboard() {
 
       const [actRes, claimsRes, leadsRes, oppRes, soRes] = await Promise.all([
         api.get(`/api/sales/activities?date=${today}`),
-        api.get("/api/sales/claims"),
-        api.get("/api/leads?status=NEW"),
-        api.get("/api/opportunities"),
-        api.get("/api/sales-orders"),
+        api.get("/sales/claims"),
+        api.get("/leads?status=NEW"),
+        api.get("/opportunities"),
+        api.get("/sales-orders"),
       ]) as any[];
 
       if ((actRes as any)?.data) setActivities((actRes as any).data);

@@ -26,9 +26,9 @@ export default function MaterialsPage() {
     setLoading(true);
     try {
       const [consResponse, woResponse, matResponse] = await Promise.all([
-        api.get("/api/production/materials/consumption"),
-        api.get("/api/work-orders"),
-        api.get("/api/inventory"),
+        api.get("/production/materials/consumption"),
+        api.get("/work-orders"),
+        api.get("/inventory"),
       ]) as any[];
 
       if ((consResponse as any)?.data) setConsumptions((consResponse as any).data);
@@ -49,7 +49,7 @@ export default function MaterialsPage() {
 
     setLoading(true);
     try {
-      await api.post("/api/production/materials/consumption", {
+      await api.post("/production/materials/consumption", {
         workOrderId: selectedWorkOrder,
         materialId: selectedMaterial,
         plannedQty: parseFloat(plannedQty),

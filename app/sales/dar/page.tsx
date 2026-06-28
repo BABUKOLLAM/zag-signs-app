@@ -31,7 +31,7 @@ export default function DARPage() {
 
     setLoading(true);
     try {
-      await api.post("/api/sales/dar/generate", {
+      await api.post("/sales/dar/generate", {
         date,
       });
       setSubmitted(true);
