@@ -474,12 +474,14 @@ model Material {
   minimumStock Float    @default(0)
   unitCost     Float    @default(0)
   supplier     String?
+  branch       String?  // TVM | KTYM | EKM | CLT | null = all-branch/company stock
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   stockMovements StockMovement[]
   consumptions MaterialConsumption[]
 
+  @@index([branch])
   @@map("materials")
 }
 
@@ -489,12 +491,32 @@ model StockMovement {
   quantity  Float
   reference String?
   notes     String?
+  branch    String?  // which branch the movement belongs to
   createdAt DateTime @default(now())
 
   materialId String
   material   Material @relation(fields: [materialId], references: [id])
 
+  @@index([branch])
   @@map("stock_movements")
+}
+
+// Per-branch operational configuration — machine types, hours, contact info
+model BranchOperationalSetting {
+  id                 String   @id  // TVM, KTYM, EKM, CLT, HO
+  displayName        String   @default("")
+  address            String   @default("")
+  contactName        String   @default("")
+  contactPhone       String   @default("")
+  startTime          String   @default("09:00")  // HH:MM
+  endTime            String   @default("18:00")  // HH:MM
+  shiftHours         Float    @default(8)
+  machineTypes       String   @default("[]")     // JSON [{type,defaultRate,printTypes,enabled}]
+  materialCategories String   @default("[]")     // JSON [category strings active at branch]
+  notes              String   @default("")
+  updatedAt          DateTime @updatedAt
+
+  @@map("branch_operational_settings")
 }
 
 // ─── FINANCE ──────────────────────────────────────────────────────────────────

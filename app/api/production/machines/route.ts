@@ -1,9 +1,7 @@
 import { NextRequest } from "next/server";
 import { requireSession, ok, err, autoNo } from "@/lib/api-helpers";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { normBranch } from "@/lib/bulk-helpers";
-
-const prisma = new PrismaClient();
 
 export async function GET(req: NextRequest) {
   const session = await requireSession();

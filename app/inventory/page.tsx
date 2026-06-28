@@ -13,6 +13,14 @@ import { Plus, RefreshCw, Package, AlertTriangle, X, ArrowUpDown, Upload, Downlo
 const CATEGORIES = ["Flex", "Vinyl", "ACP", "Acrylic", "LED", "Metal", "Electrical", "Ink", "Hardware", "Other"];
 const UNITS = ["Sqft", "Sqmtr", "Meters", "Kg", "Nos", "Rolls", "Litres", "Sheets", "Boxes"];
 
+const BRANCH_TABS = [
+  { id: "ALL",  label: "All Branches" },
+  { id: "TVM",  label: "TVM" },
+  { id: "KTYM", label: "KTYM" },
+  { id: "EKM",  label: "EKM" },
+  { id: "CLT",  label: "CLT" },
+];
+
 const STATUS_COLORS: Record<string, string> = {
   OK:       "bg-green-100 text-green-700",
   Low:      "bg-yellow-100 text-yellow-700",
@@ -23,12 +31,14 @@ const STATUS_COLORS: Record<string, string> = {
 interface Material {
   id: string; name: string; category: string; unit: string;
   currentStock: number; minimumStock: number; unitCost: number;
-  supplier: string; createdAt: string; stockStatus: string; stockValue: number;
+  supplier: string; branch: string | null; createdAt: string;
+  stockStatus: string; stockValue: number;
 }
 
 const emptyMaterial = {
   name: "", category: "Flex", unit: "Sqft",
   currentStock: "", minimumStock: "", unitCost: "", supplier: "",
+  branch: "",
 };
 
 const emptyMovement = { type: "IN", quantity: "", reference: "", notes: "" };
@@ -39,6 +49,7 @@ export default function InventoryPage() {
   const toast = useToast();
   const [catFilter, setCatFilter]       = useState("");
   const [search, setSearch]             = useState("");
+  const [branchFilter, setBranchFilter] = useState("ALL");
   const [showAdd, setShowAdd]           = useState(false);
   const [moveFor, setMoveFor]           = useState<Material | null>(null);
   const [form, setForm]                 = useState(emptyMaterial);
@@ -47,20 +58,23 @@ export default function InventoryPage() {
   const [showImport, setShowImport]     = useState(false);
 
   const { data, loading, error, refetch } = useApi<Material[]>("/inventory", {
-    category: catFilter || undefined,
-    search:   search    || undefined,
+    category: catFilter  || undefined,
+    search:   search     || undefined,
+    branch:   branchFilter !== "ALL" ? branchFilter : undefined,
   });
 
   const materials = data ?? [];
 
   const handleExport = () => exportExcel(`Inventory_${new Date().toISOString().slice(0,10)}`, materials.map((m) => ({
     "Name": m.name, "Category": m.category, "Unit": m.unit,
+    "Branch": m.branch || "All Branches",
     "Current Stock": m.currentStock, "Minimum Stock": m.minimumStock,
     "Unit Cost (₹)": m.unitCost, "Stock Value (₹)": m.stockValue,
     "Supplier": m.supplier, "Status": m.stockStatus,
   })));
-  const totalValue   = materials.reduce((s, m) => s + m.stockValue, 0);
-  const lowCount     = materials.filter((m) => m.stockStatus === "Low").length;
+
+  const totalValue    = materials.reduce((s, m) => s + m.stockValue, 0);
+  const lowCount      = materials.filter((m) => m.stockStatus === "Low").length;
   const criticalCount = materials.filter((m) => m.stockStatus === "Critical" || m.stockStatus === "Out").length;
 
   const set  = (f: keyof typeof emptyMaterial) =>
@@ -81,7 +95,8 @@ export default function InventoryPage() {
         currentStock: Number(form.currentStock) || 0,
         minimumStock: Number(form.minimumStock) || 0,
         unitCost:     Number(form.unitCost)     || 0,
-        supplier:     form.supplier             || undefined,
+        supplier:     form.supplier || undefined,
+        branch:       form.branch   || null,
       });
       setForm(emptyMaterial);
       setShowAdd(false);
@@ -136,6 +151,19 @@ export default function InventoryPage() {
           ))}
         </div>
 
+        {/* Branch filter tabs */}
+        <div className="flex flex-wrap gap-2">
+          {BRANCH_TABS.map(b => (
+            <button key={b.id} onClick={() => setBranchFilter(b.id)}
+              className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all border"
+              style={branchFilter === b.id
+                ? { background: "#4F46E5", color: "#fff", borderColor: "#4F46E5" }
+                : { background: "#fff", color: "#374151", borderColor: "#E5E7EB" }}>
+              {b.label}
+            </button>
+          ))}
+        </div>
+
         {/* Toolbar */}
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-wrap gap-3 items-center justify-between">
           <div className="flex gap-3 flex-wrap items-center">
@@ -185,7 +213,7 @@ export default function InventoryPage() {
 
         {/* Materials table */}
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-          {loading ? <TableSkeleton rows={8} cols={8} /> :
+          {loading ? <TableSkeleton rows={8} cols={9} /> :
            error   ? <ErrorState message={error} onRetry={refetch} /> :
            materials.length === 0 ? (
              <EmptyState label="No materials found" hint="Add your first material to start tracking inventory." />
@@ -196,6 +224,7 @@ export default function InventoryPage() {
                   <tr className="text-xs text-gray-500 font-medium">
                     <th className="text-left px-4 py-3">Material</th>
                     <th className="text-left px-4 py-3">Category</th>
+                    <th className="text-left px-4 py-3">Branch</th>
                     <th className="text-right px-4 py-3">Current Stock</th>
                     <th className="text-right px-4 py-3 hidden md:table-cell">Min Stock</th>
                     <th className="text-left px-4 py-3">Unit</th>
@@ -219,6 +248,11 @@ export default function InventoryPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-gray-600">{m.category}</td>
+                      <td className="px-4 py-3">
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-700">
+                          {m.branch || "All Branches"}
+                        </span>
+                      </td>
                       <td className="px-4 py-3 text-right">
                         <span className={`font-semibold ${
                           m.stockStatus === "Critical" || m.stockStatus === "Out"
@@ -305,6 +339,16 @@ export default function InventoryPage() {
                 <label className="block text-xs font-medium text-gray-600 mb-1">Supplier</label>
                 <input value={form.supplier} onChange={set("supplier")} placeholder="Supplier name" className={ic} />
               </div>
+              <div className="col-span-2">
+                <label className="block text-xs font-medium text-gray-600 mb-1">Branch <span className="text-gray-400 font-normal">(leave blank = shared across all branches)</span></label>
+                <select value={form.branch} onChange={set("branch")} className={ic}>
+                  <option value="">All Branches (shared stock)</option>
+                  <option value="TVM">TVM – Thiruvananthapuram</option>
+                  <option value="KTYM">KTYM – Kottayam</option>
+                  <option value="EKM">EKM – Ernakulam</option>
+                  <option value="CLT">CLT – Calicut</option>
+                </select>
+              </div>
             </div>
             <div className="flex justify-end gap-3 px-6 pb-5">
               <button onClick={() => { setShowAdd(false); setForm(emptyMaterial); }} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
@@ -324,7 +368,9 @@ export default function InventoryPage() {
             <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b">
               <div>
                 <h2 className="text-base font-bold text-gray-900">Adjust Stock</h2>
-                <p className="text-xs text-gray-500">{moveFor.name} · Current: {moveFor.currentStock} {moveFor.unit}</p>
+                <p className="text-xs text-gray-500">{moveFor.name} · Current: {moveFor.currentStock} {moveFor.unit}
+                  {moveFor.branch ? ` · ${moveFor.branch}` : " · All Branches"}
+                </p>
               </div>
               <button onClick={() => setMoveFor(null)} className="p-1.5 rounded-lg hover:bg-gray-100"><X size={16} /></button>
             </div>

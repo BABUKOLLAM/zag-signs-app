@@ -20,6 +20,7 @@ function shape(m: Awaited<ReturnType<typeof prisma.material.findFirst>>) {
     minimumStock: m.minimumStock,
     unitCost: m.unitCost,
     supplier: m.supplier ?? "",
+    branch: (m as any).branch ?? null,
     createdAt: toDate(m.createdAt),
     stockStatus: stockStatus(m.currentStock, m.minimumStock),
     stockValue: m.currentStock * m.unitCost,
@@ -32,19 +33,24 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const category = searchParams.get("category");
+  const branch   = searchParams.get("branch");
   const search   = searchParams.get("search") ?? "";
 
   const items = await prisma.material.findMany({
     where: {
       ...(category ? { category } : {}),
-      ...(search   ? {
+      // branch=ALL or missing → show everything; branch=TVM → show TVM + null (shared stock)
+      ...(branch && branch !== "ALL" ? {
+        OR: [{ branch }, { branch: null }]
+      } : {}),
+      ...(search ? {
         OR: [
           { name:     { contains: search, mode: "insensitive" } },
           { supplier: { contains: search, mode: "insensitive" } },
         ],
       } : {}),
     },
-    orderBy: { name: "asc" },
+    orderBy: [{ branch: "asc" }, { name: "asc" }],
   });
 
   return ok(items.map(shape));
@@ -62,6 +68,7 @@ export async function POST(request: NextRequest) {
     minimumStock?: number;
     unitCost?: number;
     supplier?: string;
+    branch?: string;
   };
 
   if (!body.name?.trim())     return err("name is required");
@@ -76,7 +83,8 @@ export async function POST(request: NextRequest) {
       minimumStock: body.minimumStock ?? 0,
       unitCost:     body.unitCost     ?? 0,
       supplier:     body.supplier || null,
-    },
+      branch:       body.branch  || null,
+    } as any,
   });
 
   return ok(shape(material), 201);
