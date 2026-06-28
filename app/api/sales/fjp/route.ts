@@ -1,8 +1,6 @@
 import { NextRequest } from "next/server";
 import { requireSession, ok, err } from "@/lib/api-helpers";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 function fjpNo(count: number) {
   const d = new Date();
@@ -22,7 +20,7 @@ function getSubmissionWindow() {
 
 export async function GET(req: NextRequest) {
   const session = await requireSession();
-  if (!session) return new Response(JSON.stringify(err("Unauthorized")), { status: 401 });
+  if (!session) return err("Unauthorized", 401);
 
   try {
     const sp = req.nextUrl.searchParams;
@@ -41,23 +39,23 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
-    const window = getSubmissionWindow();
-    return new Response(JSON.stringify(ok({ fjps, window })), { status: 200 });
+    const submissionWindow = getSubmissionWindow();
+    return ok({ fjps, window: submissionWindow });
   } catch (e: any) {
-    return new Response(JSON.stringify(err(e.message)), { status: 500 });
+    return err(e.message, 500);
   }
 }
 
 export async function POST(req: NextRequest) {
   const session = await requireSession();
-  if (!session) return new Response(JSON.stringify(err("Unauthorized")), { status: 401 });
+  if (!session) return err("Unauthorized", 401);
 
   try {
     const body = await req.json();
     const { routes = [], notes, status = "SUBMITTED" } = body;
     const userId = (session.user as any).id;
 
-    const window = getSubmissionWindow();
+    const submissionWindow = getSubmissionWindow();
 
     const count = await prisma.fJP.count();
     const no = fjpNo(count);
@@ -69,7 +67,7 @@ export async function POST(req: NextRequest) {
       data: {
         fjpNo: no,
         userId,
-        forMonth: window.forMonth,
+        forMonth: submissionWindow.forMonth,
         status,
         totalDays: routes.length,
         totalKm,
@@ -90,8 +88,8 @@ export async function POST(req: NextRequest) {
       include: { routes: true },
     });
 
-    return new Response(JSON.stringify(ok(fjp)), { status: 201 });
+    return ok(fjp, 201);
   } catch (e: any) {
-    return new Response(JSON.stringify(err(e.message)), { status: 500 });
+    return err(e.message, 500);
   }
 }

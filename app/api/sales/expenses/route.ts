@@ -1,8 +1,6 @@
 import { NextRequest } from "next/server";
 import { requireSession, ok, err } from "@/lib/api-helpers";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 function expNo(count: number) {
   const d = new Date();
@@ -11,7 +9,7 @@ function expNo(count: number) {
 
 export async function GET(req: NextRequest) {
   const session = await requireSession();
-  if (!session) return new Response(JSON.stringify(err("Unauthorized")), { status: 401 });
+  if (!session) return err("Unauthorized", 401);
 
   try {
     const sp = req.nextUrl.searchParams;
@@ -45,15 +43,15 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
-    return new Response(JSON.stringify(ok(expenses)), { status: 200 });
+    return ok(expenses);
   } catch (e: any) {
-    return new Response(JSON.stringify(err(e.message)), { status: 500 });
+    return err(e.message, 500);
   }
 }
 
 export async function POST(req: NextRequest) {
   const session = await requireSession();
-  if (!session) return new Response(JSON.stringify(err("Unauthorized")), { status: 401 });
+  if (!session) return err("Unauthorized", 401);
 
   try {
     const body = await req.json();
@@ -61,7 +59,7 @@ export async function POST(req: NextRequest) {
     const userId = (session.user as any).id;
 
     if (!expenseType || !description) {
-      return new Response(JSON.stringify(err("expenseType and description are required")), { status: 400 });
+      return err("expenseType and description are required");
     }
 
     const count = await prisma.expenseReport.count();
@@ -107,8 +105,8 @@ export async function POST(req: NextRequest) {
       include: { items: true, user: { select: { name: true } } },
     });
 
-    return new Response(JSON.stringify(ok(expense)), { status: 201 });
+    return ok(expense, 201);
   } catch (e: any) {
-    return new Response(JSON.stringify(err(e.message)), { status: 500 });
+    return err(e.message, 500);
   }
 }

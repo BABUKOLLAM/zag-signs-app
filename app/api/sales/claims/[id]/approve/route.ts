@@ -9,7 +9,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await requireSession();
-  if (!session) return new Response(JSON.stringify(err("Unauthorized")), { status: 401 });
+  if (!session) return err("Unauthorized", 401);
 
   try {
     const { id } = await params;
@@ -59,8 +59,8 @@ export async function POST(
       },
     });
 
-    return new Response(JSON.stringify(ok(updatedClaim)), { status: 200 });
+    return ok(updatedClaim, 200);
   } catch (error: any) {
-    return new Response(JSON.stringify(err(error.message)), { status: 500 });
+    return err(error.message, 500);
   }
 }

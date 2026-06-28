@@ -9,7 +9,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await requireSession();
-  if (!session) return new Response(JSON.stringify(err("Unauthorized")), { status: 401 });
+  if (!session) return err("Unauthorized", 401);
 
   try {
     const body = await req.json();
@@ -31,9 +31,9 @@ export async function PUT(
       },
     });
 
-    return new Response(JSON.stringify(ok(schedule)), { status: 200 });
+    return ok(schedule, 200);
   } catch (error: any) {
-    return new Response(JSON.stringify(err(error.message)), { status: 500 });
+    return err(error.message, 500);
   }
 }
 
@@ -42,7 +42,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await requireSession();
-  if (!session) return new Response(JSON.stringify(err("Unauthorized")), { status: 401 });
+  if (!session) return err("Unauthorized", 401);
 
   try {
     const { id } = await params;
@@ -57,11 +57,11 @@ export async function GET(
     });
 
     if (!schedule) {
-      return new Response(JSON.stringify(err("Schedule not found")), { status: 404 });
+      return err("Schedule not found", 404);
     }
 
-    return new Response(JSON.stringify(ok(schedule)), { status: 200 });
+    return ok(schedule, 200);
   } catch (error: any) {
-    return new Response(JSON.stringify(err(error.message)), { status: 500 });
+    return err(error.message, 500);
   }
 }

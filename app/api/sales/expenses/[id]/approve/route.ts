@@ -36,7 +36,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await requireSession();
-  if (!session) return new Response(JSON.stringify(err("Unauthorized")), { status: 401 });
+  if (!session) return err("Unauthorized", 401);
 
   try {
     const { id } = await params;
@@ -47,23 +47,23 @@ export async function POST(
 
     // Validate stage
     if (!STAGE_TRANSITIONS[stage]) {
-      return new Response(JSON.stringify(err("Invalid stage")), { status: 400 });
+      return err("Invalid stage", 400);
     }
 
     // Validate role permission
     if (!STAGE_ROLES[stage].includes(role)) {
-      return new Response(JSON.stringify(err(`Your role cannot act at ${stage} stage`)), { status: 403 });
+      return err(`Your role cannot act at ${stage} stage`, 403);
     }
 
     // Validate action
     const validActions = Object.keys(STAGE_TRANSITIONS[stage]);
     if (!validActions.includes(action)) {
-      return new Response(JSON.stringify(err(`Invalid action for ${stage}. Valid: ${validActions.join(", ")}`)), { status: 400 });
+      return err(`Invalid action for ${stage}. Valid: ${validActions.join(", ")}`, 400);
     }
 
     // Require reason for HOLD or REJECTED
     if ((action === "HOLD" || action === "REJECTED") && !reason) {
-      return new Response(JSON.stringify(err("Reason is required for Hold or Rejected")), { status: 400 });
+      return err("Reason is required for Hold or Rejected", 400);
     }
 
     const expense = await prisma.expenseReport.findUnique({
@@ -74,7 +74,7 @@ export async function POST(
       },
     });
 
-    if (!expense) return new Response(JSON.stringify(err("Expense not found")), { status: 404 });
+    if (!expense) return err("Expense not found", 404);
 
     const newStatus = STAGE_TRANSITIONS[stage][action];
 
@@ -113,8 +113,8 @@ export async function POST(
       });
     }
 
-    return new Response(JSON.stringify(ok({ status: newStatus, stage, action })), { status: 200 });
+    return ok({ status: newStatus, stage, action }, 200);
   } catch (e: any) {
-    return new Response(JSON.stringify(err(e.message)), { status: 500 });
+    return err(e.message, 500);
   }
 }

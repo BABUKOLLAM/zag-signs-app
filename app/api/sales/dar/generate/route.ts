@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 export async function POST(req: NextRequest) {
   const session = await requireSession();
-  if (!session) return new Response(JSON.stringify(err("Unauthorized")), { status: 401 });
+  if (!session) return err("Unauthorized", 401);
 
   try {
     const body = await req.json();
@@ -57,16 +57,16 @@ export async function POST(req: NextRequest) {
       totalTime: activities.reduce((sum, a) => sum + (a.duration || 0), 0),
     };
 
-    return new Response(JSON.stringify(ok({ ...darData, action: "submitted" })), { status: 201 });
+    return ok({ ...darData, action: "submitted" }, 201);
   } catch (error: any) {
-    return new Response(JSON.stringify(err(error.message)), { status: 500 });
+    return err(error.message, 500);
   }
 }
 
 // GET endpoint to preview DAR without saving
 export async function GET(req: NextRequest) {
   const session = await requireSession();
-  if (!session) return new Response(JSON.stringify(err("Unauthorized")), { status: 401 });
+  if (!session) return err("Unauthorized", 401);
 
   try {
     const searchParams = req.nextUrl.searchParams;
@@ -112,8 +112,8 @@ export async function GET(req: NextRequest) {
       totalTime: activities.reduce((sum, a) => sum + (a.duration || 0), 0),
     };
 
-    return new Response(JSON.stringify(ok(darData)), { status: 200 });
+    return ok(darData, 200);
   } catch (error: any) {
-    return new Response(JSON.stringify(err(error.message)), { status: 500 });
+    return err(error.message, 500);
   }
 }

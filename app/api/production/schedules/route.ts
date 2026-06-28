@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 export async function GET(req: NextRequest) {
   const session = await requireSession();
-  if (!session) return new Response(JSON.stringify(err("Unauthorized")), { status: 401 });
+  if (!session) return err("Unauthorized", 401);
 
   try {
     const searchParams = req.nextUrl.searchParams;
@@ -41,15 +41,15 @@ export async function GET(req: NextRequest) {
       take: 300,
     });
 
-    return new Response(JSON.stringify(ok(schedules)), { status: 200 });
+    return ok(schedules, 200);
   } catch (error: any) {
-    return new Response(JSON.stringify(err(error.message)), { status: 500 });
+    return err(error.message, 500);
   }
 }
 
 export async function POST(req: NextRequest) {
   const session = await requireSession();
-  if (!session) return new Response(JSON.stringify(err("Unauthorized")), { status: 401 });
+  if (!session) return err("Unauthorized", 401);
 
   try {
     const body = await req.json();
@@ -95,8 +95,8 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return new Response(JSON.stringify(ok(schedule)), { status: 201 });
+    return ok(schedule, 201);
   } catch (error: any) {
-    return new Response(JSON.stringify(err(error.message)), { status: 500 });
+    return err(error.message, 500);
   }
 }

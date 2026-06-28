@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 export async function GET(req: NextRequest) {
   const session = await requireSession();
-  if (!session) return new Response(JSON.stringify(err("Unauthorized")), { status: 401 });
+  if (!session) return err("Unauthorized", 401);
 
   try {
     const searchParams = req.nextUrl.searchParams;
@@ -27,15 +27,15 @@ export async function GET(req: NextRequest) {
       take: 300,
     });
 
-    return new Response(JSON.stringify(ok(consumptions)), { status: 200 });
+    return ok(consumptions, 200);
   } catch (error: any) {
-    return new Response(JSON.stringify(err(error.message)), { status: 500 });
+    return err(error.message, 500);
   }
 }
 
 export async function POST(req: NextRequest) {
   const session = await requireSession();
-  if (!session) return new Response(JSON.stringify(err("Unauthorized")), { status: 401 });
+  if (!session) return err("Unauthorized", 401);
 
   try {
     const body = await req.json();
@@ -72,15 +72,15 @@ export async function POST(req: NextRequest) {
       data: { currentStock: { decrement: body.plannedQty } },
     });
 
-    return new Response(JSON.stringify(ok(consumption)), { status: 201 });
+    return ok(consumption, 201);
   } catch (error: any) {
-    return new Response(JSON.stringify(err(error.message)), { status: 500 });
+    return err(error.message, 500);
   }
 }
 
 export async function PUT(req: NextRequest) {
   const session = await requireSession();
-  if (!session) return new Response(JSON.stringify(err("Unauthorized")), { status: 401 });
+  if (!session) return err("Unauthorized", 401);
 
   try {
     const body = await req.json();
@@ -96,8 +96,8 @@ export async function PUT(req: NextRequest) {
       include: { material: true },
     });
 
-    return new Response(JSON.stringify(ok(consumption)), { status: 200 });
+    return ok(consumption, 200);
   } catch (error: any) {
-    return new Response(JSON.stringify(err(error.message)), { status: 500 });
+    return err(error.message, 500);
   }
 }
