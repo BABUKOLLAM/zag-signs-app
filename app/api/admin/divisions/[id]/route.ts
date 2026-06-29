@@ -6,7 +6,7 @@ const GUARD = ["MD", "IT_ADMIN"];
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await requireSession();
   if (!session) return err("Unauthorized", 401);
@@ -14,11 +14,12 @@ export async function PUT(
   const role = (session.user as any).role;
   if (!GUARD.includes(role)) return err("Forbidden", 403);
 
+  const { id } = await params;
   const body = await req.json();
 
   try {
     const division = await prisma.division.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         name:      body.name?.trim(),
         headName:  body.headName  ?? undefined,
@@ -38,7 +39,7 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await requireSession();
   if (!session) return err("Unauthorized", 401);
@@ -46,8 +47,10 @@ export async function DELETE(
   const role = (session.user as any).role;
   if (!GUARD.includes(role)) return err("Forbidden", 403);
 
+  const { id } = await params;
+
   try {
-    await prisma.division.delete({ where: { id: params.id } });
+    await prisma.division.delete({ where: { id } });
     return ok({ deleted: true });
   } catch (e: any) {
     if (e.code === "P2025") return err("Division not found", 404);
