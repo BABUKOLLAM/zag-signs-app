@@ -250,7 +250,7 @@ export default function SettingsHub() {
   const handleDeleteDivision = async (id: string) => {
     if (!confirm("Delete this division and all its departments?")) return;
     try {
-      await api.delete(`/admin/divisions/${id}`);
+      await api.del(`/admin/divisions/${id}`);
       setDivisions(d => d.filter(x => x.id !== id));
     } catch { alert("Delete failed"); }
   };
@@ -283,7 +283,7 @@ export default function SettingsHub() {
   const handleDeleteDept = async (id: string) => {
     if (!confirm("Delete this department?")) return;
     try {
-      await api.delete(`/admin/departments/${id}`);
+      await api.del(`/admin/departments/${id}`);
       setDepartments(d => d.filter(x => x.id !== id));
     } catch { alert("Delete failed"); }
   };
