@@ -1,8 +1,7 @@
 import { NextRequest } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { sendFollowUpReminderEmail, sendDARReminderEmail, sendClaimsReminderEmail } from "@/lib/email-service";
 
-const prisma = new PrismaClient();
 
 export async function POST(req: NextRequest) {
   try {

@@ -1,8 +1,7 @@
 import { NextRequest } from "next/server";
+import { prisma } from "@/lib/prisma";
 import { requireSession, ok, err, autoNo } from "@/lib/api-helpers";
-import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
 
 // Claim submission window: 1st to 10th of month
 function getClaimSubmissionWindow() {

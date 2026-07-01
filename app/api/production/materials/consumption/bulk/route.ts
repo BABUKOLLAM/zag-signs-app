@@ -1,9 +1,8 @@
 import { NextRequest } from "next/server";
+import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/api-helpers";
-import { PrismaClient } from "@prisma/client";
 import { str, num, rowNo, maxTrailingInt } from "@/lib/bulk-helpers";
 
-const prisma = new PrismaClient();
 
 interface RowInput {
   __row: number;

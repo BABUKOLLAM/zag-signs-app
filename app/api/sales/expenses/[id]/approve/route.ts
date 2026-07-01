@@ -1,9 +1,8 @@
 import { NextRequest } from "next/server";
+import { prisma } from "@/lib/prisma";
 import { requireSession, ok, err } from "@/lib/api-helpers";
-import { PrismaClient } from "@prisma/client";
 import { sendExpenseApprovalEmail } from "@/lib/email-service";
 
-const prisma = new PrismaClient();
 
 // Stage → next status map
 const STAGE_TRANSITIONS: Record<string, Record<string, string>> = {
