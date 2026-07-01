@@ -13,7 +13,7 @@ export default function DARPage() {
   const handleGenerateDAR = async () => {
     setLoading(true);
     try {
-      const res = await api.get(`/api/sales/dar/generate?date=${date}`);
+      const res = await api.get(`/sales/dar/generate?date=${date}`);
       if ((res as any)?.data) {
         setDarData((res as any).data);
         setSubmitted(false);
