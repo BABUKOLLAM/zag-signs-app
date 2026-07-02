@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     const myId = (session.user as any).id;
 
     // HOD/Accounts/CEO/MD/AVP see pending approvals; others see own
-    const isApprover = ["MD", "AVP", "BUSINESS_MANAGER", "ACCOUNTS"].includes(role);
+    const isApprover = ["MD", "AVP", "Business Manager", "Accounts"].includes(role);
 
     const where: any = {};
     if (userId) where.userId = userId;

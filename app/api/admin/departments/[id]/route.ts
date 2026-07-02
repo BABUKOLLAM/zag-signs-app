@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok, err, requireSession } from "@/lib/api-helpers";
 
-const GUARD = ["MD", "IT_ADMIN"];
+const GUARD = ["MD", "IT Admin"];
 
 export async function PUT(
   req: NextRequest,

@@ -25,7 +25,7 @@ export async function PUT(req: NextRequest) {
   if (!session) return err("Unauthorized", 401);
 
   const role = (session.user as any).role;
-  if (!["MD", "IT_ADMIN"].includes(role)) return err("Forbidden — MD or IT Admin only", 403);
+  if (!["MD", "IT Admin"].includes(role)) return err("Forbidden — MD or IT Admin only", 403);
 
   const body = await req.json();
   const { branch, machineTypes, materialCategories, ...rest } = body;

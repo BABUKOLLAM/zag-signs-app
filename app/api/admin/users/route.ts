@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   if (!session) return err("Unauthorized", 401);
 
   const role = (session.user as any).role;
-  if (!["MD", "IT_ADMIN", "HR", "AVP"].includes(role)) return err("Forbidden", 403);
+  if (!["MD", "IT Admin", "HR", "AVP"].includes(role)) return err("Forbidden", 403);
 
   const branch = req.nextUrl.searchParams.get("branch") || undefined;
 

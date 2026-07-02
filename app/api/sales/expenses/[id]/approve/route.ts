@@ -25,8 +25,8 @@ const STAGE_TRANSITIONS: Record<string, Record<string, string>> = {
 
 // Allowed roles per stage
 const STAGE_ROLES: Record<string, string[]> = {
-  HOD: ["MD", "AVP", "BUSINESS_MANAGER"],
-  ACCOUNTS: ["ACCOUNTS"],
+  HOD: ["MD", "AVP", "Business Manager"],
+  ACCOUNTS: ["Accounts"],
   CEO: ["MD"],
 };
 
