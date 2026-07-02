@@ -26,7 +26,7 @@ const TYPE_DOT: Record<string,string> = {
 export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const { data, refetch } = useApi<Notification[]>("/api/notifications");
+  const { data, refetch } = useApi<Notification[]>("/notifications");
   const notifs = data ?? [];
   const unread = notifs.filter(n => !n.isRead).length;
 

@@ -23,12 +23,12 @@ export default function CollectionsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const { data: raw, loading, refetch } = useApi<Collection[]>(`/api/collections?month=${month}`);
+  const { data: raw, loading, refetch } = useApi<Collection[]>(`/collections?month=${month}`);
   const collections = raw ?? [];
 
-  const { data: customers } = useApi<{ id:string; name:string; company:string }[]>("/api/customers");
-  const { data: invoices  } = useApi<{ id:string; invoiceNo:string; totalAmount:number }[]>("/api/invoices?status=PENDING");
-  const { data: orders    } = useApi<{ id:string; orderNo:string }[]>("/api/sales-orders");
+  const { data: customers } = useApi<{ id:string; name:string; company:string }[]>("/customers");
+  const { data: invoices  } = useApi<{ id:string; invoiceNo:string; totalAmount:number }[]>("/invoices?status=PENDING");
+  const { data: orders    } = useApi<{ id:string; orderNo:string }[]>("/sales-orders");
   const custList = customers ?? [];
   const invList  = invoices  ?? [];
   const ordList  = orders    ?? [];

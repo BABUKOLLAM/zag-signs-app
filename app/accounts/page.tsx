@@ -25,10 +25,10 @@ export default function AccountsPage() {
   const [saving, setSaving]   = useState(false);
 
   const params = new URLSearchParams({ ...(status?{status}:{}), ...(search?{search}:{}) });
-  const { data: raw, loading, refetch } = useApi<Invoice[]>(`/api/invoices?${params}`);
+  const { data: raw, loading, refetch } = useApi<Invoice[]>(`/invoices?${params}`);
   const invoices = raw ?? [];
 
-  const { data: salesOrders } = useApi<{ id:string; orderNo:string; customer:{name:string}|null }[]>("/api/sales-orders");
+  const { data: salesOrders } = useApi<{ id:string; orderNo:string; customer:{name:string}|null }[]>("/sales-orders");
   const orders = salesOrders ?? [];
 
   const [form, setForm] = useState({ salesOrderId:"", amount:"", taxAmount:"0", dueDate:"", notes:"" });

@@ -24,7 +24,7 @@ export default function AuditPage() {
   const [table, setTable] = useState("");
 
   const params = new URLSearchParams({ page: String(page), ...(table ? { table } : {}) });
-  const { data: raw, loading, refetch } = useApi<AuditLog[]>(`/api/audit-logs?${params}`);
+  const { data: raw, loading, refetch } = useApi<AuditLog[]>(`/audit-logs?${params}`);
   const logs = raw ?? [];
 
   const TABLES = ["User","Lead","Customer","SalesOrder","Quotation","Employee","Invoice","WorkOrder","Inventory"];
