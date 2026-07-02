@@ -198,8 +198,10 @@ model User {
   phone          String?
   isActive       Boolean   @default(true)
   status         String    @default("PENDING") // PENDING | ACTIVE | INACTIVE
-  approvalToken  String?   @unique
-  tokenExpiry    DateTime?
+  approvalToken      String?   @unique
+  tokenExpiry        DateTime?
+  resetToken         String?   @unique
+  resetTokenExpiry   DateTime?
   reportingToId  String?
   reportingTo    User?     @relation("Hierarchy", fields: [reportingToId], references: [id])
   reportees      User[]    @relation("Hierarchy")

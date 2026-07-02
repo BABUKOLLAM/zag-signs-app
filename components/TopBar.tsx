@@ -1,5 +1,7 @@
 "use client";
 import { ChevronRight, Menu, Sun, Moon } from "lucide-react";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { useSidebar } from "@/lib/sidebar-context";
 import { useTheme } from "@/lib/theme-context";
 import NotificationBell from "@/components/NotificationBell";
@@ -14,6 +16,9 @@ interface TopBarProps {
 export default function TopBar({ title, subtitle, actions }: TopBarProps) {
   const { toggle } = useSidebar();
   const { theme, toggle: toggleTheme } = useTheme();
+  const { data: session } = useSession();
+  const user = session?.user as any;
+  const initials = (user?.name ?? "U").split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2);
 
   return (
     <header
@@ -68,6 +73,16 @@ export default function TopBar({ title, subtitle, actions }: TopBarProps) {
 
       {/* Notifications */}
       <NotificationBell />
+
+      {/* Profile avatar */}
+      <Link
+        href="/profile"
+        title={`${user?.name ?? "Profile"} — My account`}
+        className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs font-bold shadow-sm transition-opacity hover:opacity-80"
+        style={{ background: "linear-gradient(135deg, #6366F1, #EC4899)" }}
+      >
+        {session ? initials : <span className="opacity-70 text-white"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>}
+      </Link>
 
       {/* Date — desktop only */}
       <div

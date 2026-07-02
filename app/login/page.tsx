@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, ChevronDown, AlertCircle, Loader2 } from "lucide-react";
+import Link from "next/link";
 import { DEMO_CREDENTIALS } from "@/lib/demo-credentials";
 import BrandLogo from "@/components/BrandLogo";
 import PoweredByBpro from "@/components/PoweredByBpro";
@@ -106,9 +107,14 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                Password
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-semibold text-slate-600">
+                  Password
+                </label>
+                <Link href="/forgot-password" className="text-xs text-indigo-600 hover:underline font-medium">
+                  Forgot password?
+                </Link>
+              </div>
               <div className="relative">
                 <input
                   type={showPass ? "text" : "password"}
