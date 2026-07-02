@@ -57,7 +57,7 @@ export default function UsersPage() {
   });
   const [editForm, setEditForm] = useState<{ role?: string; branch?: string; phone?: string; status?: string; password?: string; reportingToId?: string }>({});
 
-  const url = `/api/users?${new URLSearchParams({ ...(filter ? {status:filter}:{}), ...(search?{search}:{}) })}`;
+  const url = `/users?${new URLSearchParams({ ...(filter ? {status:filter}:{}), ...(search?{search}:{}) })}`;
   const { data: rawUsers, loading, refetch } = useApi<UserRecord[]>(url);
   const users = rawUsers ?? [];
 
