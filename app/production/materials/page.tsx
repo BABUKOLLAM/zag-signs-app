@@ -276,7 +276,7 @@ export default function MaterialsPage() {
       {showImport && (
         <BatchImportModal
           title="Import Material Consumption"
-          endpoint="/api/production/materials/consumption/bulk"
+          endpoint="/production/materials/consumption/bulk"
           templateName="zag-material-consumption-template"
           columns={MATERIAL_CONSUMPTION_COLUMNS}
           onClose={() => setShowImport(false)}

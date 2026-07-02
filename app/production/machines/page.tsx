@@ -396,7 +396,7 @@ export default function MachinesPage() {
       {showImport && (
         <BatchImportModal
           title="Import Machines"
-          endpoint="/api/production/machines/bulk"
+          endpoint="/production/machines/bulk"
           templateName="zag-machines-template"
           columns={MACHINE_COLUMNS}
           onClose={() => setShowImport(false)}
