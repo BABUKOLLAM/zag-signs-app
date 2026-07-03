@@ -8,7 +8,7 @@ import {
   MapPin, FolderOpen, Sparkles, ChevronRight, X, LogOut,
   Shield, Database, ScrollText, BookOpen, Settings, Receipt,
   Ticket, Palette, Trophy, Truck, ShoppingBag, FolderKanban,
-  ClipboardCheck, ShieldCheck, DollarSign,
+  ClipboardCheck, ShieldCheck, DollarSign, LayoutGrid,
 } from "lucide-react";
 import { useSidebar } from "@/lib/sidebar-context";
 import { useSession, signOut } from "next-auth/react";
@@ -19,6 +19,7 @@ const sections = [
   {
     label: "OVERVIEW",
     items: [
+      { href: "/modules",       label: "All Modules",      icon: LayoutGrid },
       { href: "/dashboard",     label: "Dashboard",        icon: LayoutDashboard },
       { href: "/kpi",           label: "KPI Dashboard",    icon: Target },
     ],
