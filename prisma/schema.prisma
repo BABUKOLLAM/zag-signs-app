@@ -241,9 +241,19 @@ model User {
   expenseApprovals   ExpenseApproval[] @relation("ExpenseApprovals")
 
   // Production Phase 2 Relations
-  machineSchedulesAsOperator MachineSchedule[]
+  machineSchedulesAsOperator    MachineSchedule[]
   qualityCheckpointsAsInspector QualityCheckpoint[]
   productionRejectionsApprovals ProductionRejection[]
+
+  // New Module Relations
+  tendersCreated        Tender[]          @relation("TenderCreator")
+  purchaseOrdersCreated PurchaseOrder[]   @relation("POCreator")
+  grnsReceived          GoodsReceived[]   @relation("GRNReceiver")
+  vehiclesDriven        Vehicle[]         @relation("VehicleDriver")
+  tripsAsDriver         FleetTrip[]       @relation("TripDriver")
+  projectsManaged       Project[]         @relation("ProjectManager")
+  approvalsCreated      DigitalApproval[] @relation("ApprovalCreator")
+  serviceTicketsAssigned ServiceTicket[]  @relation("ServiceAssignee")
 
   @@map("users")
 }
@@ -306,14 +316,17 @@ model Customer {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
-  quotations   Quotation[]
-  salesOrders  SalesOrder[]
-  complaints   Complaint[]
-  collections  Collection[]
-  fieldVisits  FieldVisit[]
-  invoices     Invoice[]
-  tickets      WorkOrderTicket[]
-  activityLogs ActivityLog[]
+  quotations     Quotation[]
+  salesOrders    SalesOrder[]
+  complaints     Complaint[]
+  collections    Collection[]
+  fieldVisits    FieldVisit[]
+  invoices       Invoice[]
+  tickets        WorkOrderTicket[]
+  activityLogs   ActivityLog[]
+  projects       Project[]
+  amcContracts   AMCContract[]
+  serviceTickets ServiceTicket[]
 
   @@map("customers")
 }
@@ -416,6 +429,7 @@ model SalesOrder {
   workOrders  WorkOrder[]
   invoices    Invoice[]
   collections Collection[]
+  jobCost     JobCost?
 
   @@map("sales_orders")
 }
@@ -1437,4 +1451,355 @@ model ProductionRejection {
   @@index([workOrderId])
   @@index([action])
   @@map("production_rejections")
+}
+
+// ─── TENDER MANAGEMENT ────────────────────────────────────────────────────────
+
+model Tender {
+  id             String   @id @default(cuid())
+  tenderNo       String   @unique
+  title          String
+  client         String
+  branch         Branch
+  status         String   @default("OPEN") // OPEN, SUBMITTED, WON, LOST, CANCELLED
+  bidValue       Float    @default(0)
+  awardedValue   Float?
+  rfpDate        DateTime?
+  submitDeadline DateTime?
+  openingDate    DateTime?
+  competitors    String?  // JSON array [{name, bidValue}]
+  boqUrl         String?
+  notes          String?
+  createdById    String
+  createdBy      User     @relation("TenderCreator", fields: [createdById], references: [id])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([branch])
+  @@index([status])
+  @@map("tenders")
+}
+
+// ─── JOB COSTING ─────────────────────────────────────────────────────────────
+
+model JobCost {
+  id             String        @id @default(cuid())
+  salesOrderId   String        @unique
+  salesOrder     SalesOrder    @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
+  revenueQuoted  Float         @default(0)
+  revenueActual  Float         @default(0)
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  lines          JobCostLine[]
+
+  @@map("job_costs")
+}
+
+model JobCostLine {
+  id          String  @id @default(cuid())
+  jobCostId   String
+  jobCost     JobCost @relation(fields: [jobCostId], references: [id], onDelete: Cascade)
+  category    String  // MATERIAL, LABOUR, TRANSPORT, FABRICATION, INSTALLATION, OTHER
+  description String
+  quantity    Float   @default(1)
+  unit        String  @default("units")
+  unitCost    Float   @default(0)
+  totalCost   Float   @default(0)
+  createdAt   DateTime @default(now())
+
+  @@index([jobCostId])
+  @@map("job_cost_lines")
+}
+
+// ─── PROCUREMENT ──────────────────────────────────────────────────────────────
+
+model Vendor {
+  id             String          @id @default(cuid())
+  vendorCode     String          @unique
+  name           String
+  company        String?
+  phone          String
+  email          String?
+  address        String?
+  gstin          String?
+  category       String          // MATERIAL, PRINTING, FABRICATION, TRANSPORT, SERVICE
+  branch         Branch
+  status         String          @default("ACTIVE")
+  creditDays     Int             @default(30)
+  notes          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  purchaseOrders PurchaseOrder[]
+
+  @@index([branch])
+  @@index([status])
+  @@map("vendors")
+}
+
+model PurchaseOrder {
+  id           String          @id @default(cuid())
+  poNo         String          @unique
+  vendorId     String
+  vendor       Vendor          @relation(fields: [vendorId], references: [id])
+  branch       Branch
+  status       String          @default("DRAFT") // DRAFT, SENT, PARTIAL, RECEIVED, COMPLETED, CANCELLED
+  totalAmount  Float           @default(0)
+  deliveryDate DateTime?
+  notes        String?
+  createdById  String
+  createdBy    User            @relation("POCreator", fields: [createdById], references: [id])
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  lines        POLine[]
+  grns         GoodsReceived[]
+
+  @@index([vendorId])
+  @@index([status])
+  @@map("purchase_orders")
+}
+
+model POLine {
+  id          String        @id @default(cuid())
+  poId        String
+  po          PurchaseOrder @relation(fields: [poId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Float
+  unit        String
+  unitCost    Float
+  totalCost   Float
+  receivedQty Float         @default(0)
+
+  @@index([poId])
+  @@map("po_lines")
+}
+
+model GoodsReceived {
+  id           String        @id @default(cuid())
+  grnNo        String        @unique
+  poId         String
+  po           PurchaseOrder @relation(fields: [poId], references: [id])
+  receivedDate DateTime      @default(now())
+  notes        String?
+  receivedById String
+  receivedBy   User          @relation("GRNReceiver", fields: [receivedById], references: [id])
+  items        GRNItem[]
+  createdAt    DateTime      @default(now())
+
+  @@index([poId])
+  @@map("goods_received")
+}
+
+model GRNItem {
+  id          String        @id @default(cuid())
+  grnId       String
+  grn         GoodsReceived @relation(fields: [grnId], references: [id], onDelete: Cascade)
+  description String
+  orderedQty  Float
+  receivedQty Float
+  rejectedQty Float         @default(0)
+  unit        String
+  notes       String?
+
+  @@index([grnId])
+  @@map("grn_items")
+}
+
+// ─── FLEET MANAGEMENT ────────────────────────────────────────────────────────
+
+model Vehicle {
+  id              String             @id @default(cuid())
+  vehicleNo       String             @unique
+  make            String
+  model           String
+  type            String             // TRUCK, VAN, CAR, BIKE, AUTO
+  branch          Branch
+  status          String             @default("ACTIVE") // ACTIVE, MAINTENANCE, RETIRED
+  driverId        String?
+  driver          User?              @relation("VehicleDriver", fields: [driverId], references: [id])
+  insuranceExpiry DateTime?
+  pucExpiry       DateTime?
+  nextService     DateTime?
+  notes           String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  trips           FleetTrip[]
+  fuelLogs        FuelLog[]
+  maintenance     FleetMaintenance[]
+
+  @@index([branch])
+  @@index([status])
+  @@map("vehicles")
+}
+
+model FleetTrip {
+  id             String   @id @default(cuid())
+  tripNo         String   @unique
+  vehicleId      String
+  vehicle        Vehicle  @relation(fields: [vehicleId], references: [id])
+  driverId       String
+  driver         User     @relation("TripDriver", fields: [driverId], references: [id])
+  startKm        Float
+  endKm          Float?
+  startTime      DateTime
+  endTime        DateTime?
+  purpose        String   // DELIVERY, INSTALLATION, SITE_VISIT, MATERIAL_PICKUP, OTHER
+  fromPlace      String
+  toPlace        String
+  relatedOrderId String?
+  notes          String?
+  createdAt      DateTime @default(now())
+
+  @@index([vehicleId])
+  @@index([driverId])
+  @@map("fleet_trips")
+}
+
+model FuelLog {
+  id           String   @id @default(cuid())
+  vehicleId    String
+  vehicle      Vehicle  @relation(fields: [vehicleId], references: [id])
+  date         DateTime @db.Date
+  litres       Float
+  costPerLitre Float
+  totalCost    Float
+  odometer     Float
+  fuelStation  String?
+  createdAt    DateTime @default(now())
+
+  @@index([vehicleId])
+  @@map("fuel_logs")
+}
+
+model FleetMaintenance {
+  id        String   @id @default(cuid())
+  vehicleId String
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id])
+  type      String   // SERVICE, REPAIR, TYRE, BATTERY, OTHER
+  date      DateTime @db.Date
+  cost      Float    @default(0)
+  vendor    String?
+  notes     String?
+  nextDue   DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([vehicleId])
+  @@map("fleet_maintenance")
+}
+
+// ─── PROJECT MANAGEMENT ───────────────────────────────────────────────────────
+
+model Project {
+  id           String             @id @default(cuid())
+  projectNo    String             @unique
+  name         String
+  customerId   String
+  customer     Customer           @relation(fields: [customerId], references: [id])
+  salesOrderId String?
+  branch       Branch
+  status       String             @default("PLANNING") // PLANNING, PRODUCTION, DISPATCH, INSTALLATION, COMPLETED, ON_HOLD
+  managerId    String
+  manager      User               @relation("ProjectManager", fields: [managerId], references: [id])
+  startDate    DateTime?
+  endDate      DateTime?
+  budget       Float              @default(0)
+  notes        String?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  milestones   ProjectMilestone[]
+
+  @@index([branch])
+  @@index([status])
+  @@map("projects")
+}
+
+model ProjectMilestone {
+  id            String   @id @default(cuid())
+  projectId     String
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title         String
+  dueDate       DateTime
+  completedDate DateTime?
+  status        String   @default("PENDING") // PENDING, COMPLETED, DELAYED
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  @@index([projectId])
+  @@map("project_milestones")
+}
+
+// ─── DIGITAL APPROVALS ───────────────────────────────────────────────────────
+
+model DigitalApproval {
+  id            String   @id @default(cuid())
+  approvalNo    String   @unique
+  type          String   // ARTWORK, PRODUCTION, SITE, HANDOVER
+  relatedId     String
+  relatedType   String   // SALES_ORDER, WORK_ORDER, QUOTATION
+  status        String   @default("PENDING") // PENDING, APPROVED, REJECTED, REVISION_REQUESTED
+  customerName  String?
+  customerEmail String?
+  customerPhone String?
+  documentUrl   String?
+  signatureUrl  String?
+  approvedAt    DateTime?
+  notes         String?
+  remarks       String?
+  createdById   String
+  createdBy     User     @relation("ApprovalCreator", fields: [createdById], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([relatedId])
+  @@index([status])
+  @@index([type])
+  @@map("digital_approvals")
+}
+
+// ─── AMC & WARRANTY ──────────────────────────────────────────────────────────
+
+model AMCContract {
+  id             String          @id @default(cuid())
+  amcNo          String          @unique
+  customerId     String
+  customer       Customer        @relation(fields: [customerId], references: [id])
+  description    String
+  startDate      DateTime
+  endDate        DateTime
+  annualValue    Float           @default(0)
+  status         String          @default("ACTIVE") // ACTIVE, EXPIRED, CANCELLED, RENEWED
+  visitFrequency String          // MONTHLY, QUARTERLY, HALF_YEARLY, ANNUALLY
+  notes          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  serviceTickets ServiceTicket[]
+
+  @@index([customerId])
+  @@index([status])
+  @@map("amc_contracts")
+}
+
+model ServiceTicket {
+  id              String       @id @default(cuid())
+  ticketNo        String       @unique
+  customerId      String
+  customer        Customer     @relation(fields: [customerId], references: [id])
+  amcId           String?
+  amc             AMCContract? @relation(fields: [amcId], references: [id])
+  type            String       // WARRANTY, AMC, ADHOC
+  priority        String       @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
+  status          String       @default("OPEN") // OPEN, ASSIGNED, IN_PROGRESS, RESOLVED, CLOSED
+  description     String
+  assignedToId    String?
+  assignedTo      User?        @relation("ServiceAssignee", fields: [assignedToId], references: [id])
+  resolvedAt      DateTime?
+  resolutionNotes String?
+  slaHours        Int          @default(24)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([customerId])
+  @@index([status])
+  @@index([priority])
+  @@map("service_tickets")
 }

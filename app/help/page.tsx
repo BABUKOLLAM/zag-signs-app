@@ -230,15 +230,79 @@ const SECTIONS: Section[] = [
     tips: ["Outstanding balance in the customer record updates automatically as sales orders and collections are linked."],
   },
   {
+    id: "tickets", icon: <ClipboardList size={18} />, title: "Work Order Tickets", color: "orange",
+    intro: "The front office raises a ticket for every customer job — walk-in, phone, WhatsApp or from an approved quotation. Tickets pass through the Designer queue before moving to production and billing.",
+    steps: [
+      { step: "Raise a new ticket", desc: "Work Order Tickets → 'New Ticket'. Choose Source: Walk-in / Phone / WhatsApp / From Quotation. Enter Customer Name, Nature of Work, ETA and Priority (High / Medium / Low)." },
+      { step: "Raise from an approved quotation", desc: "On any APPROVED or SUBMITTED quotation, click 'Ticket'. Customer name, items and amounts are auto-filled from the quotation — zero re-entry." },
+      { step: "Assign a designer", desc: "Select a designer from the 'Assign Designer' dropdown before printing. The ticket is pushed directly to that designer's My Work queue." },
+      { step: "Print the work-order slip", desc: "Click 'Print'. An A4 job slip prints with: customer name, nature of work, costing, ETA, and signature blocks for designer and manager." },
+      { step: "Designer picks it up (My Work)", desc: "Designer → My Work → sees own ticket queue sorted by priority → clicks 'Pick' then 'Start'. Status: NEW → ASSIGNED → IN PROGRESS." },
+      { step: "Close the ticket", desc: "Designer marks 'Done' (remarks required) or 'Half-Done' (reason required). Completed tickets move to the billing queue." },
+    ],
+    tips: [
+      "High-priority tickets automatically sort to the top of every designer's queue.",
+      "Every status change is timestamped — use this to measure designer turnaround time.",
+    ],
+    warning: "Closing a ticket as Done requires mandatory remarks. Half-Done requires a reason. No ticket can be closed without a note.",
+  },
+  {
     id: "operations", icon: <Wrench size={18} />, title: "Work Orders & Production", color: "red",
-    intro: "Production module for managing job execution, daily output logging and material usage.",
+    intro: "Full production suite — job execution, machine scheduling, material consumption tracking and quality control.",
     steps: [
       { step: "Create a work order", desc: "Work Orders → 'New Work Order'. Link to a Sales Order. Enter: Description, Assigned Team, Start Date, Due Date, Priority (High / Medium / Low)." },
-      { step: "Update progress", desc: "Change status through: Pending → In Progress → Completed. Add progress notes that are visible to the linked sales executive." },
-      { step: "Log daily production", desc: "Production (/production) → 'New Log'. Select Work Order, enter: Units Produced, Downtime Hours, Downtime Reason, Units Dispatched." },
-      { step: "Inventory", desc: "Inventory → 'Record Movement' to log materials in or out. Stock levels update instantly. Low-stock items are highlighted in red." },
+      { step: "Update progress", desc: "Status flow: Pending → In Progress → Quality Check → Dispatch Ready → Completed. Progress notes are visible to the linked sales executive in real time." },
+      { step: "Machine scheduling", desc: "Production → Machines → Schedule Board. Assign jobs to specific machines. The system detects double-booking conflicts automatically." },
+      { step: "Material consumption", desc: "Production → Materials → 'Add Materials'. Select Work Order, material and planned quantity. Inventory stock is auto-deducted on save." },
+      { step: "Quality checkpoints", desc: "Production → Quality → 'New Checkpoint'. Select stage (Pre-Production / Mid-Production / Pre-Delivery). Mark PASS, FAIL or CONDITIONAL PASS. Log defects if failed." },
     ],
-    tips: ["Low stock alerts appear in the Inventory module when a material falls below its minimum quantity threshold."],
+    tips: [
+      "Work orders are visible to the linked sales executive — they see real-time production status without calling the factory.",
+      "Low-stock alerts appear when a material falls below its minimum quantity threshold.",
+    ],
+  },
+  {
+    id: "inventory", icon: <Package size={18} />, title: "Inventory", color: "emerald",
+    intro: "Track all raw materials and supplies across all branches. Monitor stock levels, record in/out movements and get low-stock alerts.",
+    steps: [
+      { step: "Add a material", desc: "Inventory → 'Add Material'. Required: Name, Category, Branch, Unit (Sqft/Rft/Nos/Kg/Ltr/Roll/Box), Current Stock, Minimum Qty. Minimum Qty is the low-stock alert threshold." },
+      { step: "Record a stock movement", desc: "Click 'Stock Movement' on any material row. Choose: IN (received new stock), OUT (consumed/issued), ADJUST (stock count correction). Enter quantity and reason." },
+      { step: "Monitor low-stock items", desc: "Materials below their Minimum Qty are highlighted in red. The count of low-stock materials appears as an alert on the Dashboard." },
+      { step: "Filter by branch", desc: "Use the branch tabs (ALL / TVM / KTYM / EKM / CLT) at the top of the page to view stock for a specific location." },
+      { step: "Bulk import", desc: "Click 'Import' to upload a materials list from Excel. Download the template first and fill it — see Batch Import section." },
+    ],
+    tips: [
+      "Set Minimum Qty carefully — too low means late alerts, too high means unnecessary orders.",
+      "OUT movements are recorded automatically when material consumption is logged in Production → Materials.",
+    ],
+  },
+  {
+    id: "complaints", icon: <AlertCircle size={18} />, title: "Complaints", color: "red",
+    intro: "Log, assign and track every customer complaint to resolution. All complaints are visible to the MD on the Dashboard.",
+    steps: [
+      { step: "Log a complaint", desc: "Complaints → 'New Complaint'. Required: Customer, Complaint Type, Description, Priority (Low / Medium / High / Critical). Optional: link to a Sales Order or Work Order." },
+      { step: "Assign and track", desc: "Assign the complaint to a responsible person. Set an Expected Resolution Date. Update status: OPEN → IN PROGRESS → RESOLVED → CLOSED." },
+      { step: "Add resolution notes", desc: "When resolving, enter a Resolution Note explaining what was done. This note appears in the customer's complaint history and on reports." },
+      { step: "Escalate urgent complaints", desc: "Set Priority to HIGH or CRITICAL. These appear highlighted on the Dashboard for MD/AVP review and cannot be missed." },
+    ],
+    tips: [
+      "Resolved complaints stay in the customer history — review them to spot recurring issues.",
+      "Filter by Branch, Priority or Status to manage the complaints queue efficiently.",
+    ],
+  },
+  {
+    id: "tasks", icon: <CheckCircle size={18} />, title: "Tasks & To-Dos", color: "cyan",
+    intro: "Assign and track follow-up tasks across the team. Tasks can be linked to leads, customers or orders, or created as stand-alone reminders.",
+    steps: [
+      { step: "Create a task", desc: "Tasks → 'New Task'. Enter: Title, Description, Assign To, Due Date, Priority (Low / Medium / High / Critical). Optionally link to a Lead, Customer or Sales Order." },
+      { step: "Update task status", desc: "Status flow: TODO → IN PROGRESS → DONE → CANCELLED. Click any task to update progress and add notes." },
+      { step: "View my tasks", desc: "The Tasks page defaults to 'My Tasks' — tasks assigned to you. Use 'All Tasks' to see the full team list (Managers and above only)." },
+      { step: "Priority alert on Dashboard", desc: "HIGH and CRITICAL tasks with today's or past due dates appear as alerts on your Dashboard." },
+    ],
+    tips: [
+      "Link tasks to leads for follow-up reminders — the task appears in the lead's activity history.",
+      "Use CRITICAL priority for same-day urgent tasks that must not slip.",
+    ],
   },
   {
     id: "hr", icon: <UserCircle size={18} />, title: "HR & Attendance", color: "pink",
@@ -262,7 +326,55 @@ const SECTIONS: Section[] = [
     tips: ["Field visits auto-appear in the Daily Activity Report (DAR) for that day."],
   },
   {
-    id: "reports", icon: <ClipboardList size={18} />, title: "Team Reports", color: "violet",
+    id: "fjp", icon: <MapPin size={18} />, title: "Fixed Journey Plan (FJP)", color: "teal",
+    intro: "A mandatory monthly travel plan submitted by each sales executive before the 27th of the previous month. Lists planned customer visits day-by-day with route, mode and estimated km. Serves as the reference document for expense claims.",
+    steps: [
+      { step: "Open FJP", desc: "Sidebar → FIELD SALES → Journey Plan (FJP). A banner shows the submission window: green if open (with days remaining), red if the 27th deadline has passed." },
+      { step: "Add journey rows", desc: "Click 'Add Row'. Fill: Date, From Place, To Place, Customer/Prospect Name, Purpose, Mode of Travel (Two Wheeler / Four Wheeler / Bus / Train / Flight / Auto), Estimated KM." },
+      { step: "Save as draft", desc: "Click 'Save Draft' to save progress without submitting. Return and edit your draft at any time before the 27th." },
+      { step: "Submit FJP", desc: "Click 'Submit FJP'. The system assigns a FJP-YYYY-MM-NNN number. Submission is blocked after the 27th deadline." },
+      { step: "Print the FJP", desc: "In FJP History, click 'Print'. The printout shows the full route table, total KM, estimated travel cost (₹6/km) and signature blocks." },
+      { step: "Link to Expense Report", desc: "When submitting an expense report, select the relevant FJP from the dropdown to link your actual travel to the plan." },
+    ],
+    tips: [
+      "Submit at least 2–3 days before the 27th to allow time for corrections.",
+      "Estimated travel cost is auto-calculated at ₹6 per km (minimum reimbursement rate).",
+    ],
+    warning: "FJP submission is automatically blocked after the 27th. The system does not allow late submissions — plan ahead.",
+  },
+  {
+    id: "expenses", icon: <Wallet size={18} />, title: "Expense Reports", color: "yellow",
+    intro: "Submit itemised expense reports for reimbursement — travel, accommodation, food, client entertainment, communication. Every claim references an FJP and goes through a three-tier approval before payment.",
+    steps: [
+      { step: "Open Expense Reports", desc: "Sidebar → FIELD SALES → Expense Reports → 'New Expense'." },
+      { step: "Select type and link FJP", desc: "Choose Expense Type: TRAVEL / ACCOMMODATION / FOOD / CLIENT ENTERTAINMENT / COMMUNICATION / OTHER. For travel, select the related FJP from the dropdown." },
+      { step: "Enter line items", desc: "Add one row per expense: Date, Category, Description, From/To Place, KM (for travel), Amount (₹), Bill available (tick). Net Payable = Total – Advance is auto-calculated." },
+      { step: "Upload bills to Google Drive", desc: "Click 'Choose Files' → select scanned bills/receipts → 'Upload to Drive'. Files are saved to Google Drive and linked to your report. Approvers can view them." },
+      { step: "Submit for approval", desc: "'Save Draft' to save without submitting. 'Submit for Approval' to start the HOD → Accounts → CEO chain. EXP-YYYY-MM-NNN number is assigned on creation." },
+      { step: "Print the expense voucher", desc: "Click 'Print' on any submitted report. The printout shows itemised table, totals, net payable and approval history. Attach original hard-copy bills before handing to Accounts." },
+    ],
+    tips: [
+      "Upload all bills before submitting — attachments cannot be added after submission.",
+      "Items without bills are flagged and may be queried by Accounts during verification.",
+    ],
+    warning: "Always print the expense voucher and physically submit it with original bills to Accounts — this is required for audit compliance even after digital approval.",
+  },
+  {
+    id: "approvals", icon: <BadgeCheck size={18} />, title: "Three-Tier Approvals", color: "violet",
+    intro: "Expense reports go through a mandatory three-stage approval chain before reimbursement: HOD (Recommend) → Accounts (Verify) → CEO (Approve). Each stage can approve, hold or reject with a mandatory reason.",
+    steps: [
+      { step: "HOD — Recommend stage", desc: "After submission, the report lands with the HOD (Business Manager / AVP / MD). Options: Recommend (moves to Accounts), Hold (submitter notified with reason), Reject (claim declined with reason)." },
+      { step: "Accounts — Verify stage", desc: "Accounts verifies bill amounts, GST claims, advance deductions and policy compliance. Options: Verify (moves to CEO), Hold, Reject." },
+      { step: "CEO — Final Approve stage", desc: "MD/CEO gives the final decision. Options: Approve (reimbursement authorised), Hold, Reject. Email notification sent to submitter at every stage." },
+      { step: "View pending approvals", desc: "Sidebar → FIELD SALES → Approvals. Approvers see expenses pending their action with a coloured 'Action Required' badge and the step indicator (HOD → Accounts → CEO)." },
+    ],
+    tips: [
+      "Held claims can be resubmitted after addressing the HOD's or Accounts' query.",
+      "Email notifications are sent automatically at every stage — no need to follow up manually.",
+    ],
+  },
+  {
+    id: "reports", icon: <ClipboardList size={18} />, title: "Team Reports (DAR/WWR/MWR)", color: "indigo",
     intro: "Daily, weekly and monthly activity reports for all team members. MD reviews and approves.",
     steps: [
       { step: "Daily Activity Report (DAR)", desc: "Team Reports → DAR tab → 'New DAR'. Fill: Customer Visits, Calls Made, Orders Booked, Collections Amount, Travel Distance, Production Output. Submit by end of each working day." },
@@ -318,6 +430,24 @@ const FAQ: FaqItem[] = [
   { category: "Admin", q: "What are the user roles and what can each access?", a: "MD: full access to everything. AVP: all modules except Admin. Business Manager: all modules for their branch. Sales Executive: Leads, Customers, Quotations, Sales Orders, Field Visits, Tasks. CRE: Leads, Customers, Complaints, Tasks, Field Visits. Production: Work Orders, Production, Inventory, Tasks. Accounts: Customers, Invoices, Collections, Reports. HR: HR & Attendance, Tasks. IT Admin: everything including Admin." },
   { category: "Admin", q: "How do I see what a user has done in the system?", a: "Admin → Audit Trail. Filter by the user's email address. Every create, update and delete action is logged with the exact timestamp, old values and new values. This log is permanent and cannot be tampered with." },
   { category: "Admin", q: "How do I export data to Excel?", a: "Every list page (Leads, Customers, Quotations, Invoices, etc.) has an 'Excel' or 'Export' button in the filter bar. Click it to download the current filtered view as a .xlsx file. The file opens in Excel or Google Sheets." },
+  // Work Order Tickets
+  { category: "Work Order Tickets", q: "What is the difference between a Work Order Ticket and a Work Order?", a: "A Work Order Ticket is raised by the front office as soon as a customer brings a job — it's a lightweight slip that goes to the Designer queue first. A Work Order (Production module) is the full production job card linked to a Sales Order, created after the design phase. Ticket → Design → Work Order → Production." },
+  { category: "Work Order Tickets", q: "How does a designer see their assigned tickets?", a: "The designer logs in and goes to 'My Work' (sidebar or bottom nav on mobile). The queue shows all tickets assigned to them, sorted by priority (High first). They click 'Pick' to accept and 'Start' to begin. Status updates automatically." },
+  { category: "Work Order Tickets", q: "Can I raise a ticket directly from a quotation?", a: "Yes. On any APPROVED or SUBMITTED quotation, click the 'Ticket' button. The customer name, nature of work and amount are auto-filled from the quotation. This avoids re-entering data." },
+  // Inventory
+  { category: "Inventory", q: "How do I get a low-stock alert?", a: "When adding a material, set the 'Minimum Qty' field. When current stock falls below this number, the item turns red in the Inventory list and the count of low-stock items appears as an alert on the Dashboard. Each branch has its own stock levels." },
+  { category: "Inventory", q: "How do I correct a wrong stock count?", a: "Go to Inventory → click 'Stock Movement' on the material → choose ADJUST → enter the correct quantity and a reason (e.g. 'Physical count correction'). The system records the adjustment with a timestamp so it's traceable in the movement history." },
+  // Complaints
+  { category: "Complaints", q: "Can I link a complaint to a specific sales order or job?", a: "Yes. When creating a complaint, the form has optional dropdowns to link it to a Sales Order or Work Order. This lets you trace which job caused the issue and appears in the linked order's history." },
+  { category: "Complaints", q: "Who can see complaints on the Dashboard?", a: "MD, AVP and Branch Managers see all open complaints on the Dashboard. CRITICAL priority complaints are highlighted separately. Sales Executives and CRE can only see complaints they raised or are assigned to." },
+  // Tasks
+  { category: "Tasks", q: "How do I assign a task to someone else?", a: "Tasks → 'New Task' → use the 'Assign To' dropdown to select any team member. They will see the task in their 'My Tasks' list. You can also assign tasks to yourself as personal reminders." },
+  { category: "Tasks", q: "Can tasks be linked to leads?", a: "Yes. When creating a task, use the 'Link To' dropdown to connect it to a Lead, Customer, Sales Order or Work Order. The task then appears in that record's activity timeline." },
+  // FJP
+  { category: "FJP & Expenses", q: "What happens if I miss the FJP deadline on the 27th?", a: "The system automatically blocks FJP submission after the 27th. There is no override — you cannot submit a late FJP. If you have an emergency, contact your HOD who can contact IT Admin to manually backdate a submission in exceptional circumstances." },
+  { category: "FJP & Expenses", q: "Do I need an FJP to submit an expense claim?", a: "For travel expenses, yes — you must link an FJP to the expense report. For non-travel expenses (accommodation, food, communication), the FJP link is optional. Always submit your monthly FJP before making any travel expense claims." },
+  { category: "FJP & Expenses", q: "My expense was rejected. Can I resubmit?", a: "Yes. If an approver Holds or Rejects your expense, you receive an email with the reason. Address the issue (add missing bills, correct amounts), then go to Expense Reports → find the held/rejected report → click 'Resubmit' to send it back for approval." },
+  { category: "FJP & Expenses", q: "How do I upload bills to an expense report?", a: "In the expense form, scroll to 'Supporting Documents'. Click 'Choose Files', select your scanned bills or photos of receipts, then click 'Upload to Drive'. The files are saved to Google Drive and linked to your report. Approvers can view them online. Upload all bills before submitting — they cannot be added after submission." },
   // Technical
   { category: "Technical", q: "The page is not loading or showing an error. What do I do?", a: "1. Hard-refresh: press Cmd+Shift+R (Mac) or Ctrl+Shift+R (Windows). 2. Clear browser cache. 3. Try an incognito/private window. 4. Check your internet connection. 5. If the problem persists, contact IT Admin with a screenshot of the error." },
   { category: "Technical", q: "Can multiple users be logged in at the same time?", a: "Yes. Each user has their own secure session. All changes are written to the database in real time and visible to all logged-in users without refreshing the page." },
@@ -378,7 +508,7 @@ export default function HelpPage() {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <BookOpen size={24} />
-                <h2 className="text-xl font-bold">ZAG SIGNS ERP — User Manual v1.3</h2>
+                <h2 className="text-xl font-bold">ZAG SIGNS ERP — User Manual v1.4</h2>
               </div>
               <p className="text-indigo-100 text-sm mb-4">
                 Complete guide for all modules. Search below or browse by module. For urgent help, contact IT Admin.
@@ -664,8 +794,7 @@ export default function HelpPage() {
             <div className="text-white">
               <p className="font-bold text-sm">Download the Complete User Manual</p>
               <p className="text-indigo-200 text-xs mt-0.5">
-                VER 1.3 · 25/06/2026 — includes FJP, Expense Reports & 3-Tier Approvals. Printable PDF with
-                logo, step-by-step guidance, screen illustrations, FAQ and role guide.
+                VER 1.4 · 03/07/2026 — adds Work Order Tickets, Inventory, Complaints, Tasks, FJP, Expenses & Approvals. Complete guide for all 21 modules with step-by-step guidance, FAQ and role matrix.
               </p>
             </div>
             <button
@@ -680,7 +809,7 @@ export default function HelpPage() {
         <div className="flex flex-col items-center gap-2 pb-4">
           <PoweredByBpro variant="light" logoHeight={28} />
           <div className="text-center text-xs" style={{ color: "var(--text-muted)" }}>
-            ZAG SIGNS ERP · VER 1.3 · 25/06/2026 · bprozagcrm.xyz · For technical support contact IT Admin
+            ZAG SIGNS ERP · VER 1.4 · 03/07/2026 · bprozagcrm.xyz · For technical support contact IT Admin
           </div>
         </div>
       </div>

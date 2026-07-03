@@ -7,7 +7,8 @@ import {
   Building2, ClipboardList, Target, CheckSquare, TrendingUp,
   MapPin, FolderOpen, Sparkles, ChevronRight, X, LogOut,
   Shield, Database, ScrollText, BookOpen, Settings, Receipt,
-  Ticket, Palette,
+  Ticket, Palette, Trophy, Truck, ShoppingBag, FolderKanban,
+  ClipboardCheck, ShieldCheck, DollarSign,
 } from "lucide-react";
 import { useSidebar } from "@/lib/sidebar-context";
 import { useSession, signOut } from "next-auth/react";
@@ -25,29 +26,46 @@ const sections = [
   {
     label: "SALES",
     items: [
-      { href: "/leads",         label: "Leads & CRM",      icon: Users },
-      { href: "/opportunities", label: "Opportunities",    icon: TrendingUp },
-      { href: "/customers",     label: "Customers",        icon: UserCheck },
-      { href: "/quotations",    label: "Quotations",       icon: FileText },
-      { href: "/sales-orders",  label: "Sales Orders",     icon: ShoppingCart },
+      { href: "/leads",         label: "Leads & CRM",        icon: Users },
+      { href: "/opportunities", label: "Opportunities",      icon: TrendingUp },
+      { href: "/tender",        label: "Tender Management",  icon: Trophy },
+      { href: "/customers",     label: "Customers",          icon: UserCheck },
+      { href: "/quotations",    label: "Quotations",         icon: FileText },
+      { href: "/sales-orders",  label: "Sales Orders",       icon: ShoppingCart },
     ],
   },
   {
     label: "OPERATIONS",
     items: [
-      { href: "/work-order-tickets", label: "Work Order Tickets", icon: Ticket },
-      { href: "/my-work",            label: "My Work",            icon: Palette },
-      { href: "/work-orders",        label: "Work Orders",        icon: Wrench },
-      { href: "/production",         label: "Production",         icon: Package },
-      { href: "/inventory",          label: "Inventory",          icon: Package },
+      { href: "/work-order-tickets",  label: "Work Order Tickets",  icon: Ticket },
+      { href: "/my-work",             label: "My Work",             icon: Palette },
+      { href: "/work-orders",         label: "Work Orders",         icon: Wrench },
+      { href: "/production",          label: "Production",          icon: Package },
+      { href: "/inventory",           label: "Inventory",           icon: Package },
+      { href: "/digital-approvals",   label: "Digital Approvals",   icon: ClipboardCheck },
+      { href: "/projects",            label: "Project Management",  icon: FolderKanban },
+    ],
+  },
+  {
+    label: "PROCUREMENT & FLEET",
+    items: [
+      { href: "/procurement",   label: "Procurement",        icon: ShoppingBag },
+      { href: "/fleet",         label: "Fleet Management",   icon: Truck },
     ],
   },
   {
     label: "FINANCE",
     items: [
-      { href: "/invoices",      label: "Invoices",           icon: Receipt },
-      { href: "/accounts",      label: "Accounts & Billing", icon: Wallet },
-      { href: "/collections",   label: "Collections",        icon: Wallet },
+      { href: "/invoices",            label: "Invoices",           icon: Receipt },
+      { href: "/accounts",            label: "Accounts & Billing", icon: Wallet },
+      { href: "/collections",         label: "Collections",        icon: Wallet },
+      { href: "/job-costing",         label: "Job Costing",        icon: DollarSign },
+    ],
+  },
+  {
+    label: "AMC & SERVICE",
+    items: [
+      { href: "/amc",           label: "AMC & Warranty",     icon: ShieldCheck },
     ],
   },
   {
@@ -70,11 +88,12 @@ const sections = [
   {
     label: "REPORTS & AI",
     items: [
-      { href: "/team-reports",  label: "Team Reports",     icon: ClipboardList },
-      { href: "/reports",       label: "Reports & MIS",    icon: BarChart3 },
-      { href: "/reports/tax",   label: "GST Tax Report",   icon: ScrollText },
-      { href: "/ai-insights",   label: "AI Insights",      icon: Sparkles },
-      { href: "/documents",     label: "Documents",        icon: FolderOpen },
+      { href: "/team-reports",             label: "Team Reports",        icon: ClipboardList },
+      { href: "/reports",                  label: "Reports & MIS",       icon: BarChart3 },
+      { href: "/reports/tax",              label: "GST Tax Report",      icon: ScrollText },
+      { href: "/reports/profitability",    label: "Profitability",       icon: TrendingUp },
+      { href: "/ai-insights",              label: "AI Insights",         icon: Sparkles },
+      { href: "/documents",                label: "Documents",           icon: FolderOpen },
     ],
   },
   {

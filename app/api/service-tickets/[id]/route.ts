@@ -1,0 +1,24 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { ok, err } from "@/lib/api-helpers";
+
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json(err("Unauthorized"), { status: 401 });
+  const { id } = await params;
+  const body = await req.json();
+  const data: any = {};
+  if (body.status !== undefined) data.status = body.status;
+  if (body.priority !== undefined) data.priority = body.priority;
+  if (body.assignedToId !== undefined) data.assignedToId = body.assignedToId || null;
+  if (body.resolutionNotes !== undefined) data.resolutionNotes = body.resolutionNotes;
+  if (body.status === "RESOLVED") data.resolvedAt = new Date();
+  const row = await prisma.serviceTicket.update({
+    where: { id },
+    data,
+    include: { customer: { select: { name: true } }, assignedTo: { select: { name: true } } },
+  });
+  return NextResponse.json(ok(row));
+}
