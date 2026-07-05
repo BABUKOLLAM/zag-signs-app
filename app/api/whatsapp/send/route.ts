@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendWhatsAppMessage, sendWhatsAppDocument, sendWhatsAppTemplate } from "@/lib/whatsapp-service";
+import { requireSession } from "@/lib/api-helpers";
 
 export async function POST(request: NextRequest) {
+  const session = await requireSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   try {
     const body = await request.json();
     const { type, to, message, documentUrl, filename, templateName, parameters } = body;

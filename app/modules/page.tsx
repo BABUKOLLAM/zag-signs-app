@@ -9,7 +9,7 @@ import {
   Wallet, DollarSign, MapPin, CheckSquare, AlertCircle,
   UserCircle, ShieldCheck, ClipboardList, BarChart3, ScrollText,
   Sparkles, FolderOpen, Settings, Shield, Database, BookOpen,
-  Building2,
+  Building2, Hammer, GitCompare,
 } from "lucide-react";
 
 const SECTIONS = [
@@ -42,6 +42,7 @@ const SECTIONS = [
       { href: "/work-orders",        label: "Work Orders",        sub: "Production jobs",         icon: Wrench,         grad: "from-slate-500 to-slate-700" },
       { href: "/production",         label: "Production",         sub: "Schedule & output",       icon: Package,        grad: "from-blue-500 to-blue-700" },
       { href: "/inventory",          label: "Inventory",          sub: "Stock & materials",       icon: Package,        grad: "from-emerald-500 to-teal-700" },
+      { href: "/installation",        label: "Installation",       sub: "Dispatch to delivery",    icon: Hammer,         grad: "from-orange-500 to-red-600" },
       { href: "/digital-approvals",  label: "Digital Approvals",  sub: "Artwork sign-offs",       icon: ClipboardCheck, grad: "from-violet-500 to-violet-700" },
       { href: "/projects",           label: "Projects",           sub: "Milestones & tracking",   icon: FolderKanban,   grad: "from-indigo-500 to-indigo-700" },
     ],
@@ -97,8 +98,9 @@ const SECTIONS = [
       { href: "/team-reports",          label: "Team Reports",    sub: "DAR / WWR / MWR",   icon: ClipboardList, grad: "from-blue-500 to-blue-700" },
       { href: "/reports",               label: "Reports & MIS",   sub: "Business analytics", icon: BarChart3,     grad: "from-indigo-500 to-indigo-700" },
       { href: "/reports/tax",           label: "GST Tax Report",  sub: "GSTR export",        icon: ScrollText,    grad: "from-amber-500 to-amber-700" },
-      { href: "/reports/profitability", label: "Profitability",   sub: "Margin & job cost",  icon: TrendingUp,    grad: "from-emerald-500 to-emerald-700" },
-      { href: "/ai-insights",           label: "AI Insights",     sub: "Smart suggestions",  icon: Sparkles,      grad: "from-violet-500 to-purple-600" },
+      { href: "/reports/profitability",    label: "Profitability",       sub: "Margin & job cost",   icon: TrendingUp,  grad: "from-emerald-500 to-emerald-700" },
+      { href: "/reports/branch-comparison", label: "Branch Comparison", sub: "4-branch analytics",  icon: GitCompare,  grad: "from-blue-500 to-indigo-600" },
+      { href: "/ai-insights",              label: "AI Insights",        sub: "Live DB insights",    icon: Sparkles,    grad: "from-violet-500 to-purple-600" },
       { href: "/documents",             label: "Documents",       sub: "Drive & files",      icon: FolderOpen,    grad: "from-slate-500 to-slate-700" },
     ],
   },

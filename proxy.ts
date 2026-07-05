@@ -20,6 +20,8 @@ export function proxy(request: Request) {
 
 export const config = {
   matcher: [
-    "/((?!login|api/auth|_next/static|_next/image|favicon\\.ico|icons|manifest\\.json|sw\\.js|offline\\.html).*)",
+    // Public: login/signup, auth API, customer portal (page + API), WhatsApp webhook (Meta calls it),
+    // and static files served from /public (images, manuals, PWA files)
+    "/((?!login|signup|api/auth|portal|api/portal|api/whatsapp/webhook|_next/static|_next/image|favicon\\.ico|icons|manifest\\.json|sw\\.js|offline\\.html|manual\\.html|.*\\.png|.*\\.svg|.*\\.jpg|.*\\.pdf).*)",
   ],
 };

@@ -1,6 +1,5 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { DEMO_CREDENTIALS } from "./demo-credentials";
 import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
 
@@ -56,21 +55,9 @@ export const authOptions: NextAuthOptions = {
             };
           }
         } catch {
-          // DB unavailable — fall through to demo credentials
+          // DB unavailable — deny login rather than falling back to hardcoded credentials
         }
-
-        // 2. Fall back to demo credentials
-        const found = DEMO_CREDENTIALS.find(
-          u => u.email === normalizedEmail && u.password === credentials.password
-        );
-        if (!found) return null;
-        return {
-          id:     String(DEMO_CREDENTIALS.indexOf(found) + 1),
-          name:   found.name,
-          email:  found.email,
-          role:   found.role as string,
-          branch: found.branch,
-        };
+        return null;
       },
     }),
   ],

@@ -1,7 +1,36 @@
 import { NextRequest } from "next/server";
-import { requireSession, ok, err, autoNo } from "@/lib/api-helpers";
+import { requireSession, ok, err } from "@/lib/api-helpers";
 import { prisma } from "@/lib/prisma";
 import { normBranch } from "@/lib/bulk-helpers";
+
+const CAT_CODES: Record<string, string> = {
+  "Printing":         "PRT",
+  "UV Printing":      "PRT",
+  "Digital Printing": "PRT",
+  "Cutting":          "CUT",
+  "Laminating":       "LAM",
+  "Finishing":        "FIN",
+  "Fabrication":      "FAB",
+  "Office Printer":   "OFP",
+  "UPS":              "UPS",
+  "Battery":          "BAT",
+  "Computer":         "COM",
+  "Other":            "OTH",
+};
+
+async function genMachineCode(branch: string, type: string): Promise<string> {
+  const cat = CAT_CODES[type] ?? "OTH";
+  const prefix = `${branch}-${cat}-`;
+  const existing = await prisma.machine.findMany({
+    where: { machineNo: { startsWith: prefix } },
+    select: { machineNo: true },
+  });
+  const maxSeq = existing.reduce((max, m) => {
+    const num = parseInt(m.machineNo.slice(prefix.length), 10);
+    return isNaN(num) ? max : Math.max(max, num);
+  }, 0);
+  return `${prefix}${String(maxSeq + 1).padStart(2, "0")}`;
+}
 
 export async function GET(req: NextRequest) {
   const session = await requireSession();
@@ -20,7 +49,7 @@ export async function GET(req: NextRequest) {
 
     const machines = await prisma.machine.findMany({
       where,
-      orderBy: { createdAt: "desc" },
+      orderBy: { machineNo: "asc" },
       take: 300,
     });
 
@@ -37,9 +66,8 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    // Generate machine number
-    const count = await prisma.machine.count();
-    const machineNo = autoNo("M", count);
+    // Generate structured machine code: [BRANCH]-[CAT]-[SEQ]
+    const machineNo = await genMachineCode(body.branch || "TVM", body.type || "Other");
 
     const machine = await prisma.machine.create({
       data: {

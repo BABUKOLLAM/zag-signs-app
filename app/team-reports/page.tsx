@@ -4,6 +4,7 @@ import TopBar from "@/components/TopBar";
 import { api } from "@/lib/api-client";
 import { fmt } from "@/lib/utils";
 import { Plus, X, Eye, ChevronRight, AlertCircle, Loader2, RefreshCw } from "lucide-react";
+import { useToast } from "@/components/Toaster";
 
 const branches = ["TVM", "KTYM", "EKM", "CLT"];
 const depts = ["Sales / CRE", "Production", "Accounts", "Administration"];
@@ -71,6 +72,7 @@ const blankMWR = {
 };
 
 export default function TeamReportsPage() {
+  const toast = useToast();
   const [tab, setTab] = useState<"dar" | "wwr" | "mwr">("dar");
   const [darList, setDarList] = useState<DARReport[]>([]);
   const [wwrList, setWwrList] = useState<WWReport[]>([]);
@@ -150,7 +152,7 @@ export default function TeamReportsPage() {
       setDar(blankDAR);
       setShowSubmit(false);
       await loadDAR();
-    } catch { alert("Failed to submit DAR"); }
+    } catch { toast.error("Failed to submit DAR"); }
     finally { setSaving(false); }
   };
 
@@ -167,7 +169,7 @@ export default function TeamReportsPage() {
       setWwr(blankWWR);
       setShowSubmit(false);
       await loadWWR();
-    } catch { alert("Failed to submit WWR"); }
+    } catch { toast.error("Failed to submit WWR"); }
     finally { setSaving(false); }
   };
 
@@ -186,7 +188,7 @@ export default function TeamReportsPage() {
       setMwr(blankMWR);
       setShowSubmit(false);
       await loadMWR();
-    } catch { alert("Failed to submit MWR"); }
+    } catch { toast.error("Failed to submit MWR"); }
     finally { setSaving(false); }
   };
 

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { api } from "@/lib/api-client";
 import { uploadToDrive, isDriveConfigured } from "@/lib/google-drive";
 import { Plus, Trash2, Printer, Send, Loader2, Paperclip, CheckCircle, Clock, XCircle, AlertCircle, Upload, ExternalLink } from "lucide-react";
+import { useToast } from "@/components/Toaster";
 
 const EXPENSE_TYPES = ["TRAVEL", "ACCOMMODATION", "FOOD", "CLIENT_ENTERTAINMENT", "COMMUNICATION", "OTHER"];
 const CATEGORIES = ["Fuel", "Toll", "Parking", "Hotel", "Food", "Client Lunch/Dinner", "Train", "Bus", "Flight", "Auto/Taxi", "Other"];
@@ -29,6 +30,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }>
 };
 
 export default function ExpensesPage() {
+  const toast = useToast();
   const [expenses, setExpenses] = useState<any[]>([]);
   const [fjps, setFjps] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -65,7 +67,7 @@ export default function ExpensesPage() {
         const url = await uploadToDrive(`Expense_${Date.now()}_${file.name}`, file);
         links.push({ name: file.name, url });
       } catch (e: any) {
-        alert(`Failed to upload ${file.name}: ${e.message}`);
+        toast.error(`Failed to upload ${file.name}: ${e.message}`);
       }
     }
     setUploadedLinks(prev => [...prev, ...links]);
@@ -100,18 +102,18 @@ export default function ExpensesPage() {
   };
 
   const handleSubmit = async (status = "SUBMITTED") => {
-    if (!form.expenseType || !form.description) { alert("Fill all required fields."); return; }
-    if (items.some(i => !i.date || !i.category || !i.amount)) { alert("Fill all expense item fields."); return; }
+    if (!form.expenseType || !form.description) { toast.error("Fill all required fields."); return; }
+    if (items.some(i => !i.date || !i.category || !i.amount)) { toast.error("Fill all expense item fields."); return; }
     setSubmitting(true);
     try {
       await api.post("/sales/expenses", { ...form, items, attachments: uploadedLinks, status });
-      alert(status === "DRAFT" ? "Draft saved." : "Expense submitted successfully!");
+      toast.success(status === "DRAFT" ? "Draft saved." : "Expense submitted successfully!");
       setShowForm(false);
       setItems([newItem()]);
       setUploadedLinks([]);
       setForm({ expenseType: "TRAVEL", description: "", fjpId: "", advanceReceived: "" });
       fetchData();
-    } catch { alert("Submission failed."); }
+    } catch { toast.error("Submission failed."); }
     finally { setSubmitting(false); }
   };
 

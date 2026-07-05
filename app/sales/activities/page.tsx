@@ -3,8 +3,10 @@
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api-client";
 import { Loader2, Plus, Trash2 } from "lucide-react";
+import { useToast } from "@/components/Toaster";
 
 export default function ActivitiesPage() {
+  const toast = useToast();
   const [activities, setActivities] = useState<any[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
   const [leads, setLeads] = useState<any[]>([]);
@@ -51,7 +53,7 @@ export default function ActivitiesPage() {
 
   const handleSubmit = async () => {
     if (!formData.startTime || !formData.type) {
-      alert("Please fill required fields");
+      toast.error("Please fill required fields");
       return;
     }
 
@@ -80,7 +82,7 @@ export default function ActivitiesPage() {
       await fetchData();
     } catch (error) {
       console.error("Error logging activity:", error);
-      alert("Failed to log activity");
+      toast.error("Failed to log activity");
     } finally {
       setLoading(false);
     }

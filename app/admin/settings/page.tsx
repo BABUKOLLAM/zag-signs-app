@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import TopBar from "@/components/TopBar";
 import { api } from "@/lib/api-client";
+import { useToast } from "@/components/Toaster";
 import {
   Building2, CreditCard, FileText, Save, CheckCircle, Loader2,
   AlertCircle, Landmark, Settings2, Plus, X, Edit2, Trash2,
@@ -84,6 +85,25 @@ const NAV_GROUPS = [
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
+const MACH_CAT: Record<string, string> = {
+  "Printing": "PRT", "UV Printing": "PRT", "Digital Printing": "PRT",
+  "Cutting": "CUT", "Laminating": "LAM", "Finishing": "FIN",
+  "Fabrication": "FAB", "Office Printer": "OFP",
+  "UPS": "UPS", "Battery": "BAT", "Computer": "COM", "Other": "OTH",
+};
+
+function previewMachineCode(machines: any[], branch: string, type: string): string {
+  const cat = MACH_CAT[type] ?? "OTH";
+  const prefix = `${branch}-${cat}-`;
+  const maxSeq = machines
+    .filter(m => m.machineNo?.startsWith(prefix))
+    .reduce((max, m) => {
+      const n = parseInt(m.machineNo.slice(prefix.length), 10);
+      return isNaN(n) ? max : Math.max(max, n);
+    }, 0);
+  return `${prefix}${String(maxSeq + 1).padStart(2, "0")}`;
+}
+
 const inp = "w-full border rounded-xl px-3 py-2 text-sm";
 const is   = { background: "var(--input-bg)", borderColor: "var(--input-border)", color: "var(--text-primary)" } as React.CSSProperties;
 const cs   = { background: "var(--card-bg)", border: "1px solid var(--card-border)" } as React.CSSProperties;
@@ -115,6 +135,7 @@ function SaveBtn({ saving, saved, onClick, label }: { saving: boolean; saved: bo
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function SettingsHub() {
+  const toast = useToast();
   const [section, setSection] = useState("company");
 
   // Company settings state
@@ -145,6 +166,14 @@ export default function SettingsHub() {
   const [users,    setUsers]    = useState<any[]>([]);
   const [machines, setMachines] = useState<any[]>([]);
   const [materials,setMaterials]= useState<any[]>([]);
+
+  // Machinery CRUD state
+  const [machBranch,     setMachBranch]     = useState("TVM");
+  const [showAddMach,    setShowAddMach]    = useState(false);
+  const [addMachForm,    setAddMachForm]    = useState({ name: "", type: "Printing", model: "", branch: "TVM", status: "ACTIVE", notes: "" });
+  const [addingMach,     setAddingMach]     = useState(false);
+  const [savingMachId,   setSavingMachId]   = useState<string|null>(null);
+  const [deletingMachId, setDeletingMachId] = useState<string|null>(null);
 
   // Loading / saving flags
   const [initLoading,  setInitLoading]  = useState(true);
@@ -234,7 +263,7 @@ export default function SettingsHub() {
       setDivisions(d => [...d, r.data]);
       setDivForm({ name: "", headName: "", headEmail: "", headPhone: "", notes: "" });
       setShowDivForm(false);
-    } catch { alert("Failed to add division"); }
+    } catch { toast.error("Failed to add division"); }
     finally { setLoading(l => ({ ...l, divAdd: false })); }
   };
 
@@ -244,7 +273,7 @@ export default function SettingsHub() {
       const r: any = await api.put(`/admin/divisions/${editDiv.id}`, editDiv);
       setDivisions(d => d.map(x => x.id === editDiv.id ? r.data : x));
       setEditDiv(null);
-    } catch { alert("Failed to update"); }
+    } catch { toast.error("Failed to update"); }
   };
 
   const handleDeleteDivision = async (id: string) => {
@@ -252,7 +281,7 @@ export default function SettingsHub() {
     try {
       await api.del(`/admin/divisions/${id}`);
       setDivisions(d => d.filter(x => x.id !== id));
-    } catch { alert("Delete failed"); }
+    } catch { toast.error("Delete failed"); }
   };
 
   // ─ Department CRUD ────────────────────────────────────────────────────────
@@ -267,7 +296,7 @@ export default function SettingsHub() {
       setDepartments(d => [...d, r.data]);
       setDeptForm({ name: "", divisionId: "", headName: "", headEmail: "", headPhone: "", notes: "" });
       setShowDeptForm(false);
-    } catch { alert("Failed to add department"); }
+    } catch { toast.error("Failed to add department"); }
     finally { setLoading(l => ({ ...l, deptAdd: false })); }
   };
 
@@ -277,7 +306,7 @@ export default function SettingsHub() {
       const r: any = await api.put(`/admin/departments/${editDept.id}`, editDept);
       setDepartments(d => d.map(x => x.id === editDept.id ? r.data : x));
       setEditDept(null);
-    } catch { alert("Failed to update department"); }
+    } catch { toast.error("Failed to update department"); }
   };
 
   const handleDeleteDept = async (id: string) => {
@@ -285,7 +314,7 @@ export default function SettingsHub() {
     try {
       await api.del(`/admin/departments/${id}`);
       setDepartments(d => d.filter(x => x.id !== id));
-    } catch { alert("Delete failed"); }
+    } catch { toast.error("Delete failed"); }
   };
 
   // ─ Layout ─────────────────────────────────────────────────────────────────
@@ -815,45 +844,190 @@ export default function SettingsHub() {
 
             {/* ── MACHINERY ───────────────────────────────────────────── */}
             {section === "machinery" && (
-              <Section title="Machinery" sub="Equipment registered and mapped to each branch.">
+              <Section title="Machinery" sub="Equipment registered across all branches. Add, remove, or update status per machine.">
                 {loading.machinery ? (
                   <div className="flex justify-center py-8"><Loader2 size={20} className="animate-spin text-indigo-400" /></div>
                 ) : (
                   <>
-                    <div className="flex justify-end mb-2">
-                      <Link href="/production/machines" className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white"
+                    {/* Branch tabs + Add button */}
+                    <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                      <div className="flex gap-1.5 flex-wrap">
+                        {BRANCHES.filter(b => b.id !== "HO").map(b => (
+                          <button key={b.id} onClick={() => setMachBranch(b.id)}
+                            className="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors"
+                            style={machBranch === b.id
+                              ? { background: "#4F46E5", color: "#fff" }
+                              : { background: "var(--input-bg)", color: "var(--text-secondary)", border: "1px solid var(--input-border)" }}>
+                            {b.id}
+                            <span className="ml-1 opacity-70">({machines.filter((m: any) => m.branch === b.id).length})</span>
+                          </button>
+                        ))}
+                      </div>
+                      <button
+                        onClick={() => { setAddMachForm(f => ({ ...f, branch: machBranch })); setShowAddMach(true); }}
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white"
                         style={{ background: "linear-gradient(135deg,#4F46E5,#6366F1)" }}>
-                        Manage Machines <ExternalLink size={13} />
-                      </Link>
+                        <Plus size={14} /> Add Machine
+                      </button>
                     </div>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {BRANCHES.filter(b => b.id !== "HO").map(b => {
-                        const bm = machines.filter((m: any) => m.branch === b.id);
-                        const active = bm.filter((m: any) => m.status === "ACTIVE").length;
-                        const byType = bm.reduce((acc: any, m: any) => { acc[m.type] = (acc[m.type] || 0) + 1; return acc; }, {});
-                        return (
-                          <div key={b.id} className="rounded-2xl p-4" style={cs}>
-                            <div className="flex items-center justify-between mb-3">
-                              <span className="font-bold text-sm" style={{ color: "var(--text-primary)" }}>{b.id} — {b.label}</span>
-                              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">{bm.length} machines</span>
-                            </div>
-                            <div className="flex items-center gap-3 mb-3 text-xs" style={{ color: "var(--text-secondary)" }}>
-                              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" /> {active} Active</span>
-                              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400 inline-block" /> {bm.length - active} Other</span>
-                            </div>
-                            <div className="flex flex-wrap gap-1">
-                              {Object.entries(byType).map(([type, cnt]) => (
-                                <span key={type} className="text-xs px-2 py-0.5 rounded-md bg-slate-50 text-slate-600 border border-slate-100">
-                                  {type} ({cnt as number})
+
+                    {/* Machine table */}
+                    <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--card-border)" }}>
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr style={{ background: "var(--card-bg)", borderBottom: "1px solid var(--card-border)" }}>
+                            <th className="text-left px-4 py-2.5 text-xs font-bold" style={{ color: "var(--text-secondary)" }}>Code</th>
+                            <th className="text-left px-4 py-2.5 text-xs font-bold" style={{ color: "var(--text-secondary)" }}>Machine Name</th>
+                            <th className="text-left px-4 py-2.5 text-xs font-bold hidden md:table-cell" style={{ color: "var(--text-secondary)" }}>Type</th>
+                            <th className="text-left px-4 py-2.5 text-xs font-bold" style={{ color: "var(--text-secondary)" }}>Status</th>
+                            <th className="px-4 py-2.5 w-10"></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {machines.filter((m: any) => m.branch === machBranch).length === 0 && (
+                            <tr>
+                              <td colSpan={5} className="text-center py-8 text-xs" style={{ color: "var(--text-muted)" }}>
+                                No machines registered for {machBranch}
+                              </td>
+                            </tr>
+                          )}
+                          {machines.filter((m: any) => m.branch === machBranch).map((m: any) => (
+                            <tr key={m.id} style={{ borderBottom: "1px solid var(--card-border)" }}>
+                              <td className="px-4 py-2.5">
+                                <span className="font-mono text-xs font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700">
+                                  {m.machineNo}
                                 </span>
-                              ))}
-                              {bm.length === 0 && <span className="text-xs" style={{ color: "var(--text-muted)" }}>No machines registered</span>}
-                            </div>
-                          </div>
-                        );
-                      })}
+                              </td>
+                              <td className="px-4 py-2.5 font-medium text-xs" style={{ color: "var(--text-primary)" }}>
+                                {m.name}
+                                {m.model && <span className="ml-1 font-normal" style={{ color: "var(--text-muted)" }}>({m.model})</span>}
+                              </td>
+                              <td className="px-4 py-2.5 text-xs hidden md:table-cell" style={{ color: "var(--text-secondary)" }}>{m.type}</td>
+                              <td className="px-4 py-2.5">
+                                <select
+                                  value={m.status}
+                                  disabled={savingMachId === m.id}
+                                  onChange={async e => {
+                                    const newStatus = e.target.value;
+                                    setSavingMachId(m.id);
+                                    try {
+                                      await api.put(`/production/machines/${m.id}`, { status: newStatus });
+                                      setMachines(ms => ms.map((x: any) => x.id === m.id ? { ...x, status: newStatus } : x));
+                                    } catch { /* ignore */ }
+                                    finally { setSavingMachId(null); }
+                                  }}
+                                  className="text-xs rounded-lg px-2 py-1 border"
+                                  style={{ background: "var(--input-bg)", borderColor: "var(--input-border)", color: "var(--text-primary)" }}>
+                                  <option value="ACTIVE">Active</option>
+                                  <option value="MAINTENANCE">Maintenance</option>
+                                  <option value="RETIRED">Retired</option>
+                                </select>
+                                {savingMachId === m.id && <Loader2 size={12} className="inline ml-1 animate-spin text-indigo-400" />}
+                              </td>
+                              <td className="px-4 py-2.5 text-right">
+                                <button
+                                  disabled={deletingMachId === m.id}
+                                  onClick={async () => {
+                                    if (!confirm(`Delete "${m.name}"? This cannot be undone.`)) return;
+                                    setDeletingMachId(m.id);
+                                    try {
+                                      await api.del(`/production/machines/${m.id}`);
+                                      setMachines(ms => ms.filter((x: any) => x.id !== m.id));
+                                    } catch { /* ignore */ }
+                                    finally { setDeletingMachId(null); }
+                                  }}
+                                  className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 disabled:opacity-40">
+                                  {deletingMachId === m.id
+                                    ? <Loader2 size={14} className="animate-spin" />
+                                    : <Trash2 size={14} />}
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </>
+                )}
+
+                {/* Add Machine Modal */}
+                {showAddMach && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.5)" }}>
+                    <div className="w-full max-w-md rounded-2xl p-6 shadow-xl" style={cs}>
+                      <div className="flex items-center justify-between mb-5">
+                        <h3 className="font-bold text-base" style={{ color: "var(--text-primary)" }}>Add Machine</h3>
+                        <button onClick={() => setShowAddMach(false)} className="p-1 rounded-lg hover:bg-red-50 text-red-400">
+                          <X size={16} />
+                        </button>
+                      </div>
+                      <div className="space-y-3">
+                        <F label="Machine Name *">
+                          <I value={addMachForm.name} onChange={v => setAddMachForm(f => ({ ...f, name: v }))} placeholder="e.g. Flex Printing Machine 1024i" />
+                        </F>
+                        <div className="grid grid-cols-2 gap-3">
+                          <F label="Type *">
+                            <select className={inp} style={is} value={addMachForm.type} onChange={e => setAddMachForm(f => ({ ...f, type: e.target.value }))}>
+                              {["Printing","UV Printing","Digital Printing","Cutting","Laminating","Finishing","Fabrication","Office Printer","UPS","Battery","Computer","Other"].map(t => (
+                                <option key={t} value={t}>{t}</option>
+                              ))}
+                            </select>
+                          </F>
+                          <F label="Branch *">
+                            <select className={inp} style={is} value={addMachForm.branch} onChange={e => setAddMachForm(f => ({ ...f, branch: e.target.value }))}>
+                              {BRANCHES.filter(b => b.id !== "HO").map(b => (
+                                <option key={b.id} value={b.id}>{b.id} — {b.label}</option>
+                              ))}
+                            </select>
+                          </F>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <F label="Model / Make">
+                            <I value={addMachForm.model} onChange={v => setAddMachForm(f => ({ ...f, model: v }))} placeholder="e.g. Canon IR2004N" />
+                          </F>
+                          <F label="Status">
+                            <select className={inp} style={is} value={addMachForm.status} onChange={e => setAddMachForm(f => ({ ...f, status: e.target.value }))}>
+                              <option value="ACTIVE">Active</option>
+                              <option value="MAINTENANCE">Maintenance</option>
+                              <option value="RETIRED">Retired</option>
+                            </select>
+                          </F>
+                        </div>
+                        <F label="Notes / Performance">
+                          <I value={addMachForm.notes} onChange={v => setAddMachForm(f => ({ ...f, notes: v }))} placeholder="e.g. 2200 sq.ft per hour" />
+                        </F>
+                        <div className="flex items-center gap-2 rounded-xl px-3 py-2.5" style={{ background: "var(--input-bg)", border: "1px solid var(--input-border)" }}>
+                          <span className="text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>Generated Code:</span>
+                          <span className="font-mono text-sm font-bold text-indigo-600">
+                            {previewMachineCode(machines, addMachForm.branch, addMachForm.type)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 mt-5">
+                        <button onClick={() => setShowAddMach(false)}
+                          className="flex-1 py-2.5 rounded-xl text-sm font-semibold border"
+                          style={{ color: "var(--text-secondary)", borderColor: "var(--input-border)", background: "transparent" }}>
+                          Cancel
+                        </button>
+                        <button
+                          disabled={addingMach || !addMachForm.name.trim()}
+                          onClick={async () => {
+                            setAddingMach(true);
+                            try {
+                              const r = await api.post<any>("/production/machines", addMachForm);
+                              setMachines(ms => [r.data, ...ms]);
+                              setMachBranch(addMachForm.branch);
+                              setShowAddMach(false);
+                              setAddMachForm({ name: "", type: "Printing", model: "", branch: machBranch, status: "ACTIVE", notes: "" });
+                            } catch { /* ignore */ }
+                            finally { setAddingMach(false); }
+                          }}
+                          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-60"
+                          style={{ background: "linear-gradient(135deg,#4F46E5,#6366F1)" }}>
+                          {addingMach ? <><Loader2 size={14} className="animate-spin" /> Adding…</> : <><Plus size={14} /> Add Machine</>}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </Section>
             )}

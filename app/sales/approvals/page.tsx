@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { api } from "@/lib/api-client";
 import { CheckCircle, XCircle, AlertCircle, Clock, ChevronDown, ChevronUp, Loader2, Paperclip, ExternalLink } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useToast } from "@/components/Toaster";
 
 type Tab = "pending" | "reviewed" | "all";
 type Stage = "HOD" | "ACCOUNTS" | "CEO";
@@ -43,6 +44,7 @@ function getStageForRole(role: string): Stage | null {
 }
 
 export default function ApprovalsPage() {
+  const toast = useToast();
   const { data: session } = useSession();
   const [expenses, setExpenses] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -86,7 +88,7 @@ export default function ApprovalsPage() {
   const handleAction = async () => {
     if (!actionModal) return;
     const requiresReason = pendingAction === "HOLD" || pendingAction === "REJECTED";
-    if (requiresReason && !reason.trim()) { alert("Please provide a reason for this action."); return; }
+    if (requiresReason && !reason.trim()) { toast.error("Please provide a reason for this action."); return; }
 
     setSubmitting(true);
     try {
@@ -96,12 +98,12 @@ export default function ApprovalsPage() {
         action: pendingAction,
         reason: reason || undefined,
       });
-      alert(`Action recorded: ${pendingAction}`);
+      toast.success(`Action recorded: ${pendingAction}`);
       setActionModal(null);
       setPendingAction("");
       setReason("");
       fetchExpenses();
-    } catch { alert("Action failed. Please try again."); }
+    } catch { toast.error("Action failed. Please try again."); }
     finally { setSubmitting(false); }
   };
 

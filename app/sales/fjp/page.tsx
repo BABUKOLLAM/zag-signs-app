@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { api } from "@/lib/api-client";
 import { Plus, Trash2, Printer, Send, Loader2, ChevronDown } from "lucide-react";
+import { useToast } from "@/components/Toaster";
 
 const MODES = ["Two Wheeler", "Four Wheeler", "Bus", "Train", "Flight", "Auto"];
 
@@ -11,6 +12,7 @@ function newRoute() {
 }
 
 export default function FJPPage() {
+  const toast = useToast();
   const [fjps, setFjps] = useState<any[]>([]);
   const [window_, setWindow_] = useState<any>(null);
   const [routes, setRoutes] = useState([newRoute()]);
@@ -47,18 +49,18 @@ export default function FJPPage() {
 
   const handleSubmit = async () => {
     if (routes.some(r => !r.dayDate || !r.fromPlace || !r.toPlace || !r.purpose)) {
-      alert("Please fill all required fields in each route row.");
+      toast.error("Please fill all required fields in each route row.");
       return;
     }
     setSubmitting(true);
     try {
       await api.post("/sales/fjp", { routes, notes, status: "SUBMITTED" });
-      alert("FJP submitted successfully!");
+      toast.success("FJP submitted successfully!");
       setRoutes([newRoute()]);
       setNotes("");
       fetchFJPs();
     } catch {
-      alert("Submission failed. Please try again.");
+      toast.error("Submission failed. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -68,7 +70,7 @@ export default function FJPPage() {
     setSubmitting(true);
     try {
       await api.post("/sales/fjp", { routes, notes, status: "DRAFT" });
-      alert("Draft saved.");
+      toast.success("Draft saved.");
       fetchFJPs();
     } finally {
       setSubmitting(false);

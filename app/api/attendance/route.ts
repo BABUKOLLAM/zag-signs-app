@@ -42,9 +42,20 @@ export async function POST(request: NextRequest) {
   const body = await request.json() as {
     employeeId?: string; date?: string; status?: string;
     checkIn?: string; checkOut?: string; notes?: string;
+    checkInLat?: number; checkInLng?: number;
+    checkOutLat?: number; checkOutLng?: number;
+    locationName?: string;
   };
   if (!body.employeeId) return err("employeeId required");
   if (!body.date)       return err("date required");
+
+  const gpsFields = {
+    checkInLat:   body.checkInLat  ?? null,
+    checkInLng:   body.checkInLng  ?? null,
+    checkOutLat:  body.checkOutLat ?? null,
+    checkOutLng:  body.checkOutLng ?? null,
+    locationName: body.locationName ?? null,
+  };
 
   const record = await prisma.attendance.upsert({
     where: { employeeId_date: { employeeId: body.employeeId, date: new Date(body.date) } },
@@ -53,6 +64,7 @@ export async function POST(request: NextRequest) {
       checkIn:  body.checkIn  ? new Date(body.checkIn)  : null,
       checkOut: body.checkOut ? new Date(body.checkOut) : null,
       notes:    body.notes ?? null,
+      ...gpsFields,
     },
     create: {
       employeeId: body.employeeId, date: new Date(body.date),
@@ -60,6 +72,7 @@ export async function POST(request: NextRequest) {
       checkIn:  body.checkIn  ? new Date(body.checkIn)  : null,
       checkOut: body.checkOut ? new Date(body.checkOut) : null,
       notes:    body.notes ?? null,
+      ...gpsFields,
     },
   });
   return ok(record, 201);

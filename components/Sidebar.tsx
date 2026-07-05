@@ -1,31 +1,32 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard, Users, UserCheck, FileText, ShoppingCart,
   Wrench, Package, Wallet, AlertCircle, BarChart3, UserCircle,
   Building2, ClipboardList, Target, CheckSquare, TrendingUp,
-  MapPin, FolderOpen, Sparkles, ChevronRight, X, LogOut,
+  MapPin, FolderOpen, Sparkles, ChevronRight, ChevronDown, X, LogOut,
   Shield, Database, ScrollText, BookOpen, Settings, Receipt,
   Ticket, Palette, Trophy, Truck, ShoppingBag, FolderKanban,
-  ClipboardCheck, ShieldCheck, DollarSign, LayoutGrid,
+  ClipboardCheck, ShieldCheck, DollarSign, LayoutGrid, Hammer, GitCompare,
 } from "lucide-react";
 import { useSidebar } from "@/lib/sidebar-context";
 import { useSession, signOut } from "next-auth/react";
 import { usePermissions } from "@/lib/permission-context";
 import PoweredByBpro from "@/components/PoweredByBpro";
 
-const sections = [
+// Top-level links always visible (no drill-down)
+const pinned = [
+  { href: "/modules",   label: "All Modules",   icon: LayoutGrid },
+  { href: "/dashboard", label: "Dashboard",     icon: LayoutDashboard },
+  { href: "/kpi",       label: "KPI Dashboard", icon: Target },
+];
+
+// Collapsible groups — icon shown on the group header
+const groups = [
   {
-    label: "OVERVIEW",
-    items: [
-      { href: "/modules",       label: "All Modules",      icon: LayoutGrid },
-      { href: "/dashboard",     label: "Dashboard",        icon: LayoutDashboard },
-      { href: "/kpi",           label: "KPI Dashboard",    icon: Target },
-    ],
-  },
-  {
-    label: "SALES",
+    label: "Sales", icon: ShoppingCart,
     items: [
       { href: "/leads",         label: "Leads & CRM",        icon: Users },
       { href: "/opportunities", label: "Opportunities",      icon: TrendingUp },
@@ -36,41 +37,42 @@ const sections = [
     ],
   },
   {
-    label: "OPERATIONS",
+    label: "Operations", icon: Wrench,
     items: [
-      { href: "/work-order-tickets",  label: "Work Order Tickets",  icon: Ticket },
-      { href: "/my-work",             label: "My Work",             icon: Palette },
-      { href: "/work-orders",         label: "Work Orders",         icon: Wrench },
-      { href: "/production",          label: "Production",          icon: Package },
-      { href: "/inventory",           label: "Inventory",           icon: Package },
-      { href: "/digital-approvals",   label: "Digital Approvals",   icon: ClipboardCheck },
-      { href: "/projects",            label: "Project Management",  icon: FolderKanban },
+      { href: "/work-order-tickets", label: "Work Order Tickets",    icon: Ticket },
+      { href: "/my-work",            label: "My Work",               icon: Palette },
+      { href: "/work-orders",        label: "Work Orders",           icon: Wrench },
+      { href: "/production",         label: "Production",            icon: Package },
+      { href: "/inventory",          label: "Inventory",             icon: Package },
+      { href: "/installation",       label: "Installation Tracking", icon: Hammer },
+      { href: "/digital-approvals",  label: "Digital Approvals",     icon: ClipboardCheck },
+      { href: "/projects",           label: "Project Management",    icon: FolderKanban },
     ],
   },
   {
-    label: "PROCUREMENT & FLEET",
+    label: "Procurement & Fleet", icon: Truck,
     items: [
-      { href: "/procurement",   label: "Procurement",        icon: ShoppingBag },
-      { href: "/fleet",         label: "Fleet Management",   icon: Truck },
+      { href: "/procurement", label: "Procurement",      icon: ShoppingBag },
+      { href: "/fleet",       label: "Fleet Management", icon: Truck },
     ],
   },
   {
-    label: "FINANCE",
+    label: "Finance", icon: Wallet,
     items: [
-      { href: "/invoices",            label: "Invoices",           icon: Receipt },
-      { href: "/accounts",            label: "Accounts & Billing", icon: Wallet },
-      { href: "/collections",         label: "Collections",        icon: Wallet },
-      { href: "/job-costing",         label: "Job Costing",        icon: DollarSign },
+      { href: "/invoices",    label: "Invoices",           icon: Receipt },
+      { href: "/accounts",    label: "Accounts & Billing", icon: Wallet },
+      { href: "/collections", label: "Collections",        icon: Wallet },
+      { href: "/job-costing", label: "Job Costing",        icon: DollarSign },
     ],
   },
   {
-    label: "AMC & SERVICE",
+    label: "AMC & Service", icon: ShieldCheck,
     items: [
-      { href: "/amc",           label: "AMC & Warranty",     icon: ShieldCheck },
+      { href: "/amc", label: "AMC & Warranty", icon: ShieldCheck },
     ],
   },
   {
-    label: "FIELD SALES",
+    label: "Field Sales", icon: MapPin,
     items: [
       { href: "/sales/fjp",       label: "Journey Plan (FJP)", icon: MapPin },
       { href: "/sales/expenses",  label: "Expense Reports",    icon: Receipt },
@@ -78,42 +80,45 @@ const sections = [
     ],
   },
   {
-    label: "PEOPLE & FIELD",
+    label: "People & Field", icon: UserCircle,
     items: [
-      { href: "/complaints",    label: "Complaints",       icon: AlertCircle },
-      { href: "/tasks",         label: "Tasks",            icon: CheckSquare },
-      { href: "/hr",            label: "HR & Attendance",  icon: UserCircle },
-      { href: "/field-visits",  label: "Field Visits",     icon: MapPin },
+      { href: "/complaints",   label: "Complaints",      icon: AlertCircle },
+      { href: "/tasks",        label: "Tasks",           icon: CheckSquare },
+      { href: "/hr",           label: "HR & Attendance", icon: UserCircle },
+      { href: "/field-visits", label: "Field Visits",    icon: MapPin },
     ],
   },
   {
-    label: "REPORTS & AI",
+    label: "Reports & AI", icon: BarChart3,
     items: [
-      { href: "/team-reports",             label: "Team Reports",        icon: ClipboardList },
-      { href: "/reports",                  label: "Reports & MIS",       icon: BarChart3 },
-      { href: "/reports/tax",              label: "GST Tax Report",      icon: ScrollText },
-      { href: "/reports/profitability",    label: "Profitability",       icon: TrendingUp },
-      { href: "/ai-insights",              label: "AI Insights",         icon: Sparkles },
-      { href: "/documents",                label: "Documents",           icon: FolderOpen },
+      { href: "/team-reports",              label: "Team Reports",      icon: ClipboardList },
+      { href: "/reports",                   label: "Reports & MIS",     icon: BarChart3 },
+      { href: "/reports/tax",               label: "GST Tax Report",    icon: ScrollText },
+      { href: "/reports/profitability",     label: "Profitability",     icon: TrendingUp },
+      { href: "/reports/branch-comparison", label: "Branch Comparison", icon: GitCompare },
+      { href: "/ai-insights",               label: "AI Insights",       icon: Sparkles },
+      { href: "/documents",                 label: "Documents",         icon: FolderOpen },
     ],
   },
   {
-    label: "ADMIN",
+    label: "Admin", icon: Shield,
     items: [
-      { href: "/admin/settings",    label: "Company Settings",    icon: Settings },
-      { href: "/admin/users",       label: "User Management",     icon: Shield },
-      { href: "/admin/privileges",  label: "Privilege Settings",  icon: Shield },
-      { href: "/admin/database",    label: "Database Admin",      icon: Database },
-      { href: "/admin/audit",       label: "Audit Trail",         icon: ScrollText },
+      { href: "/admin/settings",   label: "Company Settings",   icon: Settings },
+      { href: "/admin/users",      label: "User Management",    icon: Shield },
+      { href: "/admin/privileges", label: "Privilege Settings", icon: Shield },
+      { href: "/admin/database",   label: "Database Admin",     icon: Database },
+      { href: "/admin/audit",      label: "Audit Trail",        icon: ScrollText },
     ],
   },
   {
-    label: "SUPPORT",
+    label: "Support", icon: BookOpen,
     items: [
       { href: "/help", label: "Help & Manual", icon: BookOpen },
     ],
   },
 ];
+
+const STORAGE_KEY = "zag-sidebar-open-groups";
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -122,10 +127,45 @@ export default function Sidebar() {
   const user = session?.user;
   const { canUse } = usePermissions();
 
+  const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
+
   // Filter nav using DB-overridden permissions (falls back to role defaults).
-  const visibleSections = sections
-    .map((s) => ({ ...s, items: s.items.filter((i) => canUse(i.href)) }))
-    .filter((s) => s.items.length > 0);
+  const visiblePinned = pinned.filter((i) => canUse(i.href));
+  const visibleGroups = groups
+    .map((g) => ({ ...g, items: g.items.filter((i) => canUse(i.href)) }))
+    .filter((g) => g.items.length > 0);
+
+  // Open-group state — restored from localStorage, active group always opened
+  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    let saved: string[] = [];
+    try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]"); } catch { /* ignore */ }
+    const active = groups.find(g => g.items.some(i => isActive(i.href)))?.label;
+    setOpenGroups(new Set(active ? [...saved, active] : saved));
+    setHydrated(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Auto-expand the group that contains the page being navigated to
+  useEffect(() => {
+    if (!hydrated) return;
+    const active = groups.find(g => g.items.some(i => isActive(i.href)))?.label;
+    if (active && !openGroups.has(active)) {
+      setOpenGroups(prev => new Set(prev).add(active));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, hydrated]);
+
+  const toggleGroup = (label: string) => {
+    setOpenGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(label)) next.delete(label); else next.add(label);
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify([...next])); } catch { /* ignore */ }
+      return next;
+    });
+  };
 
   return (
     <aside
@@ -157,37 +197,90 @@ export default function Sidebar() {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5 sidebar-nav">
-        {visibleSections.map(({ label, items }) => (
-          <div key={label}>
-            <p className="text-xs font-semibold text-slate-500 px-3 mb-1.5 tracking-wider">{label}</p>
-            <div className="space-y-0.5">
-              {items.map(({ href, label: itemLabel, icon: Icon }) => {
-                const active = pathname === href || pathname.startsWith(href + "/");
-                return (
-                  <Link
-                    key={href}
-                    href={href}
-                    className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all group ${
-                      active
-                        ? "text-white"
-                        : "text-slate-400 hover:text-white"
-                    }`}
-                    style={active
-                      ? { background: "linear-gradient(135deg, #4F46E5, #6366F1)" }
-                      : {}}
-                    onMouseEnter={e => { if (!active) (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.06)"; }}
-                    onMouseLeave={e => { if (!active) (e.currentTarget as HTMLAnchorElement).style.background = ""; }}
-                  >
-                    <Icon size={15} className={active ? "text-white" : "text-slate-500 group-hover:text-slate-300"} />
-                    <span className="flex-1">{itemLabel}</span>
-                    {active && <ChevronRight size={12} className="text-indigo-300 opacity-70" />}
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+      <nav className="flex-1 overflow-y-auto px-3 py-4 sidebar-nav">
+
+        {/* Pinned top-level links */}
+        <div className="space-y-0.5 mb-3">
+          {visiblePinned.map(({ href, label, icon: Icon }) => {
+            const active = isActive(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all group ${
+                  active ? "text-white" : "text-slate-400 hover:text-white"
+                }`}
+                style={active ? { background: "linear-gradient(135deg, #4F46E5, #6366F1)" } : {}}
+                onMouseEnter={e => { if (!active) (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.06)"; }}
+                onMouseLeave={e => { if (!active) (e.currentTarget as HTMLAnchorElement).style.background = ""; }}
+              >
+                <Icon size={15} className={active ? "text-white" : "text-slate-500 group-hover:text-slate-300"} />
+                <span className="flex-1">{label}</span>
+                {active && <ChevronRight size={12} className="text-indigo-300 opacity-70" />}
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Drill-down groups */}
+        <div className="space-y-1">
+          {visibleGroups.map(({ label, icon: GroupIcon, items }) => {
+            const expanded = openGroups.has(label);
+            const containsActive = items.some(i => isActive(i.href));
+            return (
+              <div key={label}>
+                {/* Group header */}
+                <button
+                  onClick={() => toggleGroup(label)}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-semibold transition-all group ${
+                    containsActive && !expanded ? "text-indigo-300" : "text-slate-300 hover:text-white"
+                  }`}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.06)"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = ""; }}
+                  aria-expanded={expanded}
+                >
+                  <GroupIcon size={15} className={containsActive ? "text-indigo-400" : "text-slate-500 group-hover:text-slate-300"} />
+                  <span className="flex-1 text-left">{label}</span>
+                  {containsActive && !expanded && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 flex-shrink-0" />
+                  )}
+                  <ChevronDown
+                    size={13}
+                    className={`text-slate-500 transition-transform duration-200 flex-shrink-0 ${expanded ? "rotate-180" : ""}`}
+                  />
+                </button>
+
+                {/* Sub-items */}
+                <div
+                  className="overflow-hidden transition-all duration-200 ease-in-out"
+                  style={{ maxHeight: expanded ? `${items.length * 40}px` : "0px" }}
+                >
+                  <div className="ml-4 pl-3 border-l border-white/10 space-y-0.5 py-0.5">
+                    {items.map(({ href, label: itemLabel, icon: Icon }) => {
+                      const active = isActive(href);
+                      return (
+                        <Link
+                          key={href}
+                          href={href}
+                          className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[13px] font-medium transition-all group ${
+                            active ? "text-white" : "text-slate-400 hover:text-white"
+                          }`}
+                          style={active ? { background: "linear-gradient(135deg, #4F46E5, #6366F1)" } : {}}
+                          onMouseEnter={e => { if (!active) (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.06)"; }}
+                          onMouseLeave={e => { if (!active) (e.currentTarget as HTMLAnchorElement).style.background = ""; }}
+                        >
+                          <Icon size={14} className={active ? "text-white" : "text-slate-500 group-hover:text-slate-300"} />
+                          <span className="flex-1">{itemLabel}</span>
+                          {active && <ChevronRight size={11} className="text-indigo-300 opacity-70" />}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </nav>
 
       {/* Footer — shows logged-in user + sign-out */}

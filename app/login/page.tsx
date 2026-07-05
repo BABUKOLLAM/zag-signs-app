@@ -2,31 +2,17 @@
 import { useState, useEffect } from "react";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, ChevronDown, AlertCircle, Loader2 } from "lucide-react";
+import { Eye, EyeOff, AlertCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { DEMO_CREDENTIALS } from "@/lib/demo-credentials";
 import BrandLogo from "@/components/BrandLogo";
 import PoweredByBpro from "@/components/PoweredByBpro";
 
-const roleColors: Record<string, string> = {
-  "MD":               "bg-violet-100 text-violet-700",
-  "AVP":              "bg-indigo-100 text-indigo-700",
-  "Business Manager": "bg-blue-100 text-blue-700",
-  "Sales Executive":  "bg-emerald-100 text-emerald-700",
-  "CRES":             "bg-teal-100 text-teal-700",
-  "Production":       "bg-orange-100 text-orange-700",
-  "Accounts":         "bg-green-100 text-green-700",
-  "HR":               "bg-rose-100 text-rose-700",
-  "IT Admin":         "bg-slate-100 text-slate-600",
-};
-
 export default function LoginPage() {
-  const [email, setEmail]       = useState("md@zagsigns.com");
-  const [password, setPassword] = useState("MD@2026");
+  const [email, setEmail]       = useState("");
+  const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [error, setError]       = useState("");
   const [loading, setLoading]   = useState(false);
-  const [showCreds, setShowCreds] = useState(false);
   const router = useRouter();
   const { status } = useSession();
 
@@ -49,12 +35,6 @@ export default function LoginPage() {
     } else {
       router.replace("/dashboard");
     }
-  };
-
-  const fillUser = (u: { email: string; password: string }) => {
-    setEmail(u.email);
-    setPassword(u.password);
-    setShowCreds(false);
   };
 
   return (
@@ -155,39 +135,6 @@ export default function LoginPage() {
             <a href="/signup" className="text-indigo-600 font-semibold hover:underline">Request Access</a>
           </p>
         </div>
-      </div>
-
-      {/* Demo credentials */}
-      <div className="relative w-full max-w-md mt-3">
-        <button
-          onClick={() => setShowCreds(s => !s)}
-          className="w-full flex items-center justify-between px-5 py-3 rounded-2xl text-sm text-slate-400 hover:text-white transition-colors"
-          style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
-        >
-          <span className="font-medium">Demo accounts — click any to auto-fill</span>
-          <ChevronDown size={14} className={`transition-transform duration-200 ${showCreds ? "rotate-180" : ""}`} />
-        </button>
-
-        {showCreds && (
-          <div
-            className="mt-1.5 rounded-2xl overflow-hidden"
-            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
-          >
-            {DEMO_CREDENTIALS.map(u => (
-              <button
-                key={u.email}
-                onClick={() => fillUser(u)}
-                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/10 transition-colors text-left border-b border-white/5 last:border-0"
-              >
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 whitespace-nowrap ${roleColors[u.role] ?? "bg-slate-100 text-slate-600"}`}>
-                  {u.role}
-                </span>
-                <span className="text-xs text-slate-300 font-medium truncate flex-1">{u.name}</span>
-                <span className="text-xs text-slate-500 flex-shrink-0 hidden sm:block">{u.email}</span>
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       <div className="relative mt-6 flex flex-col items-center gap-2">

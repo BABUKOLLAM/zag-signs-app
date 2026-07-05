@@ -178,7 +178,7 @@ export default function QuotationsPage() {
         }, 1200);
       }, 500);
     } catch {
-      alert("Failed to load quotation data for printing.");
+      toast.error("Failed to load quotation data for printing.");
     } finally {
       setLoadingPrint(false);
     }
@@ -300,7 +300,7 @@ export default function QuotationsPage() {
       setCustomers(custRes.data ?? []);
       setReviseParent(q);
     } catch {
-      alert("Failed to load quotation for revision.");
+      toast.error("Failed to load quotation for revision.");
     }
   }, []);
 
@@ -372,7 +372,7 @@ export default function QuotationsPage() {
       setCustomers(custRes.data ?? []);
       setEditId(q.id);
     } catch {
-      alert("Failed to load quotation for editing.");
+      toast.error("Failed to load quotation for editing.");
     }
   }, []);
 

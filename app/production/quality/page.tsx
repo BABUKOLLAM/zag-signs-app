@@ -3,8 +3,10 @@
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api-client";
 import { Loader2, Plus, Trash2 } from "lucide-react";
+import { useToast } from "@/components/Toaster";
 
 export default function QualityPage() {
+  const toast = useToast();
   const [checkpoints, setCheckpoints] = useState<any[]>([]);
   const [workOrders, setWorkOrders] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("checkpoints");
@@ -44,7 +46,7 @@ export default function QualityPage() {
 
   const handleAddDefect = () => {
     if (!newDefect.description) {
-      alert("Please enter defect description");
+      toast.error("Please enter defect description");
       return;
     }
     setDefects([...defects, { ...newDefect, id: Math.random() }]);
@@ -57,12 +59,12 @@ export default function QualityPage() {
 
   const handleSubmitCheckpoint = async () => {
     if (!selectedWorkOrder) {
-      alert("Please select a work order");
+      toast.error("Please select a work order");
       return;
     }
 
     if (qcStatus === "FAIL" && defects.length === 0) {
-      alert("Please add at least one defect for FAIL status");
+      toast.error("Please add at least one defect for FAIL status");
       return;
     }
 
@@ -90,7 +92,7 @@ export default function QualityPage() {
       await fetchData();
     } catch (error) {
       console.error("Error submitting checkpoint:", error);
-      alert("Failed to submit QC checkpoint");
+      toast.error("Failed to submit QC checkpoint");
     } finally {
       setLoading(false);
     }

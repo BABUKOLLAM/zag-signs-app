@@ -801,6 +801,12 @@ model Attendance {
   checkOut  DateTime?
   notes     String?
 
+  checkInLat   Float?
+  checkInLng   Float?
+  checkOutLat  Float?
+  checkOutLng  Float?
+  locationName String?
+
   employeeId String?
   employee   Employee? @relation(fields: [employeeId], references: [id])
   userId     String?

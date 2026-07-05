@@ -3,7 +3,7 @@ import { useState } from "react";
 import TopBar from "@/components/TopBar";
 import { useApi } from "@/lib/use-api";
 import {
-  Plus, CheckCircle2, XCircle, Search, RefreshCw, Loader2, Upload, Download,
+  Plus, CheckCircle2, XCircle, Search, RefreshCw, Loader2, Upload, Download, MapPin,
 } from "lucide-react";
 import { exportExcel } from "@/lib/export";
 import BatchImportModal from "@/components/BatchImportModal";
@@ -70,6 +70,8 @@ export default function HRPage() {
   const [empForm, setEmpForm] = useState({ name:"", designation:"", department:"", branch:"TVM", phone:"", email:"", dateOfJoining:"", salary:"" });
   const [leaveForm, setLeaveForm] = useState({ employeeId:"", leaveType:"Casual Leave", fromDate:"", toDate:"", days:"1", reason:"" });
   const [attForm, setAttForm] = useState({ employeeId:"", status:"PRESENT", checkIn:"", checkOut:"" });
+  const [gpsStatus, setGpsStatus] = useState<"idle"|"loading"|"done"|"denied">("idle");
+  const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number; name: string } | null>(null);
 
   async function createEmployee() {
     if (!empForm.name || !empForm.designation) return;
@@ -88,12 +90,40 @@ export default function HRPage() {
     setSaving(false); setShowAddLeave(false); refetchLeave();
   }
 
+  function captureGps() {
+    if (!navigator.geolocation) { setGpsStatus("denied"); return; }
+    setGpsStatus("loading");
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude: lat, longitude: lng } = pos.coords;
+        let name = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        try {
+          const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+          const j = await r.json();
+          name = j.display_name?.split(",").slice(0, 3).join(", ") ?? name;
+        } catch { /* use coords as fallback */ }
+        setGpsCoords({ lat, lng, name });
+        setGpsStatus("done");
+      },
+      () => setGpsStatus("denied"),
+      { timeout: 8000 }
+    );
+  }
+
   async function markAttendance() {
     if (!attForm.employeeId) return;
     setSaving(true);
+    const payload: Record<string, unknown> = { ...attForm, date: attDate };
+    if (gpsCoords) {
+      payload.checkInLat  = gpsCoords.lat;
+      payload.checkInLng  = gpsCoords.lng;
+      payload.locationName = gpsCoords.name;
+    }
     await fetch("/api/attendance", { method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ ...attForm, date: attDate }) });
-    setSaving(false); setShowAttend(false); refetchAtt();
+      body: JSON.stringify(payload) });
+    setSaving(false); setShowAttend(false);
+    setGpsCoords(null); setGpsStatus("idle");
+    refetchAtt();
   }
 
   async function updateLeave(id: string, status: string) {
@@ -391,12 +421,29 @@ export default function HRPage() {
                   ))}
                 </div>
               )}
+              {/* GPS Capture */}
+              <div className="pt-1">
+                <button type="button" onClick={captureGps} disabled={gpsStatus === "loading"}
+                  className="flex items-center gap-2 text-xs px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 transition-all w-full justify-center">
+                  <MapPin size={13} className={gpsStatus === "loading" ? "animate-pulse text-indigo-500" : gpsStatus === "done" ? "text-emerald-500" : "text-slate-400"} />
+                  {gpsStatus === "idle" && "Capture GPS Location"}
+                  {gpsStatus === "loading" && "Getting location…"}
+                  {gpsStatus === "done" && "Location captured"}
+                  {gpsStatus === "denied" && "GPS unavailable"}
+                </button>
+                {gpsCoords && (
+                  <div className="mt-2 flex items-start gap-1.5 bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2">
+                    <MapPin size={11} className="text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-xs text-emerald-700 leading-relaxed">{gpsCoords.name}</p>
+                  </div>
+                )}
+              </div>
             </div>
             <div className="flex gap-3 mt-4">
               <button onClick={markAttendance} disabled={saving} className="flex-1 py-2.5 rounded-xl text-white font-semibold text-sm" style={{background:"linear-gradient(135deg,#4F46E5,#7C3AED)"}}>
                 {saving?"Saving…":"Mark Attendance"}
               </button>
-              <button onClick={()=>setShowAttend(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm">Cancel</button>
+              <button onClick={()=>{ setShowAttend(false); setGpsCoords(null); setGpsStatus("idle"); }} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm">Cancel</button>
             </div>
           </div>
         </div>

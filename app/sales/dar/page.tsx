@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { api } from "@/lib/api-client";
 import { Loader2, Download, Send } from "lucide-react";
+import { useToast } from "@/components/Toaster";
 
 export default function DARPage() {
+  const toast = useToast();
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [darData, setDarData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -20,7 +22,7 @@ export default function DARPage() {
       }
     } catch (error) {
       console.error("Error generating DAR:", error);
-      alert("Failed to generate DAR");
+      toast.error("Failed to generate DAR");
     } finally {
       setLoading(false);
     }
@@ -35,10 +37,10 @@ export default function DARPage() {
         date,
       });
       setSubmitted(true);
-      setTimeout(() => alert("DAR submitted successfully!"), 500);
+      setTimeout(() => toast.success("DAR submitted successfully!"), 500);
     } catch (error) {
       console.error("Error submitting DAR:", error);
-      alert("Failed to submit DAR");
+      toast.error("Failed to submit DAR");
     } finally {
       setLoading(false);
     }

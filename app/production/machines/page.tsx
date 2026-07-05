@@ -5,7 +5,8 @@ import { api as apiClient } from "@/lib/api-client";
 import { MACHINE_COLUMNS } from "@/lib/import-specs";
 import BatchImportModal from "@/components/BatchImportModal";
 import TopBar from "@/components/TopBar";
-import { Loader2, Plus, X, Wrench, CheckCircle, AlertTriangle, Clock } from "lucide-react";
+import { Loader2, Plus, X, Trash2 } from "lucide-react";
+import { useToast } from "@/components/Toaster";
 
 const BRANCHES = [
   { id: "ALL", label: "All Branches" },
@@ -28,6 +29,7 @@ const STATUS_STYLE: Record<string, string> = {
 const BLANK_MACHINE = { name: "", type: "", branch: "TVM", printType: "", model: "", location: "", hourlyRate: "", capacityPerHour: "", notes: "" };
 
 export default function MachinesPage() {
+  const toast = useToast();
   const api = apiClient;
 
   const [machines,   setMachines]   = useState<any[]>([]);
@@ -41,6 +43,8 @@ export default function MachinesPage() {
   const [form,       setForm]       = useState(BLANK_MACHINE);
   const [scheduleData, setScheduleData] = useState({ workOrderId: "", machineId: "", scheduledStartAt: "", scheduledEndAt: "" });
   const [showScheduleForm, setShowScheduleForm] = useState(false);
+  const [deletingId,      setDeletingId]      = useState<string|null>(null);
+  const [statusSavingId,  setStatusSavingId]  = useState<string|null>(null);
 
   useEffect(() => { fetchData(); }, []);
 
@@ -60,7 +64,7 @@ export default function MachinesPage() {
   };
 
   const handleAddMachine = async () => {
-    if (!form.name.trim() || !form.type) { alert("Name and Type are required"); return; }
+    if (!form.name.trim() || !form.type) { toast.error("Name and Type are required"); return; }
     setLoading(true);
     try {
       await api.post("/production/machines", {
@@ -75,13 +79,13 @@ export default function MachinesPage() {
       setForm(BLANK_MACHINE);
       setShowForm(false);
       fetchData();
-    } catch (e) { alert("Failed to add machine"); }
+    } catch (e) { toast.error("Failed to add machine"); }
     finally { setLoading(false); }
   };
 
   const handleAddSchedule = async () => {
     if (!scheduleData.workOrderId || !scheduleData.machineId || !scheduleData.scheduledStartAt || !scheduleData.scheduledEndAt) {
-      alert("Fill all schedule fields"); return;
+      toast.error("Fill all schedule fields"); return;
     }
     setLoading(true);
     try {
@@ -89,7 +93,7 @@ export default function MachinesPage() {
       setScheduleData({ workOrderId: "", machineId: "", scheduledStartAt: "", scheduledEndAt: "" });
       setShowScheduleForm(false);
       fetchData();
-    } catch (e) { alert("Failed to schedule"); }
+    } catch (e) { toast.error("Failed to schedule"); }
     finally { setLoading(false); }
   };
 
@@ -262,14 +266,15 @@ export default function MachinesPage() {
                         <th className="px-4 py-3 text-left">Name</th>
                         <th className="px-4 py-3 text-left">Type</th>
                         <th className="px-4 py-3 text-left">Branch</th>
-                        <th className="px-4 py-3 text-left">Location</th>
-                        <th className="px-4 py-3 text-right">Rate ₹/hr</th>
+                        <th className="px-4 py-3 text-left hidden md:table-cell">Location</th>
+                        <th className="px-4 py-3 text-right hidden md:table-cell">Rate ₹/hr</th>
                         <th className="px-4 py-3 text-left">Status</th>
+                        <th className="px-4 py-3 w-10"></th>
                       </tr>
                     </thead>
                     <tbody className="divide-y" style={{ borderColor: "var(--card-border)" }}>
                       {filteredMachines.map(m => (
-                        <tr key={m.id} className="hover:opacity-80 transition-opacity">
+                        <tr key={m.id} className="hover:opacity-90 transition-opacity">
                           <td className="px-4 py-3 font-mono text-xs font-semibold text-indigo-500">{m.machineNo}</td>
                           <td className="px-4 py-3 font-medium" style={{ color: "var(--text-primary)" }}>
                             {m.name}
@@ -282,12 +287,43 @@ export default function MachinesPage() {
                           <td className="px-4 py-3">
                             <span className="px-2 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700">{m.branch}</span>
                           </td>
-                          <td className="px-4 py-3 text-xs" style={{ color: "var(--text-muted)" }}>{m.location || "—"}</td>
-                          <td className="px-4 py-3 text-right font-medium" style={{ color: "var(--text-primary)" }}>
+                          <td className="px-4 py-3 text-xs hidden md:table-cell" style={{ color: "var(--text-muted)" }}>{m.location || "—"}</td>
+                          <td className="px-4 py-3 text-right font-medium hidden md:table-cell" style={{ color: "var(--text-primary)" }}>
                             {m.hourlyRate > 0 ? `₹${m.hourlyRate}` : "—"}
                           </td>
                           <td className="px-4 py-3">
-                            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${STATUS_STYLE[m.status] ?? STATUS_STYLE.ACTIVE}`}>{m.status}</span>
+                            <select
+                              value={m.status}
+                              disabled={statusSavingId === m.id}
+                              onChange={async e => {
+                                const newStatus = e.target.value;
+                                setStatusSavingId(m.id);
+                                try {
+                                  await api.put(`/production/machines/${m.id}`, { status: newStatus });
+                                  setMachines(ms => ms.map((x: any) => x.id === m.id ? { ...x, status: newStatus } : x));
+                                } catch { /* ignore */ }
+                                finally { setStatusSavingId(null); }
+                              }}
+                              className={`text-xs font-semibold rounded-full px-2 py-1 border-0 cursor-pointer ${STATUS_STYLE[m.status] ?? STATUS_STYLE.ACTIVE}`}>
+                              {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                            </select>
+                            {statusSavingId === m.id && <Loader2 size={11} className="inline ml-1 animate-spin text-indigo-400" />}
+                          </td>
+                          <td className="px-4 py-3">
+                            <button
+                              disabled={deletingId === m.id}
+                              onClick={async () => {
+                                if (!confirm(`Delete "${m.name}"? This cannot be undone.`)) return;
+                                setDeletingId(m.id);
+                                try {
+                                  await api.del(`/production/machines/${m.id}`);
+                                  setMachines(ms => ms.filter((x: any) => x.id !== m.id));
+                                } catch { /* ignore */ }
+                                finally { setDeletingId(null); }
+                              }}
+                              className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 disabled:opacity-40">
+                              {deletingId === m.id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                            </button>
                           </td>
                         </tr>
                       ))}

@@ -3,8 +3,10 @@
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api-client";
 import { Loader2, Plus, Download } from "lucide-react";
+import { useToast } from "@/components/Toaster";
 
 export default function ClaimsPage() {
+  const toast = useToast();
   const [claims, setClaims] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -35,7 +37,7 @@ export default function ClaimsPage() {
 
   const handleSubmit = async () => {
     if (!formData.amount || !formData.claimReason) {
-      alert("Please fill all required fields");
+      toast.error("Please fill all required fields");
       return;
     }
 
@@ -57,7 +59,7 @@ export default function ClaimsPage() {
       await fetchClaims();
     } catch (error: any) {
       console.error("Error submitting claim:", error);
-      alert(error.message || "Failed to submit claim");
+      toast.error(error.message || "Failed to submit claim");
     } finally {
       setLoading(false);
     }

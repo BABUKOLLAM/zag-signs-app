@@ -5,8 +5,10 @@ import { api } from "@/lib/api-client";
 import { MATERIAL_CONSUMPTION_COLUMNS } from "@/lib/import-specs";
 import BatchImportModal from "@/components/BatchImportModal";
 import { Loader2 } from "lucide-react";
+import { useToast } from "@/components/Toaster";
 
 export default function MaterialsPage() {
+  const toast = useToast();
   const [consumptions, setConsumptions] = useState<any[]>([]);
   const [workOrders, setWorkOrders] = useState<any[]>([]);
   const [materials, setMaterials] = useState<any[]>([]);
@@ -43,7 +45,7 @@ export default function MaterialsPage() {
 
   const handleAddConsumption = async () => {
     if (!selectedWorkOrder || !selectedMaterial || !plannedQty) {
-      alert("Please fill all fields");
+      toast.error("Please fill all fields");
       return;
     }
 
@@ -63,7 +65,7 @@ export default function MaterialsPage() {
       await fetchData();
     } catch (error) {
       console.error("Error adding consumption:", error);
-      alert("Failed to add material consumption");
+      toast.error("Failed to add material consumption");
     } finally {
       setLoading(false);
     }
