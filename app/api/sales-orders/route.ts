@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, err, requireSession, toLabel, toDate } from "@/lib/api-helpers";
+import { ok, err, requireAnyPathAccess, toLabel, toDate } from "@/lib/api-helpers";
 import { OrderStatus } from "@prisma/client";
+
+// Serves both /sales-orders and /installation (Installation Tracking reuses this data).
+const ORDER_PAGES = ["/sales-orders", "/installation"];
 
 function shape(o: Awaited<ReturnType<typeof prisma.salesOrder.findFirst>> & {
   customer?: { name: string; company: string; branch: string } | null;
@@ -26,8 +29,8 @@ function shape(o: Awaited<ReturnType<typeof prisma.salesOrder.findFirst>> & {
 }
 
 export async function GET(request: NextRequest) {
-  const session = await requireSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAnyPathAccess(ORDER_PAGES);
+  if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status") as OrderStatus | null;
@@ -61,8 +64,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await requireSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAnyPathAccess(ORDER_PAGES);
+  if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const body = await request.json();
   const { customerId, quotationId, totalAmount, deliveryDate, notes } = body;

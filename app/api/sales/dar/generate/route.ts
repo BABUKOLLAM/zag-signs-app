@@ -1,10 +1,10 @@
 import { NextRequest } from "next/server";
-import { requireSession, ok, err } from "@/lib/api-helpers";
+import { requirePathAccess, ok, err } from "@/lib/api-helpers";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
-  const session = await requireSession();
-  if (!session) return err("Unauthorized", 401);
+  const session = await requirePathAccess("/sales/dar");
+  if (!session) return err("Forbidden", 403);
 
   try {
     const body = await req.json();
@@ -63,8 +63,8 @@ export async function POST(req: NextRequest) {
 
 // GET endpoint to preview DAR without saving
 export async function GET(req: NextRequest) {
-  const session = await requireSession();
-  if (!session) return err("Unauthorized", 401);
+  const session = await requirePathAccess("/sales/dar");
+  if (!session) return err("Forbidden", 403);
 
   try {
     const searchParams = req.nextUrl.searchParams;

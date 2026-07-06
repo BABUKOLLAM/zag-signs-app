@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireSession, ok, err } from "@/lib/api-helpers";
+import { requirePathAccess, ok, err } from "@/lib/api-helpers";
 import { prisma } from "@/lib/prisma";
 
 function fjpNo(count: number) {
@@ -19,8 +19,8 @@ function getSubmissionWindow() {
 }
 
 export async function GET(req: NextRequest) {
-  const session = await requireSession();
-  if (!session) return err("Unauthorized", 401);
+  const session = await requirePathAccess("/sales/fjp");
+  if (!session) return err("Forbidden", 403);
 
   try {
     const sp = req.nextUrl.searchParams;
@@ -47,8 +47,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await requireSession();
-  if (!session) return err("Unauthorized", 401);
+  const session = await requirePathAccess("/sales/fjp");
+  if (!session) return err("Forbidden", 403);
 
   try {
     const body = await req.json();

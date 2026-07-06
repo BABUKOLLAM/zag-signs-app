@@ -1,11 +1,11 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireSession, ok, err } from "@/lib/api-helpers";
+import { requirePathAccess, ok, err } from "@/lib/api-helpers";
 
 
 export async function GET(req: NextRequest) {
-  const session = await requireSession();
-  if (!session) return err("Unauthorized", 401);
+  const session = await requirePathAccess("/sales/team");
+  if (!session) return err("Forbidden", 403);
 
   try {
     const searchParams = req.nextUrl.searchParams;

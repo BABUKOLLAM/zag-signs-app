@@ -36,6 +36,15 @@ export async function requireRole(allowed: string[] = []) {
  * of a second hand-maintained role list that can drift out of sync.
  */
 export async function requirePathAccess(path: string) {
+  return requireAnyPathAccess([path]);
+}
+
+/**
+ * Like requirePathAccess, but passes if the user can access ANY of the given
+ * paths. Use when one endpoint backs more than one page with different role
+ * sets (e.g. /api/sales-orders serves both /sales-orders and /installation).
+ */
+export async function requireAnyPathAccess(paths: string[]) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return null;
   const userId = (session.user as { id?: string }).id;
@@ -44,8 +53,8 @@ export async function requirePathAccess(path: string) {
     ? await prisma.userPermission.findUnique({ where: { userId }, select: { modules: true } })
     : null;
   const allowed = override
-    ? canAccessModules(override.modules, path)
-    : canAccess(role, path);
+    ? paths.some((p) => canAccessModules(override.modules, p))
+    : paths.some((p) => canAccess(role, p));
   return allowed ? session : null;
 }
 

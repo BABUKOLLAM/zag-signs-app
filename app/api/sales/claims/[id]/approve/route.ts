@@ -1,14 +1,14 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireSession, ok, err } from "@/lib/api-helpers";
+import { requirePathAccess, ok, err } from "@/lib/api-helpers";
 
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await requireSession();
-  if (!session) return err("Unauthorized", 401);
+  const session = await requirePathAccess("/sales/claims");
+  if (!session) return err("Forbidden", 403);
 
   try {
     const { id } = await params;

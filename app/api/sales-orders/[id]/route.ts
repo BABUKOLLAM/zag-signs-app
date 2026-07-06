@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, err, requireSession, toLabel, toDate } from "@/lib/api-helpers";
+import { ok, err, requireAnyPathAccess, toLabel, toDate } from "@/lib/api-helpers";
 import { OrderStatus } from "@prisma/client";
+
+// Serves both /sales-orders and /installation (Installation Tracking reuses this data).
+const ORDER_PAGES = ["/sales-orders", "/installation"];
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await requireSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAnyPathAccess(ORDER_PAGES);
+  if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { id } = await params;
   const o = await prisma.salesOrder.findUnique({
@@ -49,8 +52,8 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await requireSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAnyPathAccess(ORDER_PAGES);
+  if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { id } = await params;
   const body = await request.json();

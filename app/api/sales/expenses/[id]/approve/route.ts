@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireSession, ok, err } from "@/lib/api-helpers";
+import { requirePathAccess, ok, err } from "@/lib/api-helpers";
 import { prisma } from "@/lib/prisma";
 
 type Stage = "HOD" | "ACCOUNTS" | "CEO";
@@ -13,8 +13,8 @@ const TRANSITIONS: Record<Stage, Record<string, string>> = {
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const session = await requireSession();
-  if (!session) return err("Unauthorized", 401);
+  const session = await requirePathAccess("/sales/approvals");
+  if (!session) return err("Forbidden", 403);
 
   try {
     const body = await req.json();

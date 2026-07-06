@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { ok, err } from "@/lib/api-helpers";
+import { ok, err, requirePathAccess } from "@/lib/api-helpers";
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json(err("Unauthorized"), { status: 401 });
+  const session = await requirePathAccess("/digital-approvals");
+  if (!session) return NextResponse.json(err("Forbidden"), { status: 403 });
   const { id } = await params;
   const body = await req.json();
   const data: any = {};

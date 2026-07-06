@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { ok, err } from "@/lib/api-helpers";
+import { ok, err, requirePathAccess } from "@/lib/api-helpers";
 
 export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json(err("Unauthorized"), { status: 401 });
+  const session = await requirePathAccess("/tender");
+  if (!session) return NextResponse.json(err("Forbidden"), { status: 403 });
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status") || undefined;
   const branch = searchParams.get("branch") || undefined;
@@ -19,8 +17,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json(err("Unauthorized"), { status: 401 });
+  const session = await requirePathAccess("/tender");
+  if (!session) return NextResponse.json(err("Forbidden"), { status: 403 });
   const body = await req.json();
   const count = await prisma.tender.count();
   const tenderNo = `TND-${new Date().getFullYear()}-${String(count + 1).padStart(4, "0")}`;
