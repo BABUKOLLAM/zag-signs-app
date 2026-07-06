@@ -30,6 +30,8 @@ const ROLE_PATHS: Record<Role, string[]> = {
     "/team-reports", "/documents",
     "/admin/settings", "/admin/users", "/admin/privileges",
     "/admin/database", "/admin/audit",
+    "/amc", "/digital-approvals", "/fleet", "/installation",
+    "/job-costing", "/procurement", "/projects", "/sales", "/tender",
   ],
 
   AVP:        ["*"],
@@ -44,12 +46,15 @@ const ROLE_PATHS: Record<Role, string[]> = {
     "/accounts", "/collections", "/invoices",
     "/complaints", "/tasks", "/hr", "/field-visits",
     "/reports", "/reports/tax", "/ai-insights",
+    "/amc", "/digital-approvals", "/fleet", "/installation",
+    "/job-costing", "/procurement", "/projects", "/sales", "/tender",
   ],
 
   "Sales Executive": [
     "/leads", "/opportunities", "/customers", "/quotations", "/sales-orders",
     "/work-order-tickets",
     "/field-visits", "/tasks", "/complaints",
+    "/sales", "/tender",
   ],
 
   CRES: [
@@ -59,6 +64,7 @@ const ROLE_PATHS: Record<Role, string[]> = {
 
   Production: [
     "/work-orders", "/production", "/inventory", "/tasks",
+    "/installation", "/procurement", "/fleet", "/projects",
   ],
 
   Designer: [
@@ -68,6 +74,7 @@ const ROLE_PATHS: Record<Role, string[]> = {
   Accounts: [
     "/kpi", "/customers", "/accounts", "/collections",
     "/reports", "/reports/tax", "/tasks",
+    "/sales", "/job-costing", "/amc",
   ],
 
   HR: ["/hr", "/tasks"],
@@ -116,6 +123,8 @@ export const ALL_MODULE_PATHS = [
   "/admin/users", "/admin/database", "/admin/audit",
   "/admin/settings", "/admin/privileges",
   "/help",
+  "/amc", "/digital-approvals", "/fleet", "/installation",
+  "/job-costing", "/procurement", "/projects", "/sales", "/tender",
 ];
 
 /** True if a path is a guarded module page. */
@@ -191,6 +200,20 @@ export const MODULE_GROUPS: { group: string; color: string; items: { path: strin
       { path: "/admin/privileges", label: "Privilege Management" },
       { path: "/admin/database",   label: "Database Studio" },
       { path: "/admin/audit",      label: "Audit Logs" },
+    ],
+  },
+  {
+    group: "Extended Operations", color: "cyan",
+    items: [
+      { path: "/tender",             label: "Tender Management" },
+      { path: "/job-costing",        label: "Job Costing" },
+      { path: "/procurement",        label: "Procurement" },
+      { path: "/fleet",              label: "Fleet Management" },
+      { path: "/projects",           label: "Project Management" },
+      { path: "/installation",       label: "Installation Tracking" },
+      { path: "/amc",                label: "AMC & Warranty" },
+      { path: "/digital-approvals",  label: "Digital Approvals" },
+      { path: "/sales",              label: "Field Sales (FJP/Expenses/Approvals)" },
     ],
   },
 ];
