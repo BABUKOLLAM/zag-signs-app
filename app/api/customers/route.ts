@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok, err, requireSession, toDate, autoNo } from "@/lib/api-helpers";
-import { Branch } from "@prisma/client";
 
 function shape(c: Awaited<ReturnType<typeof prisma.customer.findFirst>>) {
   if (!c) return null;
@@ -27,7 +26,7 @@ export async function GET(request: NextRequest) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
-  const branch = searchParams.get("branch") as Branch | null;
+  const branch = searchParams.get("branch");
   const search = searchParams.get("search") ?? "";
   const page = Math.max(1, Number(searchParams.get("page") ?? "1"));
   const limit = Math.min(100, Number(searchParams.get("limit") ?? "50"));
@@ -91,7 +90,7 @@ export async function POST(request: NextRequest) {
       company: company.trim(),
       phone: phone.trim(),
       email: email?.trim() ?? null,
-      branch: branch as Branch,
+      branch,
       address: address?.trim() ?? null,
       gstNo: gstNo?.trim() ?? null,
       creditLimit: Number(creditLimit) || 0,

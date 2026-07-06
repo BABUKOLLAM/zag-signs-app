@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok, requireSession, toDate } from "@/lib/api-helpers";
-import { Branch, OpportunityStage } from "@prisma/client";
+import { OpportunityStage } from "@prisma/client";
 
 const STAGE_LABELS: Record<string, string> = {
   QUALIFICATION:    "Qualification",
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const stage  = searchParams.get("stage") as OpportunityStage | null;
-  const branch = searchParams.get("branch") as Branch | null;
+  const branch = searchParams.get("branch");
   const leadId = searchParams.get("leadId");
   const page   = Math.max(1, Number(searchParams.get("page")  ?? "1"));
   const limit  = Math.min(100, Number(searchParams.get("limit") ?? "50"));
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
       stage,
       probability:  STAGE_PROB[stage] ?? 20,
       value:        Number(body.value) || 0,
-      branch:       body.branch as Branch,
+      branch:       body.branch,
       expectedClose: body.expectedClose ? new Date(body.expectedClose) : null,
       notes:        body.notes?.trim() ?? null,
       leadId:       body.leadId ?? null,

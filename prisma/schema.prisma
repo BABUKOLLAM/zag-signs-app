@@ -9,13 +9,9 @@ datasource db {
 }
 
 // ─── ENUMS ────────────────────────────────────────────────────────────────────
-
-enum Branch {
-  TVM
-  KTYM
-  EKM
-  CLT
-}
+// NOTE: Branch is intentionally a plain String, not an enum — branch names are
+// configurable per business (e.g. ZAG SIGNS: HO, TVM, KTYM, EKM, CLT) so a new
+// SaaS customer's branch list never requires a schema migration.
 
 enum UserRole {
   MD
@@ -194,7 +190,7 @@ model User {
   email          String    @unique
   password       String
   role           UserRole
-  branch         Branch?   // null = all branches (MD, AVP, HR, IT_ADMIN)
+  branch         String?   // null = all branches (MD, AVP, HR, IT_ADMIN)
   phone          String?
   isActive       Boolean   @default(true)
   status         String    @default("PENDING") // PENDING | ACTIVE | INACTIVE
@@ -278,7 +274,7 @@ model Lead {
   company      String?
   phone        String
   email        String?
-  branch       Branch
+  branch       String
   status       LeadStatus @default(NEW)
   source       LeadSource @default(OTHER)
   value        Float      @default(0)
@@ -308,7 +304,7 @@ model Customer {
   phone              String
   email              String?
   address            String?
-  branch             Branch
+  branch             String
   gstNo              String?
   creditLimit        Float    @default(0)
   outstandingBalance Float    @default(0)
@@ -337,7 +333,7 @@ model Opportunity {
   stage         OpportunityStage @default(QUALIFICATION)
   probability   Int              @default(20)
   value         Float
-  branch        Branch
+  branch        String
   expectedClose DateTime?
   notes         String?
   closedAt      DateTime?
@@ -666,7 +662,7 @@ model FieldVisit {
 model DAR {
   id                   String   @id @default(cuid())
   date                 DateTime @default(now())
-  branch               Branch
+  branch               String
   department           String
   customerVisits       Int      @default(0)
   callsMade            Int      @default(0)
@@ -700,7 +696,7 @@ model WWR {
   id                String         @id @default(cuid())
   weekFrom          DateTime
   weekTo            DateTime
-  branch            Branch
+  branch            String
   department        String
   weeklyTarget      Float          @default(0)
   weeklyAchievement Float          @default(0)
@@ -725,7 +721,7 @@ model MWR {
   id                      String         @id @default(cuid())
   month                   Int
   year                    Int
-  branch                  Branch
+  branch                  String
   department              String
   salesTarget             Float?
   salesAchievement        Float?
@@ -758,7 +754,7 @@ model Document {
   fileSize    String?
   fileUrl     String?
   storageKey  String?
-  branch      Branch?
+  branch      String?
   relatedTo   String?
   relatedType String?
   tags        String[]
@@ -778,7 +774,7 @@ model Employee {
   name          String
   designation   String
   department    String
-  branch        Branch
+  branch        String
   phone         String?
   email         String?
   dateOfJoining DateTime?
@@ -1466,7 +1462,7 @@ model Tender {
   tenderNo       String   @unique
   title          String
   client         String
-  branch         Branch
+  branch         String
   status         String   @default("OPEN") // OPEN, SUBMITTED, WON, LOST, CANCELLED
   bidValue       Float    @default(0)
   awardedValue   Float?
@@ -1530,7 +1526,7 @@ model Vendor {
   address        String?
   gstin          String?
   category       String          // MATERIAL, PRINTING, FABRICATION, TRANSPORT, SERVICE
-  branch         Branch
+  branch         String
   status         String          @default("ACTIVE")
   creditDays     Int             @default(30)
   notes          String?
@@ -1548,7 +1544,7 @@ model PurchaseOrder {
   poNo         String          @unique
   vendorId     String
   vendor       Vendor          @relation(fields: [vendorId], references: [id])
-  branch       Branch
+  branch       String
   status       String          @default("DRAFT") // DRAFT, SENT, PARTIAL, RECEIVED, COMPLETED, CANCELLED
   totalAmount  Float           @default(0)
   deliveryDate DateTime?
@@ -1619,7 +1615,7 @@ model Vehicle {
   make            String
   model           String
   type            String             // TRUCK, VAN, CAR, BIKE, AUTO
-  branch          Branch
+  branch          String
   status          String             @default("ACTIVE") // ACTIVE, MAINTENANCE, RETIRED
   driverId        String?
   driver          User?              @relation("VehicleDriver", fields: [driverId], references: [id])
@@ -1702,7 +1698,7 @@ model Project {
   customerId   String
   customer     Customer           @relation(fields: [customerId], references: [id])
   salesOrderId String?
-  branch       Branch
+  branch       String
   status       String             @default("PLANNING") // PLANNING, PRODUCTION, DISPATCH, INSTALLATION, COMPLETED, ON_HOLD
   managerId    String
   manager      User               @relation("ProjectManager", fields: [managerId], references: [id])

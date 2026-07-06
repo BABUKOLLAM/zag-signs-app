@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/api-helpers";
-import { Branch, LeadStatus, OrderStatus } from "@prisma/client";
+import { LeadStatus, OrderStatus } from "@prisma/client";
 
 export async function GET() {
   const session = await requireSession();
@@ -70,7 +70,7 @@ export async function GET() {
   });
 
   // Get branch from customers for those orders
-  const branchRevByBranch = await prisma.$queryRaw<{ branch: Branch; revenue: number; orders: number }[]>`
+  const branchRevByBranch = await prisma.$queryRaw<{ branch: string; revenue: number; orders: number }[]>`
     SELECT c.branch,
            COALESCE(SUM(so."totalAmount"), 0)::float AS revenue,
            COUNT(so.id)::int AS orders
@@ -115,7 +115,7 @@ export async function GET() {
   const collectionValue = collectionThisMonth._sum.amount ?? 0;
   const collectionTarget = 1800000; // can be moved to settings table later
 
-  const allBranches: Branch[] = ["TVM", "KTYM", "EKM", "CLT"];
+  const allBranches: string[] = ["HO", "TVM", "KTYM", "EKM", "CLT"];
   const branchPerformance = allBranches.map((b) => {
     const found = branchRevByBranch.find((r) => r.branch === b);
     return { branch: b, revenue: found?.revenue ?? 0, orders: found?.orders ?? 0, leads: 0 };

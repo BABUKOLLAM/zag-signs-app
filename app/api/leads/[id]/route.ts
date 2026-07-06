@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok, err, requireSession, toLabel, toDate } from "@/lib/api-helpers";
-import { Branch, LeadStatus, LeadSource } from "@prisma/client";
+import { LeadStatus, LeadSource } from "@prisma/client";
 
 export async function GET(
   _req: NextRequest,
@@ -55,7 +55,7 @@ export async function PUT(
       ...(body.company !== undefined && { company: body.company.trim() || null }),
       ...(body.phone !== undefined && { phone: body.phone.trim() }),
       ...(body.email !== undefined && { email: body.email.trim() || null }),
-      ...(body.branch !== undefined && { branch: body.branch as Branch }),
+      ...(body.branch !== undefined && { branch: body.branch }),
       ...(body.status !== undefined && { status: body.status as LeadStatus }),
       ...(body.source !== undefined && { source: body.source as LeadSource }),
       ...(body.value !== undefined && { value: Number(body.value) }),

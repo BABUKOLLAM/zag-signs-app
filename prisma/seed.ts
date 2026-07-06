@@ -1,4 +1,4 @@
-import { PrismaClient, Branch, UserRole, LeadStatus, LeadSource, OrderStatus, QuotationStatus, ComplaintStatus, ComplaintPriority, TaskStatus, TaskPriority, VisitType, VisitOutcome, ApprovalStatus } from "@prisma/client";
+import { PrismaClient, UserRole, LeadStatus, LeadSource, OrderStatus, QuotationStatus, ComplaintStatus, ComplaintPriority, TaskStatus, TaskPriority, VisitType, VisitOutcome, ApprovalStatus } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -25,27 +25,27 @@ async function main() {
     prisma.user.upsert({
       where: { email: "bm@zagsigns.com" },
       update: { status: "ACTIVE", isActive: true },
-      create: { name: "Priya Nair", email: "bm@zagsigns.com", password: await hash("BM@2026"), role: UserRole.BUSINESS_MANAGER, branch: Branch.TVM, phone: "9400000003", status: "ACTIVE", isActive: true },
+      create: { name: "Priya Nair", email: "bm@zagsigns.com", password: await hash("BM@2026"), role: UserRole.BUSINESS_MANAGER, branch: "TVM", phone: "9400000003", status: "ACTIVE", isActive: true },
     }),
     prisma.user.upsert({
       where: { email: "sales@zagsigns.com" },
       update: { status: "ACTIVE", isActive: true },
-      create: { name: "Arun Kumar", email: "sales@zagsigns.com", password: await hash("Sales@2026"), role: UserRole.SALES_EXECUTIVE, branch: Branch.TVM, phone: "9400000004", status: "ACTIVE", isActive: true },
+      create: { name: "Arun Kumar", email: "sales@zagsigns.com", password: await hash("Sales@2026"), role: UserRole.SALES_EXECUTIVE, branch: "TVM", phone: "9400000004", status: "ACTIVE", isActive: true },
     }),
     prisma.user.upsert({
       where: { email: "cres@zagsigns.com" },
       update: { status: "ACTIVE", isActive: true },
-      create: { name: "Vijay CRE", email: "cres@zagsigns.com", password: await hash("CRES@2026"), role: UserRole.CRES, branch: Branch.EKM, phone: "9400000005", status: "ACTIVE", isActive: true },
+      create: { name: "Vijay CRE", email: "cres@zagsigns.com", password: await hash("CRES@2026"), role: UserRole.CRES, branch: "EKM", phone: "9400000005", status: "ACTIVE", isActive: true },
     }),
     prisma.user.upsert({
       where: { email: "prod@zagsigns.com" },
       update: { status: "ACTIVE", isActive: true },
-      create: { name: "Kumar Suresh", email: "prod@zagsigns.com", password: await hash("Prod@2026"), role: UserRole.PRODUCTION, branch: Branch.TVM, phone: "9400000006", status: "ACTIVE", isActive: true },
+      create: { name: "Kumar Suresh", email: "prod@zagsigns.com", password: await hash("Prod@2026"), role: UserRole.PRODUCTION, branch: "TVM", phone: "9400000006", status: "ACTIVE", isActive: true },
     }),
     prisma.user.upsert({
       where: { email: "accounts@zagsigns.com" },
       update: { status: "ACTIVE", isActive: true },
-      create: { name: "Meera Thomas", email: "accounts@zagsigns.com", password: await hash("Acc@2026"), role: UserRole.ACCOUNTS, branch: Branch.TVM, phone: "9400000007", status: "ACTIVE", isActive: true },
+      create: { name: "Meera Thomas", email: "accounts@zagsigns.com", password: await hash("Acc@2026"), role: UserRole.ACCOUNTS, branch: "TVM", phone: "9400000007", status: "ACTIVE", isActive: true },
     }),
     prisma.user.upsert({
       where: { email: "hr@zagsigns.com" },
@@ -67,27 +67,27 @@ async function main() {
     prisma.customer.upsert({
       where: { customerNo: "CUST-001" },
       update: {},
-      create: { customerNo: "CUST-001", name: "Dr. Ramesh PV", company: "Asha Hospitals", phone: "9447100001", email: "admin@ashahospitals.com", address: "Pattom, Thiruvananthapuram", branch: Branch.TVM, gstNo: "32AABCH1234A1Z5", creditLimit: 500000 },
+      create: { customerNo: "CUST-001", name: "Dr. Ramesh PV", company: "Asha Hospitals", phone: "9447100001", email: "admin@ashahospitals.com", address: "Pattom, Thiruvananthapuram", branch: "TVM", gstNo: "32AABCH1234A1Z5", creditLimit: 500000 },
     }),
     prisma.customer.upsert({
       where: { customerNo: "CUST-002" },
       update: {},
-      create: { customerNo: "CUST-002", name: "Suresh Manager", company: "Lulu Hypermarket EKM", phone: "9447100002", email: "procurement@lulumall.com", address: "Edappally, Ernakulam", branch: Branch.EKM, gstNo: "32AABCL5678B1Z3", creditLimit: 1000000 },
+      create: { customerNo: "CUST-002", name: "Suresh Manager", company: "Lulu Hypermarket EKM", phone: "9447100002", email: "procurement@lulumall.com", address: "Edappally, Ernakulam", branch: "EKM", gstNo: "32AABCL5678B1Z3", creditLimit: 1000000 },
     }),
     prisma.customer.upsert({
       where: { customerNo: "CUST-003" },
       update: {},
-      create: { customerNo: "CUST-003", name: "Thomas Joseph", company: "Baby Memorial Hospital", phone: "9447100003", email: "purchase@babymemorial.com", address: "KK Road, Kottayam", branch: Branch.KTYM, creditLimit: 300000 },
+      create: { customerNo: "CUST-003", name: "Thomas Joseph", company: "Baby Memorial Hospital", phone: "9447100003", email: "purchase@babymemorial.com", address: "KK Road, Kottayam", branch: "KTYM", creditLimit: 300000 },
     }),
     prisma.customer.upsert({
       where: { customerNo: "CUST-004" },
       update: {},
-      create: { customerNo: "CUST-004", name: "Salim Rasheed", company: "Al Baraka Exports", phone: "9447100004", email: "info@albaraka.com", address: "SM Street, Kozhikode", branch: Branch.CLT, creditLimit: 250000 },
+      create: { customerNo: "CUST-004", name: "Salim Rasheed", company: "Al Baraka Exports", phone: "9447100004", email: "info@albaraka.com", address: "SM Street, Kozhikode", branch: "CLT", creditLimit: 250000 },
     }),
     prisma.customer.upsert({
       where: { customerNo: "CUST-005" },
       update: {},
-      create: { customerNo: "CUST-005", name: "Anil Kumar", company: "Malabar Gold EKM", phone: "9447100005", email: "purchase@malabargold.com", address: "MG Road, Ernakulam", branch: Branch.EKM, creditLimit: 800000 },
+      create: { customerNo: "CUST-005", name: "Anil Kumar", company: "Malabar Gold EKM", phone: "9447100005", email: "purchase@malabargold.com", address: "MG Road, Ernakulam", branch: "EKM", creditLimit: 800000 },
     }),
   ]);
   console.log(`  ✓ ${customers.length} customers`);
@@ -97,32 +97,32 @@ async function main() {
     prisma.lead.upsert({
       where: { leadNo: "LEAD-001" },
       update: {},
-      create: { leadNo: "LEAD-001", name: "Rajesh Menon", company: "Federal Bank HO", phone: "9446200001", email: "rajesh@federalbank.in", branch: Branch.TVM, status: LeadStatus.NEGOTIATION, source: LeadSource.REFERRAL, value: 320000, assignedToId: arun.id, followUpDate: new Date("2026-06-20") },
+      create: { leadNo: "LEAD-001", name: "Rajesh Menon", company: "Federal Bank HO", phone: "9446200001", email: "rajesh@federalbank.in", branch: "TVM", status: LeadStatus.NEGOTIATION, source: LeadSource.REFERRAL, value: 320000, assignedToId: arun.id, followUpDate: new Date("2026-06-20") },
     }),
     prisma.lead.upsert({
       where: { leadNo: "LEAD-002" },
       update: {},
-      create: { leadNo: "LEAD-002", name: "Anitha Nair", company: "Aster Medcity", phone: "9446200002", email: "anitha@astermedcity.com", branch: Branch.EKM, status: LeadStatus.PROPOSAL, source: LeadSource.COLD_CALL, value: 550000, assignedToId: vijay.id, followUpDate: new Date("2026-06-18") },
+      create: { leadNo: "LEAD-002", name: "Anitha Nair", company: "Aster Medcity", phone: "9446200002", email: "anitha@astermedcity.com", branch: "EKM", status: LeadStatus.PROPOSAL, source: LeadSource.COLD_CALL, value: 550000, assignedToId: vijay.id, followUpDate: new Date("2026-06-18") },
     }),
     prisma.lead.upsert({
       where: { leadNo: "LEAD-003" },
       update: {},
-      create: { leadNo: "LEAD-003", name: "Suresh PV", company: "KSRTC Ernakulam", phone: "9446200003", branch: Branch.EKM, status: LeadStatus.QUALIFIED, source: LeadSource.WALK_IN, value: 1200000, assignedToId: vijay.id },
+      create: { leadNo: "LEAD-003", name: "Suresh PV", company: "KSRTC Ernakulam", phone: "9446200003", branch: "EKM", status: LeadStatus.QUALIFIED, source: LeadSource.WALK_IN, value: 1200000, assignedToId: vijay.id },
     }),
     prisma.lead.upsert({
       where: { leadNo: "LEAD-004" },
       update: {},
-      create: { leadNo: "LEAD-004", name: "Fathima Beebi", company: "Gold Souk Mall CLT", phone: "9446200004", branch: Branch.CLT, status: LeadStatus.NEW, source: LeadSource.EXHIBITION, value: 480000 },
+      create: { leadNo: "LEAD-004", name: "Fathima Beebi", company: "Gold Souk Mall CLT", phone: "9446200004", branch: "CLT", status: LeadStatus.NEW, source: LeadSource.EXHIBITION, value: 480000 },
     }),
     prisma.lead.upsert({
       where: { leadNo: "LEAD-005" },
       update: {},
-      create: { leadNo: "LEAD-005", name: "George Abraham", company: "SBI Regional HO TVM", phone: "9446200005", email: "george@sbi.co.in", branch: Branch.TVM, status: LeadStatus.CONTACTED, source: LeadSource.REFERRAL, value: 280000, assignedToId: arun.id },
+      create: { leadNo: "LEAD-005", name: "George Abraham", company: "SBI Regional HO TVM", phone: "9446200005", email: "george@sbi.co.in", branch: "TVM", status: LeadStatus.CONTACTED, source: LeadSource.REFERRAL, value: 280000, assignedToId: arun.id },
     }),
     prisma.lead.upsert({
       where: { leadNo: "LEAD-006" },
       update: {},
-      create: { leadNo: "LEAD-006", name: "Pradeep Nair", company: "HDFC Bank TVM", phone: "9446200006", branch: Branch.TVM, status: LeadStatus.WON, source: LeadSource.REFERRAL, value: 180000, closedAt: new Date("2026-05-15"), assignedToId: arun.id },
+      create: { leadNo: "LEAD-006", name: "Pradeep Nair", company: "HDFC Bank TVM", phone: "9446200006", branch: "TVM", status: LeadStatus.WON, source: LeadSource.REFERRAL, value: 180000, closedAt: new Date("2026-05-15"), assignedToId: arun.id },
     }),
   ]);
   console.log(`  ✓ ${leads.length} leads`);
@@ -216,7 +216,7 @@ async function main() {
       id: "wwr-seed-1",
       weekFrom: new Date("2026-06-09"),
       weekTo: new Date("2026-06-15"),
-      branch: Branch.TVM,
+      branch: "TVM",
       department: "Sales",
       weeklyTarget: 300000,
       weeklyAchievement: 285000,
@@ -234,7 +234,7 @@ async function main() {
       id: "mwr-seed-1",
       month: 5,
       year: 2026,
-      branch: Branch.TVM,
+      branch: "TVM",
       department: "Sales",
       salesTarget: 1200000,
       salesAchievement: 1080000,

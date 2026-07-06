@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok, err, requireSession, toDate } from "@/lib/api-helpers";
-import { Branch } from "@prisma/client";
 
 export async function GET(
   _req: NextRequest,
@@ -64,7 +63,7 @@ export async function PUT(
       ...(body.company !== undefined && { company: body.company.trim() }),
       ...(body.phone !== undefined && { phone: body.phone.trim() }),
       ...(body.email !== undefined && { email: body.email.trim() || null }),
-      ...(body.branch !== undefined && { branch: body.branch as Branch }),
+      ...(body.branch !== undefined && { branch: body.branch }),
       ...(body.address !== undefined && { address: body.address.trim() || null }),
       ...(body.gstNo !== undefined && { gstNo: body.gstNo.trim() || null }),
       ...(body.creditLimit !== undefined && { creditLimit: Number(body.creditLimit) }),

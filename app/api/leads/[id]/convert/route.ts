@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok, err, requireSession, autoNo } from "@/lib/api-helpers";
-import { Branch, OpportunityStage } from "@prisma/client";
+import { OpportunityStage } from "@prisma/client";
 
 export async function POST(
   request: NextRequest,
@@ -27,7 +27,7 @@ export async function POST(
         stage:  OpportunityStage.QUALIFICATION,
         probability: 20,
         value:  lead.value,
-        branch: lead.branch as Branch,
+        branch: lead.branch,
         notes:  lead.notes ?? undefined,
         leadId: lead.id,
       },
@@ -52,7 +52,7 @@ export async function POST(
         company: lead.company,
         phone:   lead.phone,
         email:   lead.email ?? undefined,
-        branch:  lead.branch as Branch,
+        branch:  lead.branch,
       },
     });
     // Update lead status to WON

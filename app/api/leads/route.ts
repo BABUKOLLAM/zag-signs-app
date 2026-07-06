@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok, err, requireSession, toLabel, toDate, autoNo } from "@/lib/api-helpers";
-import { Branch, LeadStatus, LeadSource } from "@prisma/client";
+import { LeadStatus, LeadSource } from "@prisma/client";
 
 function shape(l: Awaited<ReturnType<typeof prisma.lead.findFirst>>) {
   if (!l) return null;
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
-  const branch = searchParams.get("branch") as Branch | null;
+  const branch = searchParams.get("branch");
   const status = searchParams.get("status") as LeadStatus | null;
   const search = searchParams.get("search") ?? "";
   const page = Math.max(1, Number(searchParams.get("page") ?? "1"));
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
       company: company?.trim() ?? null,
       phone: phone.trim(),
       email: email?.trim() ?? null,
-      branch: branch as Branch,
+      branch,
       status: (status as LeadStatus) ?? LeadStatus.NEW,
       source: (source as LeadSource) ?? LeadSource.OTHER,
       value: Number(value) || 0,

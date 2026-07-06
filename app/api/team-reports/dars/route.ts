@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok, err, requireSession, toDate } from "@/lib/api-helpers";
-import { Branch } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   const session = await requireSession();
@@ -9,7 +8,7 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const employeeId = searchParams.get("employeeId");
-  const branch = searchParams.get("branch") as Branch | null;
+  const branch = searchParams.get("branch");
   const page = Math.max(1, Number(searchParams.get("page") ?? "1"));
   const limit = Math.min(100, Number(searchParams.get("limit") ?? "30"));
 
@@ -65,7 +64,7 @@ export async function POST(request: NextRequest) {
 
   const dar = await prisma.dAR.create({
     data: {
-      branch: branch as Branch,
+      branch,
       department,
       date: date ? new Date(date) : new Date(),
       employeeId: employeeId ?? null,

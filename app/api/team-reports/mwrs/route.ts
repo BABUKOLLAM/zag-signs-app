@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok, err, requireSession, toLabel, toDate } from "@/lib/api-helpers";
-import { Branch } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   const session = await requireSession();
@@ -9,7 +8,7 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const employeeId = searchParams.get("employeeId");
-  const branch = searchParams.get("branch") as Branch | null;
+  const branch = searchParams.get("branch");
   const year = searchParams.get("year") ? Number(searchParams.get("year")) : null;
   const page = Math.max(1, Number(searchParams.get("page") ?? "1"));
   const limit = Math.min(100, Number(searchParams.get("limit") ?? "24"));
@@ -67,7 +66,7 @@ export async function POST(request: NextRequest) {
 
   const mwr = await prisma.mWR.create({
     data: {
-      branch: branch as Branch,
+      branch,
       department,
       month: Number(month),
       year: Number(year),

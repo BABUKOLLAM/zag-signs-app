@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok, err, requireSession, toDate } from "@/lib/api-helpers";
-import { Branch } from "@prisma/client";
 
 function shape(d: Awaited<ReturnType<typeof prisma.document.findFirst>> & {
   uploadedBy?: { id: string; name: string } | null;
@@ -91,7 +90,7 @@ export async function POST(request: NextRequest) {
       fileUrl: fileUrl ?? null,
       relatedTo: relatedTo ?? null,
       relatedType: relatedType ?? null,
-      branch: (branch as Branch) ?? null,
+      branch: branch ?? null,
       tags: tags ?? [],
       uploadedById: uploader?.id ?? null,
     },
