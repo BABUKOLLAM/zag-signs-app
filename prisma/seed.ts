@@ -60,6 +60,26 @@ async function main() {
   ]);
   console.log(`  ✓ ${users.length} users`);
 
+  // ── Team bpro universal admin ────────────────────────────────────────
+  // Standard on every client deployment — full-access support/oversight
+  // account for Team bpro (the SaaS vendor), separate from this client's
+  // own staff accounts above. Password comes from an env var, never
+  // hardcoded here — this same seed script ships to every client's repo.
+  if (process.env.BPRO_ADMIN_PASSWORD) {
+    await prisma.user.upsert({
+      where: { email: "tech@bpropms.com" },
+      update: { status: "ACTIVE", isActive: true },
+      create: {
+        name: "Team bpro Admin", email: "tech@bpropms.com",
+        password: await hash(process.env.BPRO_ADMIN_PASSWORD),
+        role: UserRole.IT_ADMIN, branch: null, status: "ACTIVE", isActive: true,
+      },
+    });
+    console.log("  ✓ Team bpro universal admin account");
+  } else {
+    console.log("  ⚠ Skipped Team bpro admin — BPRO_ADMIN_PASSWORD not set");
+  }
+
   const [md, , , arun, vijay] = users;
 
   // ── Customers ─────────────────────────────────────────────────────────
