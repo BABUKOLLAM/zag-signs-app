@@ -4,8 +4,11 @@ import { Loader2, AlertCircle, CheckCircle2, ArrowLeft, Mail } from "lucide-reac
 import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
 import PoweredByBpro from "@/components/PoweredByBpro";
+import { useApi } from "@/lib/use-api";
 
 export default function ForgotPasswordPage() {
+  const { data: companySettings } = useApi<{ name?: string; logoUrl?: string }>("/settings");
+  const companyName = companySettings?.name || "ZAG SIGNS";
   const [email, setEmail]       = useState("");
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState("");
@@ -46,7 +49,7 @@ export default function ForgotPasswordPage() {
            style={{ background: "rgba(79,70,229,0.2)" }} />
 
       <div className="relative mb-7 flex flex-col items-center">
-        <BrandLogo height={46} pill className="mb-3 shadow-xl" />
+        <BrandLogo height={46} pill className="mb-3 shadow-xl" logoUrl={companySettings?.logoUrl} name={companyName} />
         <p className="text-slate-400 text-sm mt-1">Enterprise ERP System</p>
       </div>
 
@@ -135,7 +138,7 @@ export default function ForgotPasswordPage() {
 
       <div className="relative mt-6 flex flex-col items-center gap-2">
         <PoweredByBpro variant="dark" logoHeight={28} />
-        <p className="text-xs text-slate-600">© 2026 ZAG SIGNS. Enterprise ERP · All rights reserved.</p>
+        <p className="text-xs text-slate-600">© {new Date().getFullYear()} {companyName}. Enterprise ERP · All rights reserved.</p>
       </div>
     </div>
   );

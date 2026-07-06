@@ -67,13 +67,15 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
 export default function Dashboard() {
   const { data: session } = useSession();
   const { data: s, loading, error, refetch } = useApi<DashboardStats>("/dashboard");
+  const { data: companySettings } = useApi<{ name?: string }>("/settings");
+  const companyName = companySettings?.name || "ZAG SIGNS";
 
   const today = new Date().toLocaleDateString("en-IN", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
   const userName = session?.user?.name ?? "there";
 
   return (
     <div className="flex-1 bg-slate-50">
-      <TopBar title="Executive Dashboard" subtitle="ZAG SIGNS ERP" />
+      <TopBar title="Executive Dashboard" subtitle={`${companyName} ERP`} />
 
       <div className="p-4 md:p-6 space-y-6">
 
@@ -88,7 +90,7 @@ export default function Dashboard() {
             <p className="text-indigo-200 text-sm mt-1">
               {s ? (
                 <>You have <span className="text-white font-semibold">{s.totalLeads} leads</span> and <span className="text-white font-semibold">{s.openComplaints} open complaints</span>.</>
-              ) : "Welcome to ZAG SIGNS ERP."}
+              ) : `Welcome to ${companyName} ERP.`}
             </p>
           </div>
           <div className="relative items-center gap-3 hidden lg:flex">

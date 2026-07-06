@@ -15,6 +15,9 @@ import { useSidebar } from "@/lib/sidebar-context";
 import { useSession, signOut } from "next-auth/react";
 import { usePermissions } from "@/lib/permission-context";
 import PoweredByBpro from "@/components/PoweredByBpro";
+import { useApi } from "@/lib/use-api";
+
+type CompanySettings = { name?: string };
 
 // Top-level links always visible (no drill-down)
 const pinned = [
@@ -126,6 +129,8 @@ export default function Sidebar() {
   const { data: session } = useSession();
   const user = session?.user;
   const { canUse } = usePermissions();
+  const { data: companySettings } = useApi<CompanySettings>("/settings");
+  const companyName = companySettings?.name || "ZAG SIGNS";
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
 
@@ -182,7 +187,7 @@ export default function Sidebar() {
             <Building2 size={18} className="text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-white text-sm leading-tight tracking-wide">ZAG SIGNS</p>
+            <p className="font-bold text-white text-sm leading-tight tracking-wide truncate">{companyName}</p>
             <p className="text-xs text-slate-400 font-medium">Enterprise ERP</p>
           </div>
           {/* Close button — mobile only */}

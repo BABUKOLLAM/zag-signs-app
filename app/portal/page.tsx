@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { FileText, Package, Wallet, Phone, Mail, Building2, AlertCircle } from "lucide-react";
 import { fmt } from "@/lib/utils";
+import { useApi } from "@/lib/use-api";
 
 // Customer self-service portal — lightweight public-facing page.
 // Access via: /portal?customer=<customerNo>&token=<secret>
@@ -40,6 +41,9 @@ function PortalContent() {
   const [data, setData] = useState<PortalData | null>(null);
   const [error, setError] = useState("");
   const [tab, setTab] = useState<"quotations"|"orders"|"invoices">("orders");
+  const { data: companySettings } = useApi<{ name?: string; phone?: string }>("/settings");
+  const companyName = companySettings?.name || "ZAG SIGNS";
+  const companyPhone = companySettings?.phone || "+91 XXXXX XXXXX";
 
   useEffect(() => {
     if (!customerNo) { setLoading(false); setError("No customer specified."); return; }
@@ -69,8 +73,8 @@ function PortalContent() {
       <div className="text-center space-y-3 max-w-sm">
         <AlertCircle size={40} className="mx-auto text-red-400" />
         <p className="font-semibold text-slate-700">{error || "Customer not found"}</p>
-        <p className="text-sm text-slate-400">Please contact ZAG SIGNS for assistance.</p>
-        <p className="text-sm text-slate-500 mt-4">📞 +91 XXXXX XXXXX</p>
+        <p className="text-sm text-slate-400">Please contact {companyName} for assistance.</p>
+        <p className="text-sm text-slate-500 mt-4">📞 {companyPhone}</p>
       </div>
     </div>
   );
@@ -88,7 +92,7 @@ function PortalContent() {
               <span className="text-white text-sm font-bold">Z</span>
             </div>
             <div>
-              <p className="text-sm font-bold text-slate-900">ZAG SIGNS</p>
+              <p className="text-sm font-bold text-slate-900">{companyName}</p>
               <p className="text-xs text-slate-400">Customer Portal</p>
             </div>
           </div>
@@ -233,7 +237,7 @@ function PortalContent() {
 
         {/* Footer */}
         <div className="text-center py-4">
-          <p className="text-xs text-slate-400">© {new Date().getFullYear()} ZAG SIGNS · Customer Portal · For queries contact your relationship manager</p>
+          <p className="text-xs text-slate-400">© {new Date().getFullYear()} {companyName} · Customer Portal · For queries contact your relationship manager</p>
         </div>
       </div>
     </div>

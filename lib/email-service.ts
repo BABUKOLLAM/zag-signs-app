@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { getCompanyName } from "./company";
 
 // Email service using Gmail SMTP (tech@bpropms.com)
 const transporter = nodemailer.createTransport({
@@ -28,6 +29,7 @@ interface DARSubmissionEmail {
 
 export async function sendFollowUpReminderEmail(data: FollowUpReminderEmail) {
   try {
+    const companyName = await getCompanyName();
     const daysOverdue = Math.floor(
       (new Date().getTime() - data.reminderDate.getTime()) / (1000 * 60 * 60 * 24)
     );
@@ -53,11 +55,11 @@ export async function sendFollowUpReminderEmail(data: FollowUpReminderEmail) {
         </a>
       </p>
 
-      <p>Best regards,<br/>ZAG SIGNS ERP</p>
+      <p>Best regards,<br/>${companyName} ERP</p>
     `;
 
     await transporter.sendMail({
-      from: `ZAG SIGNS <${process.env.EMAIL_USER}>`,
+      from: `${companyName} <${process.env.EMAIL_USER}>`,
       to: data.toEmail,
       subject: `Follow-Up Reminder: ${data.customerName}`,
       html: htmlContent,
@@ -72,6 +74,7 @@ export async function sendFollowUpReminderEmail(data: FollowUpReminderEmail) {
 
 export async function sendDARReminderEmail(data: DARSubmissionEmail) {
   try {
+    const companyName = await getCompanyName();
     const htmlContent = `
       <h2>Daily Activity Report Submission Reminder</h2>
       <p>Hi ${data.toName},</p>
@@ -99,11 +102,11 @@ export async function sendDARReminderEmail(data: DARSubmissionEmail) {
         </a>
       </p>
 
-      <p>Best regards,<br/>ZAG SIGNS ERP</p>
+      <p>Best regards,<br/>${companyName} ERP</p>
     `;
 
     await transporter.sendMail({
-      from: `ZAG SIGNS <${process.env.EMAIL_USER}>`,
+      from: `${companyName} <${process.env.EMAIL_USER}>`,
       to: data.toEmail,
       subject: `Daily Activity Report Reminder - ${new Date().toLocaleDateString()}`,
       html: htmlContent,
@@ -123,6 +126,7 @@ export async function sendClaimsReminderEmail(
   pendingClaimsCount: number
 ) {
   try {
+    const companyName = await getCompanyName();
     const htmlContent = `
       <h2>Claims Submission Window Reminder</h2>
       <p>Hi ${toName},</p>
@@ -149,11 +153,11 @@ export async function sendClaimsReminderEmail(
         </a>
       </p>
 
-      <p>Best regards,<br/>ZAG SIGNS ERP</p>
+      <p>Best regards,<br/>${companyName} ERP</p>
     `;
 
     await transporter.sendMail({
-      from: `ZAG SIGNS <${process.env.EMAIL_USER}>`,
+      from: `${companyName} <${process.env.EMAIL_USER}>`,
       to: toEmail,
       subject: `Claims Submission Reminder - ${daysLeft} days left`,
       html: htmlContent,
@@ -194,6 +198,7 @@ const ACTION_COLORS: Record<string, string> = {
 
 export async function sendExpenseApprovalEmail(data: ExpenseApprovalEmailData) {
   try {
+    const companyName = await getCompanyName();
     const label = ACTION_LABELS[data.action] || data.action;
     const color = ACTION_COLORS[data.action] || "#374151";
 
@@ -220,11 +225,11 @@ export async function sendExpenseApprovalEmail(data: ExpenseApprovalEmailData) {
           View Expense Report
         </a>
       </p>
-      <p>Best regards,<br/>ZAG SIGNS ERP</p>
+      <p>Best regards,<br/>${companyName} ERP</p>
     `;
 
     await transporter.sendMail({
-      from: `ZAG SIGNS <${process.env.EMAIL_USER}>`,
+      from: `${companyName} <${process.env.EMAIL_USER}>`,
       to: data.toEmail,
       subject: `Expense ${data.expenseNo}: ${label}`,
       html,

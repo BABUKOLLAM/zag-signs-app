@@ -8,6 +8,8 @@
  * Falls back to console.log in development if env vars are not set.
  */
 
+import { getCompanyName } from "./company";
+
 type WAResult = { success: boolean; messageId?: string; error?: string };
 
 export async function sendWhatsApp(to: string, message: string): Promise<WAResult> {
@@ -78,16 +80,18 @@ export async function sendWhatsApp(to: string, message: string): Promise<WAResul
 
 /** Send a lead follow-up reminder via WhatsApp */
 export async function sendLeadFollowUpReminder(phone: string, contactName: string, companyName: string, crmLink: string) {
+  const ourName = await getCompanyName();
   return sendWhatsApp(
     phone,
-    `Hi ${contactName},\n\nThis is a friendly follow-up from *ZAG SIGNS*.\n\nWe wanted to connect regarding signage solutions for *${companyName}*.\n\nWould you be available for a quick call this week?\n\nBest regards,\nZAG SIGNS Team`
+    `Hi ${contactName},\n\nThis is a friendly follow-up from *${ourName}*.\n\nWe wanted to connect regarding signage solutions for *${companyName}*.\n\nWould you be available for a quick call this week?\n\nBest regards,\n${ourName} Team`
   );
 }
 
 /** Send a payment reminder via WhatsApp */
 export async function sendPaymentReminder(phone: string, contactName: string, invoiceNo: string, amount: number, dueDate: string) {
+  const ourName = await getCompanyName();
   return sendWhatsApp(
     phone,
-    `Dear ${contactName},\n\nKind reminder: Invoice *${invoiceNo}* for ₹${amount.toLocaleString()} is due on *${dueDate}*.\n\nPlease arrange payment at the earliest.\n\nThank you,\nZAG SIGNS Accounts`
+    `Dear ${contactName},\n\nKind reminder: Invoice *${invoiceNo}* for ₹${amount.toLocaleString()} is due on *${dueDate}*.\n\nPlease arrange payment at the earliest.\n\nThank you,\n${ourName} Accounts`
   );
 }

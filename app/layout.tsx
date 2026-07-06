@@ -19,21 +19,26 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
+// Build-time only (no DB access here) — set NEXT_PUBLIC_COMPANY_NAME per deployment
+// for a new customer; runtime UI reads the live name from CompanySettings instead.
+const COMPANY_NAME = process.env.NEXT_PUBLIC_COMPANY_NAME || "ZAG SIGNS";
+const SITE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://bprozagcrm.xyz";
+
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL ?? "https://bprozagcrm.xyz"),
-  title: "ZAG SIGNS — Enterprise ERP",
-  description: "ZAG SIGNS Enterprise ERP for managing leads, orders, production, inventory, billing and HR.",
+  metadataBase: new URL(SITE_URL),
+  title: `${COMPANY_NAME} — Enterprise ERP`,
+  description: `${COMPANY_NAME} Enterprise ERP for managing leads, orders, production, inventory, billing and HR.`,
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "ZAG ERP",
+    title: `${COMPANY_NAME} ERP`,
   },
   openGraph: {
-    title: "ZAG SIGNS — Enterprise ERP",
-    description: "ZAG SIGNS Enterprise ERP for managing leads, orders, production, inventory, billing and HR.",
-    url: "https://bprozagcrm.xyz",
-    siteName: "ZAG SIGNS ERP",
+    title: `${COMPANY_NAME} — Enterprise ERP`,
+    description: `${COMPANY_NAME} Enterprise ERP for managing leads, orders, production, inventory, billing and HR.`,
+    url: SITE_URL,
+    siteName: `${COMPANY_NAME} ERP`,
     locale: "en_IN",
     type: "website",
   },

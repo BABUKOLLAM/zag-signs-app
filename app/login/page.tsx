@@ -6,8 +6,13 @@ import { Eye, EyeOff, AlertCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
 import PoweredByBpro from "@/components/PoweredByBpro";
+import { useApi } from "@/lib/use-api";
+
+type CompanySettings = { name?: string; logoUrl?: string };
 
 export default function LoginPage() {
+  const { data: companySettings } = useApi<CompanySettings>("/settings");
+  const companyName = companySettings?.name || "ZAG SIGNS";
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
@@ -50,7 +55,7 @@ export default function LoginPage() {
 
       {/* Logo */}
       <div className="relative mb-7 flex flex-col items-center">
-        <BrandLogo height={46} pill className="mb-3 shadow-xl" />
+        <BrandLogo height={46} pill className="mb-3 shadow-xl" logoUrl={companySettings?.logoUrl} name={companyName} />
         <p className="text-slate-400 text-sm mt-1">Enterprise ERP System</p>
       </div>
 
@@ -61,7 +66,7 @@ export default function LoginPage() {
 
         <div className="px-8 pt-7 pb-8">
           <h2 className="text-xl font-bold text-slate-900 mb-1">Sign in</h2>
-          <p className="text-sm text-slate-500 mb-6">Access your ZAG SIGNS ERP dashboard</p>
+          <p className="text-sm text-slate-500 mb-6">Access your {companyName} ERP dashboard</p>
 
           {error && (
             <div className="flex items-center gap-2.5 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-4 text-sm">
@@ -131,7 +136,7 @@ export default function LoginPage() {
           </form>
 
           <p className="text-center text-sm text-slate-500 mt-5">
-            New to ZAG SIGNS ERP?{" "}
+            New to {companyName} ERP?{" "}
             <a href="/signup" className="text-indigo-600 font-semibold hover:underline">Request Access</a>
           </p>
         </div>
@@ -139,7 +144,7 @@ export default function LoginPage() {
 
       <div className="relative mt-6 flex flex-col items-center gap-2">
         <PoweredByBpro variant="dark" logoHeight={28} />
-        <p className="text-xs text-slate-600">© 2026 ZAG SIGNS. Enterprise ERP · All rights reserved.</p>
+        <p className="text-xs text-slate-600">© {new Date().getFullYear()} {companyName}. Enterprise ERP · All rights reserved.</p>
       </div>
     </div>
   );

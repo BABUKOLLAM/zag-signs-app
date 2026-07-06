@@ -30,7 +30,7 @@ const ROLE_DISPLAY: Record<string, string> = {
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
-      name: "ZAG SIGNS ERP",
+      name: process.env.NEXT_PUBLIC_COMPANY_NAME ? `${process.env.NEXT_PUBLIC_COMPANY_NAME} ERP` : "ZAG SIGNS ERP",
       credentials: {
         email:    { label: "Email",    type: "email" },
         password: { label: "Password", type: "password" },

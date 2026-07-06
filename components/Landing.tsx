@@ -2,10 +2,13 @@
 import Link from "next/link";
 import BrandLogo from "./BrandLogo";
 import PoweredByBpro from "./PoweredByBpro";
+import { useApi } from "@/lib/use-api";
 import {
   Users, FileText, Receipt, Wrench, Package, BarChart3,
   ArrowRight, ShieldCheck, Smartphone, Zap, CheckCircle2,
 } from "lucide-react";
+
+type CompanySettings = { name?: string; logoUrl?: string };
 
 const FEATURES = [
   { icon: Users,     title: "CRM & Leads",            desc: "Capture leads from calls, walk-ins and campaigns, then track them through a visual pipeline to won deals." },
@@ -25,6 +28,9 @@ const HIGHLIGHTS = [
 ];
 
 export default function Landing() {
+  const { data: companySettings } = useApi<CompanySettings>("/settings");
+  const companyName = companySettings?.name || "ZAG SIGNS";
+
   return (
     <div className="min-h-screen w-full relative overflow-x-hidden"
       style={{ background: "linear-gradient(160deg,#0B1120 0%,#171436 45%,#0F1629 100%)" }}>
@@ -39,7 +45,7 @@ export default function Landing() {
 
       {/* ── NAV ── */}
       <header className="relative z-10 max-w-6xl mx-auto px-5 sm:px-8 py-5 flex items-center justify-between">
-        <BrandLogo height={34} pill />
+        <BrandLogo height={34} pill logoUrl={companySettings?.logoUrl} name={companyName} />
         <div className="flex items-center gap-2 sm:gap-3">
           <Link href="/signup"
             className="hidden sm:inline-flex text-sm font-medium text-slate-300 hover:text-white px-4 py-2 rounded-xl transition-colors">
@@ -61,7 +67,7 @@ export default function Landing() {
             Enterprise ERP for the signage business
           </span>
           <h1 className="text-4xl sm:text-5xl lg:text-[3.4rem] font-extrabold text-white leading-[1.08] tracking-tight">
-            Run all of ZAG SIGNS<br />
+            Run all of {companyName}<br />
             <span className="text-transparent bg-clip-text"
               style={{ backgroundImage: "linear-gradient(120deg,#F0563F,#EC4899,#8B5CF6)" }}>
               from one platform
@@ -101,7 +107,7 @@ export default function Landing() {
               <span className="w-2.5 h-2.5 rounded-full bg-red-400/70" />
               <span className="w-2.5 h-2.5 rounded-full bg-yellow-400/70" />
               <span className="w-2.5 h-2.5 rounded-full bg-green-400/70" />
-              <span className="ml-3 text-xs text-slate-400">ZAG SIGNS · Dashboard</span>
+              <span className="ml-3 text-xs text-slate-400">{companyName} · Dashboard</span>
             </div>
             <div className="grid grid-cols-3 gap-3 mb-3">
               {[
@@ -188,9 +194,9 @@ export default function Landing() {
       {/* ── FOOTER ── */}
       <footer className="relative z-10 border-t border-white/10 mt-8">
         <div className="max-w-6xl mx-auto px-5 sm:px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-5">
-          <BrandLogo height={28} pill />
+          <BrandLogo height={28} pill logoUrl={companySettings?.logoUrl} name={companyName} />
           <PoweredByBpro variant="dark" logoHeight={28} />
-          <p className="text-xs text-slate-500">© {new Date().getFullYear()} ZAG SIGNS · All rights reserved.</p>
+          <p className="text-xs text-slate-500">© {new Date().getFullYear()} {companyName} · All rights reserved.</p>
         </div>
       </footer>
     </div>

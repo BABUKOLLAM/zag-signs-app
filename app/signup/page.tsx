@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Building2, Eye, EyeOff, CheckCircle2, Loader2 } from "lucide-react";
+import { useApi } from "@/lib/use-api";
 
 const ROLES = [
   { value: "MD",               label: "MD (Managing Director)" },
@@ -17,6 +18,7 @@ const ROLES = [
   { value: "IT_ADMIN",         label: "IT Admin" },
 ];
 const BRANCHES = [
+  { value: "HO",   label: "Head Office (HO)" },
   { value: "TVM",  label: "Thiruvananthapuram (TVM)" },
   { value: "KTYM", label: "Kottayam (KTYM)" },
   { value: "EKM",  label: "Ernakulam (EKM)" },
@@ -26,6 +28,8 @@ const ALL_BRANCH_ROLES = ["MD","AVP","HR","IT_ADMIN"];
 
 export default function SignupPage() {
   const router = useRouter();
+  const { data: companySettings } = useApi<{ name?: string }>("/settings");
+  const companyName = companySettings?.name || "ZAG SIGNS";
   const [form, setForm] = useState({
     name: "", email: "", password: "", confirm: "",
     role: "", branch: "", phone: "",
@@ -96,7 +100,7 @@ export default function SignupPage() {
           style={{ background: "linear-gradient(135deg, #4F46E5, #7C3AED)" }}>
           <Building2 size={28} className="text-white" />
         </div>
-        <h1 className="text-2xl font-bold text-white">ZAG SIGNS ERP</h1>
+        <h1 className="text-2xl font-bold text-white">{companyName} ERP</h1>
         <p className="text-slate-400 text-sm mt-0.5">Create your account</p>
       </div>
 

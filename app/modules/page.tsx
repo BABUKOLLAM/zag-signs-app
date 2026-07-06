@@ -2,6 +2,7 @@
 import Link from "next/link";
 import TopBar from "@/components/TopBar";
 import { useSession } from "next-auth/react";
+import { useApi } from "@/lib/use-api";
 import {
   LayoutDashboard, Target, Users, TrendingUp, Trophy, UserCheck,
   FileText, ShoppingCart, Ticket, Palette, Wrench, Package,
@@ -127,6 +128,8 @@ const SECTIONS = [
 export default function ModulesPage() {
   const { data: session } = useSession();
   const user = session?.user;
+  const { data: companySettings } = useApi<{ name?: string }>("/settings");
+  const companyName = companySettings?.name || "ZAG SIGNS";
 
   const totalModules = SECTIONS.reduce((s, sec) => s + sec.modules.length, 0);
 
@@ -143,7 +146,7 @@ export default function ModulesPage() {
             <Building2 size={32} className="text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl font-black text-white tracking-tight">ZAG SIGNS ERP</h1>
+            <h1 className="text-2xl font-black text-white tracking-tight">{companyName} ERP</h1>
             <p className="text-indigo-200 text-sm mt-0.5">
               Welcome, <span className="font-semibold text-white">{user?.name ?? "—"}</span>
               {user?.branch ? ` · ${user.branch}` : ""} · {user?.role ?? ""}
@@ -192,7 +195,7 @@ export default function ModulesPage() {
 
         {/* Footer */}
         <div className="text-center py-4 border-t border-slate-200">
-          <p className="text-xs text-slate-400">ZAG SIGNS ERP · {totalModules} modules across {SECTIONS.length} sections · Powered by Team bpro</p>
+          <p className="text-xs text-slate-400">{companyName} ERP · {totalModules} modules across {SECTIONS.length} sections · Powered by Team bpro</p>
         </div>
       </div>
     </div>

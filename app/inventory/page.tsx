@@ -343,6 +343,7 @@ export default function InventoryPage() {
                 <label className="block text-xs font-medium text-gray-600 mb-1">Branch <span className="text-gray-400 font-normal">(leave blank = shared across all branches)</span></label>
                 <select value={form.branch} onChange={set("branch")} className={ic}>
                   <option value="">All Branches (shared stock)</option>
+                  <option value="HO">HO – Head Office</option>
                   <option value="TVM">TVM – Thiruvananthapuram</option>
                   <option value="KTYM">KTYM – Kottayam</option>
                   <option value="EKM">EKM – Ernakulam</option>

@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { getCompanyName } from "./company";
 
 function getTransport() {
   const host = process.env.EMAIL_HOST;
@@ -26,11 +27,12 @@ export async function sendApprovalEmail(opts: {
 }) {
   const { toEmail, toName, applicantName, applicantEmail, applicantRole, approveUrl, rejectUrl } = opts;
   const from = process.env.EMAIL_FROM ?? process.env.EMAIL_USER ?? "noreply@zagsigns.com";
+  const companyName = await getCompanyName();
 
   const html = `
     <div style="font-family:sans-serif;max-width:520px;margin:0 auto;background:#f8fafc;border-radius:12px;overflow:hidden;">
       <div style="background:linear-gradient(135deg,#4F46E5,#7C3AED);padding:24px 32px;">
-        <h1 style="color:#fff;margin:0;font-size:20px;">ZAG SIGNS ERP</h1>
+        <h1 style="color:#fff;margin:0;font-size:20px;">${companyName} ERP</h1>
         <p style="color:#c7d2fe;margin:4px 0 0;font-size:13px;">New User Approval Request</p>
       </div>
       <div style="padding:28px 32px;background:#fff;">
@@ -73,7 +75,7 @@ export async function sendApprovalEmail(opts: {
   await transport.sendMail({
     from,
     to: toEmail,
-    subject: `[ZAG SIGNS ERP] Approve new user: ${applicantName} (${applicantRole})`,
+    subject: `[${companyName} ERP] Approve new user: ${applicantName} (${applicantRole})`,
     html,
   });
 }
@@ -86,11 +88,12 @@ export async function sendWelcomeEmail(opts: {
 }) {
   const { toEmail, toName, role, loginUrl } = opts;
   const from = process.env.EMAIL_FROM ?? process.env.EMAIL_USER ?? "noreply@zagsigns.com";
+  const companyName = await getCompanyName();
 
   const html = `
     <div style="font-family:sans-serif;max-width:520px;margin:0 auto;">
       <div style="background:linear-gradient(135deg,#4F46E5,#7C3AED);padding:24px 32px;border-radius:12px 12px 0 0;">
-        <h1 style="color:#fff;margin:0;font-size:20px;">Welcome to ZAG SIGNS ERP</h1>
+        <h1 style="color:#fff;margin:0;font-size:20px;">Welcome to ${companyName} ERP</h1>
       </div>
       <div style="padding:28px 32px;background:#fff;border-radius:0 0 12px 12px;">
         <p style="color:#374151;font-size:15px;">Hi ${toName},</p>
@@ -114,7 +117,7 @@ export async function sendWelcomeEmail(opts: {
   await transport.sendMail({
     from,
     to: toEmail,
-    subject: "[ZAG SIGNS ERP] Your account has been approved",
+    subject: `[${companyName} ERP] Your account has been approved`,
     html,
   });
 }

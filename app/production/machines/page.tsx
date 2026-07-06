@@ -188,6 +188,7 @@ export default function MachinesPage() {
                     <label className="text-xs font-medium mb-1 block" style={{ color: "var(--text-secondary)" }}>Branch *</label>
                     <select className={ic} value={form.branch} onChange={e => setForm(f => ({ ...f, branch: e.target.value }))}
                       style={{ background: "var(--input-bg)", borderColor: "var(--input-border)", color: "var(--text-primary)" }}>
+                      <option value="HO">HO – Head Office</option>
                       <option value="TVM">TVM – Thiruvananthapuram</option>
                       <option value="KTYM">KTYM – Kottayam</option>
                       <option value="EKM">EKM – Ernakulam</option>
