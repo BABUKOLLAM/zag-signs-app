@@ -111,6 +111,36 @@ export function homePath(): string {
   return "/dashboard";
 }
 
+/**
+ * Path → ISO date it was added to ALL_MODULE_PATHS/ROLE_PATHS. A custom
+ * UserPermission override is a hard whitelist that never auto-picks-up new
+ * modules — someone whose override predates a module's addition here will
+ * silently be blocked from it even though their role would otherwise grant
+ * it. The privileges admin UI uses this to warn when a saved override is
+ * older than a module that didn't exist yet at save time, so a stale
+ * override is never mistaken for a deliberate restriction.
+ */
+export const MODULE_INTRODUCED: Record<string, string> = {
+  "/amc": "2026-07-06",
+  "/digital-approvals": "2026-07-06",
+  "/fleet": "2026-07-06",
+  "/installation": "2026-07-06",
+  "/job-costing": "2026-07-06",
+  "/procurement": "2026-07-06",
+  "/projects": "2026-07-06",
+  "/sales": "2026-07-06",
+  "/tender": "2026-07-06",
+};
+
+/** Modules introduced after `since` that a custom override doesn't include. */
+export function newModulesMissingFrom(customModules: string[], since: string | null): string[] {
+  if (!since) return [];
+  const sinceTime = new Date(since).getTime();
+  return Object.entries(MODULE_INTRODUCED)
+    .filter(([path, introducedAt]) => new Date(introducedAt).getTime() > sinceTime && !customModules.includes(path))
+    .map(([path]) => path);
+}
+
 /** All guarded module paths (used by RouteGuard). */
 export const ALL_MODULE_PATHS = [
   "/dashboard", "/kpi",

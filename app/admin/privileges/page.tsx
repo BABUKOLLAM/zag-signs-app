@@ -2,8 +2,8 @@
 import { useState, useCallback, useEffect } from "react";
 import TopBar from "@/components/TopBar";
 import { api } from "@/lib/api-client";
-import { MODULE_GROUPS, defaultModulesForRole } from "@/lib/permissions";
-import { Shield, ChevronRight, RotateCcw, Save, Check, X, Search } from "lucide-react";
+import { MODULE_GROUPS, defaultModulesForRole, newModulesMissingFrom } from "@/lib/permissions";
+import { Shield, ChevronRight, RotateCcw, Save, Check, X, Search, AlertTriangle } from "lucide-react";
 
 const ROLE_COLORS: Record<string, string> = {
   MD:               "bg-purple-100 text-purple-700",
@@ -73,6 +73,19 @@ export default function PrivilegesPage() {
   };
 
   const ALL_PATHS = MODULE_GROUPS.flatMap((g) => g.items.map((i) => i.path));
+  const PATH_LABELS = Object.fromEntries(MODULE_GROUPS.flatMap((g) => g.items.map((i) => [i.path, i.label])));
+
+  const staleModulesFor = (u: UserRow) =>
+    u.customModules !== null ? newModulesMissingFrom(u.customModules, u.lastUpdated) : [];
+
+  // Reflects the live editor state (not the saved snapshot) so the warning
+  // clears as soon as the missing modules are added, before Save is clicked.
+  const staleModules = selected && isCustom ? newModulesMissingFrom(modules, selected.lastUpdated) : [];
+
+  const addMissingModules = (paths: string[]) => {
+    setIsCustom(true);
+    setModules((prev) => [...new Set([...prev, ...paths])]);
+  };
 
   const toggle = (path: string) => {
     setIsCustom(true);
@@ -167,6 +180,12 @@ export default function PrivilegesPage() {
                     {u.customModules !== null && (
                       <span className="ml-1.5 text-xs text-indigo-600 font-medium">custom</span>
                     )}
+                    {staleModulesFor(u).length > 0 && (
+                      <span title={`Missing ${staleModulesFor(u).length} module(s) added after this override was last saved`}
+                        className="ml-1.5 inline-flex items-center gap-0.5 text-xs text-amber-600 font-medium">
+                        <AlertTriangle size={10} /> {staleModulesFor(u).length} new
+                      </span>
+                    )}
                   </div>
                   <ChevronRight size={13} className="text-gray-300 mt-1 flex-shrink-0" />
                 </button>
@@ -222,6 +241,22 @@ export default function PrivilegesPage() {
                   </button>
                 </div>
               </div>
+
+              {staleModules.length > 0 && (
+                <div className="mx-4 mt-4 flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+                  <AlertTriangle size={15} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1 text-xs text-amber-800">
+                    <p className="font-medium mb-1">
+                      {staleModules.length} module{staleModules.length !== 1 ? "s were" : " was"} added to the app after this override was last saved, so {selected.name} currently can&apos;t access {staleModules.length !== 1 ? "them" : "it"}:
+                    </p>
+                    <p>{staleModules.map((p) => PATH_LABELS[p] ?? p).join(", ")}</p>
+                  </div>
+                  <button onClick={() => addMissingModules(staleModules)}
+                    className="flex-shrink-0 text-xs font-medium bg-amber-600 text-white px-2.5 py-1.5 rounded-lg hover:bg-amber-700">
+                    Add these
+                  </button>
+                </div>
+              )}
 
               {/* Module checkboxes */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
