@@ -10,12 +10,12 @@ import {
   PolarAngleAxis, Legend, Cell,
 } from "recharts";
 
-const BRANCHES = ["TVM", "KTYM", "EKM", "CLT"];
+const BRANCHES = ["HO", "TVM", "KTYM", "EKM", "CLT"];
 const BRANCH_LABELS: Record<string, string> = {
-  TVM: "Thiruvananthapuram", KTYM: "Kottayam", EKM: "Ernakulam", CLT: "Calicut",
+  HO: "Head Office", TVM: "Thiruvananthapuram", KTYM: "Kottayam", EKM: "Ernakulam", CLT: "Calicut",
 };
-const COLORS = ["#4F46E5", "#7C3AED", "#0EA5E9", "#10B981"];
-const STATUS_COLORS = ["bg-yellow-400", "bg-slate-300", "bg-slate-200", "bg-slate-100"];
+const COLORS = ["#F59E0B", "#4F46E5", "#7C3AED", "#0EA5E9", "#10B981"];
+const STATUS_COLORS = ["bg-yellow-400", "bg-slate-300", "bg-slate-200", "bg-slate-100", "bg-slate-50"];
 
 type BranchStats = {
   branch: string;

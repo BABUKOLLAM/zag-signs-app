@@ -15,7 +15,7 @@ import DriveButton from "@/components/DriveButton";
 import DocumentsPanel from "@/components/DocumentsPanel";
 import { Plus, Building2, RefreshCw, Download, Paperclip, X, FileText, Upload } from "lucide-react";
 
-const BRANCHES = ["TVM", "KTYM", "EKM", "CLT"];
+const BRANCHES = ["HO", "TVM", "KTYM", "EKM", "CLT"];
 
 interface Customer {
   id: string; customerNo: string; name: string; company: string;

@@ -74,7 +74,7 @@ export async function GET(_req: NextRequest) {
     _count: { id: true },
   }).catch(() => []);
 
-  const BRANCHES = ["TVM", "KTYM", "EKM", "CLT"];
+  const BRANCHES = ["HO", "TVM", "KTYM", "EKM", "CLT"];
   const branchPerf = BRANCHES.map(b => ({
     branch: b,
     revenue: (branchRevenue as any[]).find((r: any) => r.branch === b)?._sum?.totalAmount ?? 0,

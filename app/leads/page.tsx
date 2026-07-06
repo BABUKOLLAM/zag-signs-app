@@ -15,7 +15,7 @@ import DriveButton from "@/components/DriveButton";
 import DocumentsPanel from "@/components/DocumentsPanel";
 import { Plus, Phone, Mail, Calendar, RefreshCw, Download, Paperclip, X, TrendingUp, UserCheck, FileText, Upload } from "lucide-react";
 
-const BRANCHES = ["TVM", "KTYM", "EKM", "CLT"];
+const BRANCHES = ["HO", "TVM", "KTYM", "EKM", "CLT"];
 const STATUSES = [
   { value: "NEW", label: "New" },
   { value: "CONTACTED", label: "Contacted" },

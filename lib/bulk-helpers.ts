@@ -1,7 +1,7 @@
 // Server-side helpers shared by the /api/<entity>/bulk routes.
 // No next-auth imports here so it stays a lightweight pure module.
 
-export const VALID_BRANCHES = ["TVM", "KTYM", "EKM", "CLT"] as const;
+export const VALID_BRANCHES = ["HO", "TVM", "KTYM", "EKM", "CLT"] as const;
 
 export interface RowResult {
   created: number;

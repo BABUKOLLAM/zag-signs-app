@@ -26,7 +26,7 @@ const ROLES = [
   { value: "HR",               label: "HR" },
   { value: "IT_ADMIN",         label: "IT Admin" },
 ];
-const BRANCHES = ["TVM","KTYM","EKM","CLT"];
+const BRANCHES = ["HO","TVM","KTYM","EKM","CLT"];
 const ALL_BRANCH_ROLES = ["MD","AVP","HR","IT_ADMIN"];
 
 const STATUS_COLORS: Record<string, string> = {

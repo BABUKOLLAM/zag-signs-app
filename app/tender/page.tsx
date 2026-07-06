@@ -14,7 +14,7 @@ type Tender = {
   notes: string | null; competitors: string | null; createdBy: { name: string };
 };
 
-const BRANCHES = ["TVM", "KTYM", "EKM", "CLT"];
+const BRANCHES = ["HO", "TVM", "KTYM", "EKM", "CLT"];
 const STATUSES = ["OPEN", "SUBMITTED", "WON", "LOST", "CANCELLED"];
 
 const STATUS_COLOR: Record<string, string> = {

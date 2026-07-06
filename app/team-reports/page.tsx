@@ -6,7 +6,7 @@ import { fmt } from "@/lib/utils";
 import { Plus, X, Eye, ChevronRight, AlertCircle, Loader2, RefreshCw } from "lucide-react";
 import { useToast } from "@/components/Toaster";
 
-const branches = ["TVM", "KTYM", "EKM", "CLT"];
+const branches = ["HO", "TVM", "KTYM", "EKM", "CLT"];
 const depts = ["Sales / CRE", "Production", "Accounts", "Administration"];
 const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
@@ -50,7 +50,7 @@ const approvalColor: Record<ApprovalStatus, string> = {
 };
 
 const blankDAR = {
-  date: new Date().toISOString().split("T")[0], employeeId: "", branch: branches[0], dept: "Sales / CRE" as Dept,
+  date: new Date().toISOString().split("T")[0], employeeId: "", branch: "TVM", dept: "Sales / CRE" as Dept,
   customerVisits: "", callsMade: "", followUpsDone: "", ordersBooked: "", ordersValue: "", collectionsAmount: "",
   travelFrom: "", travelTo: "", travelKm: "",
   productionOutput: "", outputQty: "", downtimeHours: "", downtimeReason: "", dispatches: "", dispatchDetails: "",
@@ -59,13 +59,13 @@ const blankDAR = {
   highlights: "", challenges: "",
 };
 const blankWWR = {
-  weekFrom: "", weekTo: "", employeeId: "", branch: branches[0], department: "Sales / CRE",
+  weekFrom: "", weekTo: "", employeeId: "", branch: "TVM", department: "Sales / CRE",
   weeklyTarget: "", weeklyAchievement: "", challenges: "", actionPlan: "",
   escalationsNeeded: false, escalationDetails: "",
 };
 const blankMWR = {
   month: String(new Date().getMonth() + 1), year: String(new Date().getFullYear()),
-  employeeId: "", branch: branches[0], department: "Sales / CRE",
+  employeeId: "", branch: "TVM", department: "Sales / CRE",
   salesTarget: "", salesAchievement: "", conversionPct: "", collectionPct: "",
   productionAchievement: "", efficiencyPct: "", rejectionCount: "", rejectionReasons: "",
   collectionEfficiencyPct: "", outstandingReduction: "", totalCollected: "",

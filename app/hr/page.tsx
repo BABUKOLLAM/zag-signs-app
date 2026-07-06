@@ -28,7 +28,7 @@ type Attendance = {
 
 const LEAVE_TYPES = ["Casual Leave","Sick Leave","Earned Leave","Maternity Leave","Paternity Leave","Unpaid Leave"];
 const DEPTS = ["Sales","CRES","Production","Accounts","HR","IT","Management"];
-const BRANCHES = ["TVM","KTYM","EKM","CLT"];
+const BRANCHES = ["HO","TVM","KTYM","EKM","CLT"];
 const STATUS_COLORS: Record<string,string> = {
   PENDING:  "bg-amber-100 text-amber-700",
   APPROVED: "bg-emerald-100 text-emerald-700",

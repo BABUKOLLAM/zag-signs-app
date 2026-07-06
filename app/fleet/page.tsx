@@ -7,7 +7,7 @@ import { fmt } from "@/lib/utils";
 import { Plus, RefreshCw, X, Truck, Fuel, Wrench, MapPin } from "lucide-react";
 import { useToast } from "@/components/Toaster";
 
-const BRANCHES = ["TVM", "KTYM", "EKM", "CLT"];
+const BRANCHES = ["HO", "TVM", "KTYM", "EKM", "CLT"];
 
 type Vehicle = { id: string; vehicleNo: string; make: string; model: string; type: string; branch: string; status: string; insuranceExpiry: string | null; pucExpiry: string | null; nextService: string | null };
 type Trip = { id: string; tripNo: string; vehicle: { vehicleNo: string }; driver: { name: string }; startKm: number; endKm: number | null; startTime: string; purpose: string; fromPlace: string; toPlace: string };

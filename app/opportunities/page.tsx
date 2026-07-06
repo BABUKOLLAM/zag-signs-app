@@ -9,7 +9,7 @@ import { LoadingState, ErrorState, EmptyState, TableSkeleton } from "@/component
 import { useToast } from "@/components/Toaster";
 import { Plus, X, Eye, TrendingUp, UserCheck, FileText, RefreshCw } from "lucide-react";
 
-const BRANCHES = ["TVM", "KTYM", "EKM", "CLT"];
+const BRANCHES = ["HO", "TVM", "KTYM", "EKM", "CLT"];
 
 const STAGES = [
   { value: "QUALIFICATION",     label: "Qualification" },

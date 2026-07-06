@@ -7,7 +7,7 @@ import { fmt } from "@/lib/utils";
 import { Plus, RefreshCw, Search, X, CheckCircle, Clock, AlertTriangle } from "lucide-react";
 import { useToast } from "@/components/Toaster";
 
-const BRANCHES = ["TVM", "KTYM", "EKM", "CLT"];
+const BRANCHES = ["HO", "TVM", "KTYM", "EKM", "CLT"];
 const PROJECT_STATUSES = ["PLANNING", "PRODUCTION", "DISPATCH", "INSTALLATION", "COMPLETED", "ON_HOLD"];
 const MILESTONE_STATUSES = ["PENDING", "COMPLETED", "DELAYED"];
 

@@ -6,7 +6,7 @@ import crypto from "crypto";
 import { sendApprovalEmail } from "@/lib/email";
 
 const VALID_ROLES = ["MD","AVP","BUSINESS_MANAGER","SALES_EXECUTIVE","CRES","PRODUCTION","ACCOUNTS","HR","IT_ADMIN","DESIGNER"];
-const VALID_BRANCHES = ["TVM","KTYM","EKM","CLT"];
+const VALID_BRANCHES = ["HO","TVM","KTYM","EKM","CLT"];
 const ALL_BRANCH_ROLES = ["MD","AVP","HR","IT_ADMIN"];
 
 const ROLE_LABELS: Record<string, string> = {

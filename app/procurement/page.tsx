@@ -7,7 +7,7 @@ import { fmt } from "@/lib/utils";
 import { Plus, RefreshCw, Search, X, Trash2 } from "lucide-react";
 import { useToast } from "@/components/Toaster";
 
-const BRANCHES = ["TVM", "KTYM", "EKM", "CLT"];
+const BRANCHES = ["HO", "TVM", "KTYM", "EKM", "CLT"];
 const PO_STATUSES = ["DRAFT", "SENT", "PARTIAL", "RECEIVED", "COMPLETED", "CANCELLED"];
 const PO_STATUS_COLOR: Record<string, string> = {
   DRAFT: "bg-slate-100 text-slate-500",
