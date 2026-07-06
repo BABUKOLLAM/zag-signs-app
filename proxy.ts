@@ -20,8 +20,10 @@ export function proxy(request: Request) {
 
 export const config = {
   matcher: [
-    // Public: login/signup, auth API, customer portal (page + API), WhatsApp webhook (Meta calls it),
-    // and static files served from /public (images, manuals, PWA files)
-    "/((?!login|signup|api/auth|portal|api/portal|api/whatsapp/webhook|_next/static|_next/image|favicon\\.ico|icons|manifest\\.json|sw\\.js|offline\\.html|manual\\.html|.*\\.png|.*\\.svg|.*\\.jpg|.*\\.pdf).*)",
+    // Public: login/signup, password recovery (must work for logged-out users —
+    // that's the whole point), auth API, customer portal (page + API), WhatsApp
+    // webhook (Meta calls it), company branding (read on pre-auth pages: login,
+    // signup, password recovery), and static files served from /public.
+    "/((?!login|signup|forgot-password|reset-password|api/auth|api/settings|portal|api/portal|api/whatsapp/webhook|_next/static|_next/image|favicon\\.ico|icons|manifest\\.json|sw\\.js|offline\\.html|manual\\.html|.*\\.png|.*\\.svg|.*\\.jpg|.*\\.pdf).*)",
   ],
 };
