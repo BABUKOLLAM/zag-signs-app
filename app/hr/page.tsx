@@ -4,10 +4,12 @@ import TopBar from "@/components/TopBar";
 import { useApi } from "@/lib/use-api";
 import {
   Plus, CheckCircle2, XCircle, Search, RefreshCw, Loader2, Upload, Download, MapPin,
+  Edit2, X, Eye, Power, User as UserIcon, Mail, Phone, Calendar, Wallet, Briefcase,
 } from "lucide-react";
 import { exportExcel } from "@/lib/export";
 import BatchImportModal from "@/components/BatchImportModal";
 import { EMPLOYEE_COLUMNS } from "@/lib/import-specs";
+import { useToast } from "@/components/Toaster";
 
 type Employee = {
   id: string; employeeNo: string; name: string; designation: string;
@@ -39,12 +41,17 @@ const STATUS_COLORS: Record<string,string> = {
 };
 
 export default function HRPage() {
+  const toast = useToast();
   const [tab, setTab] = useState<"employees"|"attendance"|"leaves">("employees");
   const [search, setSearch] = useState("");
   const [dept, setDept]     = useState("");
+  const [empStatus, setEmpStatus] = useState<""|"active"|"inactive">("");
   const [leaveStatus, setLeaveStatus] = useState("");
   const [saving, setSaving] = useState(false);
   const [showAddEmp,   setShowAddEmp]   = useState(false);
+  const [editEmpId,    setEditEmpId]    = useState<string | null>(null);
+  const [viewEmp,      setViewEmp]      = useState<Employee | null>(null);
+  const [togglingId,   setTogglingId]   = useState<string | null>(null);
   const [showImportEmp, setShowImportEmp] = useState(false);
   const [showAddLeave, setShowAddLeave] = useState(false);
   const [showAttend,   setShowAttend]   = useState(false);
@@ -59,8 +66,11 @@ export default function HRPage() {
   const empList  = employees  ?? [];
   const leaveList = leaves    ?? [];
   const attList   = attendance ?? [];
+  const filteredEmpList = empList.filter(e =>
+    empStatus === "active" ? e.isActive : empStatus === "inactive" ? !e.isActive : true
+  );
 
-  const handleExportEmp = () => exportExcel(`Employees_${new Date().toISOString().slice(0,10)}`, empList.map((e) => ({
+  const handleExportEmp = () => exportExcel(`Employees_${new Date().toISOString().slice(0,10)}`, filteredEmpList.map((e) => ({
     "Employee No": e.employeeNo, "Name": e.name, "Designation": e.designation,
     "Department": e.department, "Branch": e.branch, "Phone": e.phone,
     "Email": e.email, "Date of Joining": e.dateOfJoining, "Salary": e.salary,
@@ -73,21 +83,55 @@ export default function HRPage() {
   const [gpsStatus, setGpsStatus] = useState<"idle"|"loading"|"done"|"denied">("idle");
   const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number; name: string } | null>(null);
 
-  async function createEmployee() {
+  async function saveEmployee() {
     if (!empForm.name || !empForm.designation) return;
     setSaving(true);
-    await fetch("/api/employees", { method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ ...empForm, salary: Number(empForm.salary) || 0 }) });
-    setSaving(false); setShowAddEmp(false); refetchEmp();
-    setEmpForm({ name:"", designation:"", department:"", branch:"TVM", phone:"", email:"", dateOfJoining:"", salary:"" });
+    try {
+      const url = editEmpId ? `/api/employees/${editEmpId}` : "/api/employees";
+      const method = editEmpId ? "PUT" : "POST";
+      const res = await fetch(url, { method, headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ ...empForm, salary: Number(empForm.salary) || 0 }) });
+      if (!res.ok) { const j = await res.json().catch(() => ({})); throw new Error(j.error || "Save failed"); }
+      toast.success(editEmpId ? "Employee updated" : "Employee added");
+      setShowAddEmp(false); setEditEmpId(null); refetchEmp();
+      setEmpForm({ name:"", designation:"", department:"", branch:"TVM", phone:"", email:"", dateOfJoining:"", salary:"" });
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Save failed"); }
+    finally { setSaving(false); }
+  }
+
+  function openEditEmp(e: Employee) {
+    setEmpForm({
+      name: e.name, designation: e.designation, department: e.department,
+      branch: e.branch, phone: e.phone || "", email: e.email || "",
+      dateOfJoining: e.dateOfJoining || "", salary: e.salary ? String(e.salary) : "",
+    });
+    setEditEmpId(e.id);
+    setShowAddEmp(true);
+  }
+
+  async function toggleActive(e: Employee) {
+    setTogglingId(e.id);
+    try {
+      const res = await fetch(`/api/employees/${e.id}`, { method:"PUT", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ isActive: !e.isActive }) });
+      if (!res.ok) { const j = await res.json().catch(() => ({})); throw new Error(j.error || "Update failed"); }
+      toast.success(e.isActive ? `${e.name} marked inactive` : `${e.name} marked active`);
+      refetchEmp();
+    } catch (err) { toast.error(err instanceof Error ? err.message : "Update failed"); }
+    finally { setTogglingId(null); }
   }
 
   async function createLeave() {
     if (!leaveForm.employeeId || !leaveForm.fromDate) return;
     setSaving(true);
-    await fetch("/api/leave-requests", { method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ ...leaveForm, days: Number(leaveForm.days) }) });
-    setSaving(false); setShowAddLeave(false); refetchLeave();
+    try {
+      const res = await fetch("/api/leave-requests", { method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ ...leaveForm, days: Number(leaveForm.days) }) });
+      if (!res.ok) { const j = await res.json().catch(() => ({})); throw new Error(j.error || "Submission failed"); }
+      toast.success("Leave request submitted");
+      setShowAddLeave(false); refetchLeave();
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Submission failed"); }
+    finally { setSaving(false); }
   }
 
   function captureGps() {
@@ -119,17 +163,25 @@ export default function HRPage() {
       payload.checkInLng  = gpsCoords.lng;
       payload.locationName = gpsCoords.name;
     }
-    await fetch("/api/attendance", { method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify(payload) });
-    setSaving(false); setShowAttend(false);
-    setGpsCoords(null); setGpsStatus("idle");
-    refetchAtt();
+    try {
+      const res = await fetch("/api/attendance", { method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify(payload) });
+      if (!res.ok) { const j = await res.json().catch(() => ({})); throw new Error(j.error || "Failed to mark attendance"); }
+      toast.success("Attendance marked");
+      setShowAttend(false); setGpsCoords(null); setGpsStatus("idle");
+      refetchAtt();
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Failed to mark attendance"); }
+    finally { setSaving(false); }
   }
 
   async function updateLeave(id: string, status: string) {
-    await fetch(`/api/leave-requests/${id}`, { method:"PUT", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ status }) });
-    refetchLeave();
+    try {
+      const res = await fetch(`/api/leave-requests/${id}`, { method:"PUT", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ status }) });
+      if (!res.ok) { const j = await res.json().catch(() => ({})); throw new Error(j.error || "Update failed"); }
+      toast.success(`Leave ${status.toLowerCase()}`);
+      refetchLeave();
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Update failed"); }
   }
 
   return (
@@ -176,11 +228,16 @@ export default function HRPage() {
                 <option value="">All Departments</option>
                 {DEPTS.map(d => <option key={d}>{d}</option>)}
               </select>
+              <select value={empStatus} onChange={e => setEmpStatus(e.target.value as "" | "active" | "inactive")} className="px-3 py-2 rounded-xl border border-slate-200 text-sm">
+                <option value="">All Staff</option>
+                <option value="active">Active Only</option>
+                <option value="inactive">Inactive Only</option>
+              </select>
               <button onClick={() => setShowImportEmp(true)}
                 className="flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium">
                 <Upload size={14} /> Import
               </button>
-              <button onClick={handleExportEmp} disabled={empList.length === 0}
+              <button onClick={handleExportEmp} disabled={filteredEmpList.length === 0}
                 className="flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium disabled:opacity-40">
                 <Download size={14} /> Excel
               </button>
@@ -193,24 +250,39 @@ export default function HRPage() {
             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
               <table className="w-full text-sm">
                 <thead><tr className="bg-slate-50 border-b border-slate-100">
-                  {["Employee","Dept","Branch","Contact","Joined","Salary","Status"].map(h => (
+                  {["Employee","Dept","Branch","Contact","Joined","Salary","Status",""].map(h => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">{h}</th>
                   ))}
                 </tr></thead>
                 <tbody className="divide-y divide-slate-50">
-                  {loadEmp && <tr><td colSpan={7} className="text-center py-8"><Loader2 size={18} className="animate-spin mx-auto text-slate-400" /></td></tr>}
-                  {!loadEmp && empList.map(e => (
+                  {loadEmp && <tr><td colSpan={8} className="text-center py-8"><Loader2 size={18} className="animate-spin mx-auto text-slate-400" /></td></tr>}
+                  {!loadEmp && filteredEmpList.map(e => (
                     <tr key={e.id} className="hover:bg-slate-50/50">
-                      <td className="px-4 py-3"><p className="font-medium text-slate-800">{e.name}</p><p className="text-xs text-slate-400">{e.employeeNo} · {e.designation}</p></td>
+                      <td className="px-4 py-3 cursor-pointer" onClick={() => setViewEmp(e)}>
+                        <p className="font-medium text-slate-800 hover:text-indigo-600">{e.name}</p>
+                        <p className="text-xs text-slate-400">{e.employeeNo} · {e.designation}</p>
+                      </td>
                       <td className="px-4 py-3 text-slate-600 text-xs">{e.department}</td>
                       <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-full text-xs bg-indigo-100 text-indigo-700">{e.branch}</span></td>
                       <td className="px-4 py-3 text-xs text-slate-500"><p>{e.phone}</p><p>{e.email}</p></td>
                       <td className="px-4 py-3 text-slate-500 text-xs">{e.dateOfJoining}</td>
                       <td className="px-4 py-3 text-slate-700 text-xs">{e.salary > 0 ? `₹${e.salary.toLocaleString()}` : "—"}</td>
                       <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${e.isActive ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>{e.isActive ? "Active" : "Inactive"}</span></td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => setViewEmp(e)} title="View Profile"
+                            className="p-1.5 rounded-lg text-slate-400 hover:bg-indigo-50 hover:text-indigo-600"><Eye size={14} /></button>
+                          <button onClick={() => openEditEmp(e)} title="Edit"
+                            className="p-1.5 rounded-lg text-slate-400 hover:bg-indigo-50 hover:text-indigo-600"><Edit2 size={14} /></button>
+                          <button onClick={() => toggleActive(e)} disabled={togglingId === e.id} title={e.isActive ? "Deactivate" : "Activate"}
+                            className={`p-1.5 rounded-lg disabled:opacity-40 ${e.isActive ? "text-slate-400 hover:bg-red-50 hover:text-red-500" : "text-slate-400 hover:bg-emerald-50 hover:text-emerald-600"}`}>
+                            {togglingId === e.id ? <Loader2 size={14} className="animate-spin" /> : <Power size={14} />}
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
-                  {!loadEmp && empList.length === 0 && <tr><td colSpan={7} className="text-center py-8 text-slate-400">No employees found</td></tr>}
+                  {!loadEmp && filteredEmpList.length === 0 && <tr><td colSpan={8} className="text-center py-8 text-slate-400">No employees found</td></tr>}
                 </tbody>
               </table>
             </div>
@@ -307,11 +379,11 @@ export default function HRPage() {
         )}
       </div>
 
-      {/* Add Employee Modal */}
+      {/* Add/Edit Employee Modal */}
       {showAddEmp && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
-            <h3 className="text-lg font-bold mb-4">Add Employee</h3>
+            <h3 className="text-lg font-bold mb-4">{editEmpId ? "Edit Employee" : "Add Employee"}</h3>
             <div className="grid grid-cols-2 gap-3">
               {([["name","Full Name *"],["designation","Designation *"],["phone","Phone"],["email","Email"],["salary","Salary (₹)"],["dateOfJoining","Date of Joining"]] as [string,string][]).map(([k,l]) => (
                 <div key={k}>
@@ -337,10 +409,11 @@ export default function HRPage() {
               </div>
             </div>
             <div className="flex gap-3 mt-4">
-              <button onClick={createEmployee} disabled={saving} className="flex-1 py-2.5 rounded-xl text-white font-semibold text-sm" style={{background:"linear-gradient(135deg,#4F46E5,#7C3AED)"}}>
-                {saving?"Saving…":"Create Employee"}
+              <button onClick={saveEmployee} disabled={saving} className="flex-1 py-2.5 rounded-xl text-white font-semibold text-sm" style={{background:"linear-gradient(135deg,#4F46E5,#7C3AED)"}}>
+                {saving ? "Saving…" : editEmpId ? "Save Changes" : "Create Employee"}
               </button>
-              <button onClick={()=>setShowAddEmp(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm">Cancel</button>
+              <button onClick={() => { setShowAddEmp(false); setEditEmpId(null); setEmpForm({ name:"", designation:"", department:"", branch:"TVM", phone:"", email:"", dateOfJoining:"", salary:"" }); }}
+                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm">Cancel</button>
             </div>
           </div>
         </div>
@@ -459,6 +532,135 @@ export default function HRPage() {
           onDone={() => refetchEmp()}
         />
       )}
+
+      {viewEmp && (
+        <StaffProfileDrawer
+          employee={viewEmp}
+          onClose={() => setViewEmp(null)}
+          onEdit={() => { openEditEmp(viewEmp); setViewEmp(null); }}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── Staff Profile Drawer ────────────────────────────────────────────────────
+
+function StaffProfileDrawer({ employee, onClose, onEdit }: { employee: Employee; onClose: () => void; onEdit: () => void }) {
+  const thisMonth = new Date().toISOString().slice(0, 7);
+  const { data: attendance, loading: loadAtt } = useApi<Attendance[]>(`/attendance?employeeId=${employee.id}&month=${thisMonth}`);
+  const { data: leaves, loading: loadLeave } = useApi<LeaveReq[]>(`/leave-requests?employeeId=${employee.id}`);
+
+  const attList = attendance ?? [];
+  const leaveList = leaves ?? [];
+  const present  = attList.filter(a => a.status === "PRESENT").length;
+  const absent   = attList.filter(a => a.status === "ABSENT").length;
+  const halfDay  = attList.filter(a => a.status === "HALF_DAY").length;
+  const onLeave  = attList.filter(a => a.status === "ON_LEAVE").length;
+  const totalLeaveDaysThisYear = leaveList
+    .filter(l => l.status === "APPROVED" && l.fromDate?.startsWith(new Date().getFullYear().toString()))
+    .reduce((sum, l) => sum + (l.days || 0), 0);
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/40" onClick={onClose}>
+      <div className="w-full max-w-md h-full bg-white shadow-2xl overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="p-5 border-b border-slate-100 flex items-start justify-between sticky top-0 bg-white">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center font-bold text-white text-lg flex-shrink-0"
+              style={{ background: "linear-gradient(135deg,#4F46E5,#7C3AED)" }}>
+              {employee.name?.[0]?.toUpperCase() ?? "?"}
+            </div>
+            <div>
+              <p className="font-bold text-slate-800">{employee.name}</p>
+              <p className="text-xs text-slate-400">{employee.employeeNo} · {employee.designation}</p>
+              <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${employee.isActive ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+                {employee.isActive ? "Active" : "Inactive"}
+              </span>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100"><X size={18} /></button>
+        </div>
+
+        <div className="p-5 space-y-5">
+          {/* Contact & employment details */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex items-start gap-2">
+              <Briefcase size={14} className="text-slate-400 mt-0.5" />
+              <div><p className="text-xs text-slate-400">Department</p><p className="text-sm font-medium text-slate-700">{employee.department || "—"}</p></div>
+            </div>
+            <div className="flex items-start gap-2">
+              <UserIcon size={14} className="text-slate-400 mt-0.5" />
+              <div><p className="text-xs text-slate-400">Branch</p><p className="text-sm font-medium text-slate-700">{employee.branch}</p></div>
+            </div>
+            <div className="flex items-start gap-2">
+              <Phone size={14} className="text-slate-400 mt-0.5" />
+              <div><p className="text-xs text-slate-400">Phone</p><p className="text-sm font-medium text-slate-700">{employee.phone || "—"}</p></div>
+            </div>
+            <div className="flex items-start gap-2">
+              <Mail size={14} className="text-slate-400 mt-0.5" />
+              <div><p className="text-xs text-slate-400">Email</p><p className="text-sm font-medium text-slate-700 truncate">{employee.email || "—"}</p></div>
+            </div>
+            <div className="flex items-start gap-2">
+              <Calendar size={14} className="text-slate-400 mt-0.5" />
+              <div><p className="text-xs text-slate-400">Joined</p><p className="text-sm font-medium text-slate-700">{employee.dateOfJoining || "—"}</p></div>
+            </div>
+            <div className="flex items-start gap-2">
+              <Wallet size={14} className="text-slate-400 mt-0.5" />
+              <div><p className="text-xs text-slate-400">Salary</p><p className="text-sm font-medium text-slate-700">{employee.salary > 0 ? `₹${employee.salary.toLocaleString("en-IN")}` : "—"}</p></div>
+            </div>
+          </div>
+
+          {/* Attendance summary — this month */}
+          <div>
+            <h4 className="text-xs font-semibold text-slate-500 uppercase mb-2">This Month&apos;s Attendance</h4>
+            {loadAtt ? <Loader2 size={16} className="animate-spin text-slate-400" /> : (
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { label: "Present", value: present, color: "text-emerald-600 bg-emerald-50" },
+                  { label: "Absent",  value: absent,  color: "text-red-600 bg-red-50" },
+                  { label: "Half Day", value: halfDay, color: "text-amber-600 bg-amber-50" },
+                  { label: "On Leave", value: onLeave, color: "text-blue-600 bg-blue-50" },
+                ].map(s => (
+                  <div key={s.label} className={`rounded-xl p-2 text-center ${s.color}`}>
+                    <p className="text-lg font-bold">{s.value}</p>
+                    <p className="text-[10px] font-medium">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Leave history */}
+          <div>
+            <h4 className="text-xs font-semibold text-slate-500 uppercase mb-2">
+              Leave History <span className="normal-case text-slate-400 font-normal">({totalLeaveDaysThisYear} days approved this year)</span>
+            </h4>
+            {loadLeave ? <Loader2 size={16} className="animate-spin text-slate-400" /> : leaveList.length === 0 ? (
+              <p className="text-sm text-slate-400">No leave requests yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {leaveList.slice(0, 8).map(l => (
+                  <div key={l.id} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 text-sm">
+                    <div>
+                      <p className="font-medium text-slate-700">{l.leaveType}</p>
+                      <p className="text-xs text-slate-400">{l.fromDate} → {l.toDate} · {l.days}d</p>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[l.status] ?? "bg-slate-100 text-slate-500"}`}>{l.status}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="p-5 pt-0 flex gap-3">
+          <button onClick={onEdit} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-white font-semibold text-sm"
+            style={{ background: "linear-gradient(135deg,#4F46E5,#7C3AED)" }}>
+            <Edit2 size={14} /> Edit Employee
+          </button>
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm">Close</button>
+        </div>
+      </div>
     </div>
   );
 }

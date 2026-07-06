@@ -1,6 +1,10 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok, err, requireSession } from "@/lib/api-helpers";
+import { hasRole } from "@/lib/bulk-helpers";
+
+// Employee records carry payroll data — restrict writes to HR / mgmt / admins.
+const EMP_ROLES = ["MD", "AVP", "IT Admin", "HR", "Consultant"];
 
 export async function PUT(
   request: NextRequest,
@@ -8,6 +12,8 @@ export async function PUT(
 ) {
   const session = await requireSession();
   if (!session) return err("Unauthorized", 401);
+  if (!hasRole((session.user as { role?: string }).role, EMP_ROLES))
+    return err("Forbidden — only HR or an administrator can edit employees", 403);
   const { id } = await params;
   const body = await request.json() as Record<string, unknown>;
   const emp = await prisma.employee.findUnique({ where: { id } });
