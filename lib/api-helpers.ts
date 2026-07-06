@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "./auth";
+import { prisma } from "./prisma";
+import { canAccess, canAccessModules } from "./permissions";
 
 export const ok = (data: unknown, status = 200) =>
   NextResponse.json({ data }, { status });
@@ -24,6 +26,27 @@ export async function requireRole(allowed: string[] = []) {
   if (!session?.user) return null;
   if (allowed.length > 0 && !allowed.includes(session.user.role)) return null;
   return session;
+}
+
+/**
+ * Server-side equivalent of the client's usePermissions().canUse(path) —
+ * checks the user's per-user UserPermission override first, falling back
+ * to role defaults. Use for API routes that gate sensitive data (e.g. salary)
+ * so the check matches what the RouteGuard already shows in the UI, instead
+ * of a second hand-maintained role list that can drift out of sync.
+ */
+export async function requirePathAccess(path: string) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) return null;
+  const userId = (session.user as { id?: string }).id;
+  const role = (session.user as { role?: string }).role;
+  const override = userId
+    ? await prisma.userPermission.findUnique({ where: { userId }, select: { modules: true } })
+    : null;
+  const allowed = override
+    ? canAccessModules(override.modules, path)
+    : canAccess(role, path);
+  return allowed ? session : null;
 }
 
 /** Convert DB enum like IN_PRODUCTION → "In Production" */

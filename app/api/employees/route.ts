@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, err, requireSession, autoNo } from "@/lib/api-helpers";
+import { ok, err, requireSession, requirePathAccess, autoNo } from "@/lib/api-helpers";
 import { hasRole } from "@/lib/bulk-helpers";
 
 // Employee records carry payroll data — restrict writes to HR / mgmt / admins.
@@ -22,8 +22,11 @@ function shape(e: {
 }
 
 export async function GET(request: NextRequest) {
-  const session = await requireSession();
-  if (!session) return err("Unauthorized", 401);
+  // Uses the same override-aware check as the /hr page's RouteGuard, so this
+  // endpoint's access exactly matches who can actually see the page — not a
+  // second hardcoded role list that can drift out of sync (salary is in here).
+  const session = await requirePathAccess("/hr");
+  if (!session) return err("Forbidden — you don't have access to staff records", 403);
   const { searchParams } = new URL(request.url);
   const search = searchParams.get("search") ?? "";
   const dept   = searchParams.get("department");
