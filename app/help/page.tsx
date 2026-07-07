@@ -769,6 +769,7 @@ const COLORS: Record<string, { bg: string; text: string; border: string }> = {
   emerald: { bg: "rgba(16,185,129,0.08)",  text: "#10B981", border: "rgba(16,185,129,0.2)"  },
   cyan:    { bg: "rgba(6,182,212,0.08)",   text: "#06B6D4", border: "rgba(6,182,212,0.2)"   },
   yellow:  { bg: "rgba(245,158,11,0.08)",  text: "#D97706", border: "rgba(245,158,11,0.2)"  },
+  amber:   { bg: "rgba(217,119,6,0.08)",   text: "#B45309", border: "rgba(217,119,6,0.2)"   },
   orange:  { bg: "rgba(249,115,22,0.08)",  text: "#F97316", border: "rgba(249,115,22,0.2)"  },
   red:     { bg: "rgba(239,68,68,0.08)",   text: "#EF4444", border: "rgba(239,68,68,0.2)"   },
   green:   { bg: "rgba(34,197,94,0.08)",   text: "#16A34A", border: "rgba(34,197,94,0.2)"   },
