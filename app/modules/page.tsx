@@ -120,7 +120,7 @@ const SECTIONS = [
     label: "Support",
     color: "from-sky-500 to-blue-600",
     modules: [
-      { href: "/help", label: "Help & Manual", sub: "User guide v1.4", icon: BookOpen, grad: "from-sky-500 to-sky-700" },
+      { href: "/help", label: "Help & Manual", sub: "User guide v2.0", icon: BookOpen, grad: "from-sky-500 to-sky-700" },
     ],
   },
 ];
