@@ -8,6 +8,18 @@ async function hash(plain: string) {
 }
 
 async function main() {
+  // This seeds fake demo users (with default passwords like "MD@2026"),
+  // customers and leads — safe for a fresh dev/staging DB, destructive if
+  // ever pointed at a real customer's production database. Require an
+  // explicit opt-in rather than letting `npm run db:seed` run unattended
+  // against whatever NEON_DATABASE_URL happens to be loaded.
+  if (process.env.CONFIRM_SEED !== "yes") {
+    throw new Error(
+      "Refusing to seed: this inserts fake demo users/customers/leads. " +
+      "If this is a fresh dev/staging database, re-run as: CONFIRM_SEED=yes npm run db:seed"
+    );
+  }
+
   console.log("🌱 Seeding ZAG SIGNS ERP database...");
 
   // ── Users (9 BRD roles) ───────────────────────────────────────────────

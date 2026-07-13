@@ -3,7 +3,7 @@ import axios from 'axios';
 const WHATSAPP_API_VERSION = process.env.WHATSAPP_API_VERSION || 'v18.0';
 const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_ID;
 const ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
-const BASE_URL = `https://graph.instagram.com/${WHATSAPP_API_VERSION}/${PHONE_NUMBER_ID}`;
+const BASE_URL = `https://graph.facebook.com/${WHATSAPP_API_VERSION}/${PHONE_NUMBER_ID}`;
 
 interface WhatsAppMessage {
   messaging_product: 'whatsapp';
@@ -199,7 +199,7 @@ export async function getMessageStatus(messageId: string): Promise<'sent' | 'del
   }
 
   try {
-    const response = await axios.get(`https://graph.instagram.com/${WHATSAPP_API_VERSION}/${messageId}`, {
+    const response = await axios.get(`https://graph.facebook.com/${WHATSAPP_API_VERSION}/${messageId}`, {
       headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
     });
 

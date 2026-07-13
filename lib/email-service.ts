@@ -1,12 +1,15 @@
 import nodemailer from "nodemailer";
 import { getCompanyName } from "./company";
 
-// Email service using Gmail SMTP (tech@bpropms.com)
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://bprozagcrm.xyz";
+
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: process.env.EMAIL_HOST,
+  port: Number(process.env.EMAIL_PORT ?? 587),
+  secure: process.env.EMAIL_PORT === "465",
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
+    pass: process.env.EMAIL_PASS,
   },
 });
 
@@ -49,7 +52,7 @@ export async function sendFollowUpReminderEmail(data: FollowUpReminderEmail) {
 
       <p>Log this activity in the Sales Dashboard to stay on track with your targets.</p>
       <p>
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/sales/activities"
+        <a href="${BASE_URL}/sales/activities"
            style="background-color: #2563eb; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none;">
           Log Activity
         </a>
@@ -96,7 +99,7 @@ export async function sendDARReminderEmail(data: DARSubmissionEmail) {
       </ul>
 
       <p>
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/sales/activities"
+        <a href="${BASE_URL}/sales/activities"
            style="background-color: #16a34a; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none;">
           View Activities & Submit DAR
         </a>
@@ -147,7 +150,7 @@ export async function sendClaimsReminderEmail(
       </ul>
 
       <p>
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/sales/claims"
+        <a href="${BASE_URL}/sales/claims"
            style="background-color: #2563eb; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none;">
           Submit Claim Now
         </a>
@@ -220,7 +223,7 @@ export async function sendExpenseApprovalEmail(data: ExpenseApprovalEmailData) {
         : `<p style="color:#16a34a;">Your expense is progressing through the approval chain.</p>`}
 
       <p>
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/sales/expenses"
+        <a href="${BASE_URL}/sales/expenses"
            style="background:${color};color:white;padding:10px 20px;border-radius:5px;text-decoration:none;">
           View Expense Report
         </a>

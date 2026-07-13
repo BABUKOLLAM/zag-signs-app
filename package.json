@@ -10,7 +10,7 @@
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
-    "db:reset": "prisma db push --force-reset && prisma db seed"
+    "db:reset": "node -e \"if(process.env.CONFIRM_RESET!=='yes'){console.error('Refusing: this WIPES the entire database (--force-reset) before reseeding. Re-run as: CONFIRM_RESET=yes npm run db:reset');process.exit(1)}\" && prisma db push --force-reset && prisma db seed"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
