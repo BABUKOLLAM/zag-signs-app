@@ -55,6 +55,7 @@ const ROLE_PATHS: Record<Role, string[]> = {
     "/work-order-tickets",
     "/field-visits", "/tasks", "/complaints",
     "/sales", "/tender",
+    "/collections", // AR visibility — follow up on their own customers' pending payments, without full Accounts/Invoices access
   ],
 
   CRES: [
