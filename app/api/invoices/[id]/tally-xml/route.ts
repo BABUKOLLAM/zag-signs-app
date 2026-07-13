@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { err, requireSession } from "@/lib/api-helpers";
+import { err, requirePathAccess } from "@/lib/api-helpers";
 import { generateTallyXml, type TallyItem } from "@/lib/tally-xml";
 
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function GET(_req: NextRequest, { params }: Ctx) {
-  const session = await requireSession();
-  if (!session) return err("Unauthorized", 401);
+  const session = await requirePathAccess("/accounts");
+  if (!session) return err("Forbidden", 403);
   const { id } = await params;
 
   const inv = await prisma.invoice.findUnique({ where: { id } });

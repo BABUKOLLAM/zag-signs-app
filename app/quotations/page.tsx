@@ -13,6 +13,7 @@ import WhatsAppShare from "@/components/WhatsAppShare";import { useRouter } from
 import { makeClientCode } from "@/lib/utils";
 import { uploadToDrive, isDriveConfigured } from "@/lib/google-drive";
 import { useToast } from "@/components/Toaster";
+import { usePermissions } from "@/lib/permission-context";
 
 const STATUS_COLORS: Record<string, string> = {
   DRAFT:     "bg-gray-100 text-gray-700",
@@ -66,6 +67,7 @@ const STATUS_OPTS   = [
 export default function QuotationsPage() {
   const toast = useToast();
   const router = useRouter();
+  const { canUse } = usePermissions();
   const [statusFilter, setStatusFilter] = useState("");
   const [selected, setSelected] = useState<Quotation | null>(null);
   const [printData, setPrintData] = useState<QuotationData | null>(null);
@@ -535,10 +537,12 @@ export default function QuotationsPage() {
                                 className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 hover:bg-amber-100 font-medium">
                                 <Ticket size={10} /> Ticket
                               </button>
-                              <button onClick={() => createInvoice(q)} title="Create Tax Invoice"
-                                className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-medium">
-                                <Receipt size={10} /> Invoice
-                              </button>
+                              {canUse("/accounts") && (
+                                <button onClick={() => createInvoice(q)} title="Create Tax Invoice"
+                                  className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-medium">
+                                  <Receipt size={10} /> Invoice
+                                </button>
+                              )}
                             </>
                           )}
                         </div>

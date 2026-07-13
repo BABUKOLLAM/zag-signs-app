@@ -1,10 +1,10 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, err, requireSession } from "@/lib/api-helpers";
+import { ok, err, requirePathAccess } from "@/lib/api-helpers";
 
 export async function GET(request: NextRequest) {
-  const session = await requireSession();
-  if (!session) return err("Unauthorized", 401);
+  const session = await requirePathAccess("/collections");
+  if (!session) return err("Forbidden", 403);
   const { searchParams } = new URL(request.url);
   const customerId = searchParams.get("customerId");
   const month      = searchParams.get("month");
@@ -40,8 +40,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await requireSession();
-  if (!session) return err("Unauthorized", 401);
+  const session = await requirePathAccess("/collections");
+  if (!session) return err("Forbidden", 403);
   const body = await request.json() as {
     customerId?: string; salesOrderId?: string; invoiceId?: string;
     amount?: number; paymentMode?: string; reference?: string;

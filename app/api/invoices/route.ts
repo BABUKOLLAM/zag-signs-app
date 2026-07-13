@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, err, requireSession } from "@/lib/api-helpers";
+import { ok, err, requirePathAccess } from "@/lib/api-helpers";
 
 const BRANCH_MAP: Record<string, string> = {
   TVM: "TVM", KTYM: "KTYM", EKM: "EKM", CLT: "CLT", HO: "HO",
@@ -58,8 +58,8 @@ const INCLUDE = {
 };
 
 export async function GET(request: NextRequest) {
-  const session = await requireSession();
-  if (!session) return err("Unauthorized", 401);
+  const session = await requirePathAccess("/accounts");
+  if (!session) return err("Forbidden", 403);
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status");
   const search = searchParams.get("search") ?? "";
@@ -82,8 +82,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await requireSession();
-  if (!session) return err("Unauthorized", 401);
+  const session = await requirePathAccess("/accounts");
+  if (!session) return err("Forbidden", 403);
   const su = session.user as { id?: string; branch?: string };
   const branch = branchCode(su.branch);
 
