@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     data: {
       projectNo,
       name: body.name,
-      customerId: body.customerId,
+      customerId: body.customerId || null,
       salesOrderId: body.salesOrderId || null,
       branch: body.branch,
       status: body.status ?? "PLANNING",

@@ -1695,8 +1695,8 @@ model Project {
   id           String             @id @default(cuid())
   projectNo    String             @unique
   name         String
-  customerId   String
-  customer     Customer           @relation(fields: [customerId], references: [id])
+  customerId   String?
+  customer     Customer?          @relation(fields: [customerId], references: [id])
   salesOrderId String?
   branch       String
   status       String             @default("PLANNING") // PLANNING, PRODUCTION, DISPATCH, INSTALLATION, COMPLETED, ON_HOLD
