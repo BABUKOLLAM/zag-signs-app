@@ -117,7 +117,9 @@ export default function TeamReportsPage() {
   }, [filterBranch]);
 
   useEffect(() => {
-    api.get<any>("/employees", { limit: "200" }).then(r => setEmployees(r?.data ?? [])).catch(() => {});
+    // DAR/WWR/MWR employeeId is a foreign key to User.id, not the HR payroll
+    // Employee table — must select from real user accounts, not employees.
+    api.get<any>("/team-members").then(r => setEmployees(r?.data ?? [])).catch(() => {});
   }, []);
 
   useEffect(() => { if (tab === "dar") loadDAR(); }, [tab, loadDAR]);
