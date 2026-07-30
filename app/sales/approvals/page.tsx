@@ -32,12 +32,22 @@ const PENDING_STATUSES: Record<string, string[]> = {
   CEO:      ["CEO_REVIEW"],
 };
 
+// Keyed on the human-readable labels actually stored in session.user.role
+// (see ROLE_DISPLAY in lib/auth.ts) — NOT the raw DB enum values. AVP/MD
+// happen to be spelled identically in both forms, which is why this table
+// silently "worked" for them while missing Business Manager and Accounts
+// entirely — both always fell through to null, so their pending count was
+// always 0 regardless of real data.
 const ROLE_STAGE: Record<string, Stage> = {
-  BUSINESS_MANAGER: "HOD",
+  "Business Manager": "HOD",
   AVP: "HOD",
   MD: "HOD",
-  ACCOUNTS: "ACCOUNTS",
+  Accounts: "ACCOUNTS",
 };
+
+// Full-access oversight roles aren't tied to one approval stage — they
+// should see everything still awaiting action at any stage.
+const OVERSIGHT_ROLES = ["IT Admin", "Consultant"];
 
 function getStageForRole(role: string): Stage | null {
   return ROLE_STAGE[role] || null;
@@ -71,7 +81,10 @@ export default function ApprovalsPage() {
     }
   };
 
-  const pendingStatuses = stage ? PENDING_STATUSES[stage] || [] : [];
+  const isOversight = OVERSIGHT_ROLES.includes(role);
+  const pendingStatuses = isOversight
+    ? Object.values(PENDING_STATUSES).flat()
+    : stage ? PENDING_STATUSES[stage] || [] : [];
   const ceoPendingStatuses = ["CEO_REVIEW"];
 
   const filterExpenses = (tab: Tab) => {
