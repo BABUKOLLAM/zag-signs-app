@@ -23,6 +23,7 @@ function shape(c: Awaited<ReturnType<typeof prisma.complaint.findFirst>> & {
     customerId: c.customerId,
     customerName: (c as { customer?: { company: string } | null }).customer?.company ?? "",
     assignedTo: (c as { assignedTo?: { name: string } | null }).assignedTo?.name ?? "Unassigned",
+    assignedToId: c.assignedToId ?? null,
   };
 }
 

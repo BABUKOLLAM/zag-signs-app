@@ -25,7 +25,7 @@ interface Complaint {
   id: string; complaintNo: string; subject: string; description: string;
   status: string; statusLabel: string; priority: string; priorityLabel: string;
   resolution: string; resolvedAt: string; createdAt: string;
-  customerId: string; customerName: string; assignedTo: string;
+  customerId: string; customerName: string; assignedTo: string; assignedToId: string | null;
 }
 
 const emptyForm = { subject: "", description: "", priority: "MEDIUM", customerName: "" };
@@ -41,14 +41,30 @@ export default function ComplaintsPage() {
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState<FormErrors>({});
   const [saving, setSaving] = useState(false);
+  const [assigning, setAssigning] = useState<string | null>(null);
 
   const { data, loading, error, refetch } = useApi<Complaint[]>("/complaints", {
     status: statusFilter || undefined,
     priority: priorityFilter || undefined,
     limit: 100,
   });
+  const { data: teamData } = useApi<{ id: string; name: string }[]>("/team-members");
+  const teamMembers = teamData ?? [];
 
   const complaints = data ?? [];
+
+  const handleAssign = async (complaintId: string, assignedToId: string) => {
+    setAssigning(complaintId);
+    try {
+      await api.put(`/complaints/${complaintId}`, { assignedToId: assignedToId || null });
+      refetch();
+      toast.success(assignedToId ? "Complaint assigned" : "Complaint unassigned");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to assign complaint");
+    } finally {
+      setAssigning(null);
+    }
+  };
 
   const set = (field: keyof typeof emptyForm) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -169,7 +185,19 @@ export default function ComplaintsPage() {
                           {c.statusLabel}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-xs text-gray-600 hidden lg:table-cell">{c.assignedTo}</td>
+                      <td className="px-4 py-3 text-xs text-gray-600 hidden lg:table-cell">
+                        <select
+                          value={c.assignedToId ?? ""}
+                          disabled={assigning === c.id}
+                          onChange={(e) => handleAssign(c.id, e.target.value)}
+                          className="border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400 disabled:opacity-50"
+                        >
+                          <option value="">Unassigned</option>
+                          {teamMembers.map((m) => (
+                            <option key={m.id} value={m.id}>{m.name}</option>
+                          ))}
+                        </select>
+                      </td>
                       <td className="px-4 py-3 text-xs text-gray-500 hidden lg:table-cell">{c.createdAt}</td>
                     </tr>
                   ))}
