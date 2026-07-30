@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok, err, requireSession, toLabel, toDate } from "@/lib/api-helpers";
 import { LeadStatus, LeadSource } from "@prisma/client";
+import { validateText, validatePhone, validateEmail } from "@/lib/validation";
 
 export async function GET(
   _req: NextRequest,
@@ -47,6 +48,23 @@ export async function PUT(
 
   const { id } = await params;
   const body = await request.json();
+
+  if (body.name !== undefined) {
+    const nameError = validateText(body.name, "Name");
+    if (nameError) return err(nameError);
+  }
+  if (body.company) {
+    const companyError = validateText(body.company, "Company");
+    if (companyError) return err(companyError);
+  }
+  if (body.phone !== undefined) {
+    const phoneError = validatePhone(body.phone, "Phone");
+    if (phoneError) return err(phoneError);
+  }
+  if (body.email !== undefined) {
+    const emailError = validateEmail(body.email, "Email");
+    if (emailError) return err(emailError);
+  }
 
   const lead = await prisma.lead.update({
     where: { id },

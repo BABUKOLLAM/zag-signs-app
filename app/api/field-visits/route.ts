@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok, err, requireSession, toLabel, toDate } from "@/lib/api-helpers";
 import { VisitType, VisitOutcome } from "@prisma/client";
+import { validateText, isNegative } from "@/lib/validation";
 
 function shape(v: Awaited<ReturnType<typeof prisma.fieldVisit.findFirst>> & {
   employee?: { name: string } | null;
@@ -63,9 +64,24 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const { date, visitType, outcome, customerName, location, startTime, endTime, orderValue, nextAction, notes, employeeId, customerId } = body;
 
-  if (!customerName?.trim()) return err("Customer name is required");
+  const customerNameError = validateText(customerName, "Customer Name");
+  if (customerNameError) return err(customerNameError);
   if (!visitType) return err("Visit type is required");
   if (!outcome) return err("Outcome is required");
+  if (location) {
+    const locationError = validateText(location, "Location");
+    if (locationError) return err(locationError);
+  }
+  if (nextAction) {
+    const nextActionError = validateText(nextAction, "Next Action");
+    if (nextActionError) return err(nextActionError);
+  }
+  if (notes) {
+    const notesError = validateText(notes, "Visit Notes");
+    if (notesError) return err(notesError);
+  }
+  if (isNegative(orderValue)) return err("Order Value cannot be negative");
+  if (startTime && endTime && endTime <= startTime) return err("End Time must be after Start Time");
 
   const visit = await prisma.fieldVisit.create({
     data: {

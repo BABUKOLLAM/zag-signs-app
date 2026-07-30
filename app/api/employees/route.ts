@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok, err, requireSession, requirePathAccess, autoNo } from "@/lib/api-helpers";
 import { hasRole } from "@/lib/bulk-helpers";
+import { validateText, validatePhone, validateEmail, isNegative } from "@/lib/validation";
 
 // Employee records carry payroll data — restrict writes to HR / mgmt / admins.
 const EMP_ROLES = ["MD", "AVP", "IT Admin", "HR", "Consultant"];
@@ -56,18 +57,25 @@ export async function POST(request: NextRequest) {
     name?: string; designation?: string; department?: string; branch?: string;
     phone?: string; email?: string; dateOfJoining?: string; salary?: number;
   };
-  if (!body.name?.trim())        return err("Name is required");
-  if (!body.designation?.trim()) return err("Designation is required");
+  const nameError = validateText(body.name, "Full Name");
+  if (nameError) return err(nameError);
+  const designationError = validateText(body.designation, "Designation");
+  if (designationError) return err(designationError);
   if (!body.department?.trim())  return err("Department is required");
   if (!body.branch)              return err("Branch is required");
+  const phoneError = validatePhone(body.phone, "Phone");
+  if (phoneError) return err(phoneError);
+  const emailError = validateEmail(body.email, "Email");
+  if (emailError) return err(emailError);
+  if (isNegative(body.salary)) return err("Salary cannot be negative");
 
   const count = await prisma.employee.count();
   const employeeNo = autoNo("EMP-", count);
 
   const emp = await prisma.employee.create({
     data: {
-      employeeNo, name: body.name.trim(),
-      designation: body.designation.trim(),
+      employeeNo, name: (body.name as string).trim(),
+      designation: (body.designation as string).trim(),
       department: body.department.trim(),
       branch: body.branch as never,
       phone: body.phone || null,

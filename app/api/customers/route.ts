@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok, err, requireSession, toDate, autoNo } from "@/lib/api-helpers";
+import { validateText, validatePhone, validateEmail } from "@/lib/validation";
 
 function shape(c: Awaited<ReturnType<typeof prisma.customer.findFirst>>) {
   if (!c) return null;
@@ -75,10 +76,16 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const { name, company, phone, email, branch, address, gstNo, creditLimit } = body;
 
-  if (!name?.trim()) return err("Name is required");
-  if (!company?.trim()) return err("Company is required");
+  const nameError = validateText(name, "Name");
+  if (nameError) return err(nameError);
+  const companyError = validateText(company, "Company");
+  if (companyError) return err(companyError);
   if (!phone?.trim()) return err("Phone is required");
+  const phoneError = validatePhone(phone, "Phone");
+  if (phoneError) return err(phoneError);
   if (!branch) return err("Branch is required");
+  const emailError = validateEmail(email, "Email");
+  if (emailError) return err(emailError);
 
   const count = await prisma.customer.count();
   const customerNo = autoNo("C", count);

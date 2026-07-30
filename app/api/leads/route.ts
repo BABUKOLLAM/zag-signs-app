@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok, err, requireSession, toLabel, toDate, autoNo } from "@/lib/api-helpers";
 import { LeadStatus, LeadSource } from "@prisma/client";
+import { validateText, validatePhone, validateEmail } from "@/lib/validation";
 
 function shape(l: Awaited<ReturnType<typeof prisma.lead.findFirst>>) {
   if (!l) return null;
@@ -77,9 +78,18 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const { name, company, phone, email, branch, status, source, value, followUpDate, notes, assignedToId } = body;
 
-  if (!name?.trim()) return err("Name is required");
+  const nameError = validateText(name, "Name");
+  if (nameError) return err(nameError);
   if (!phone?.trim()) return err("Phone is required");
+  const phoneError = validatePhone(phone, "Phone");
+  if (phoneError) return err(phoneError);
   if (!branch) return err("Branch is required");
+  if (company) {
+    const companyError = validateText(company, "Company");
+    if (companyError) return err(companyError);
+  }
+  const emailError = validateEmail(email, "Email");
+  if (emailError) return err(emailError);
 
   const count = await prisma.lead.count();
   const leadNo = autoNo("L", count);

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok, err, requireSession, toLabel, toDate } from "@/lib/api-helpers";
+import { validateText } from "@/lib/validation";
 import { TaskStatus, TaskPriority } from "@prisma/client";
 
 function shape(t: Awaited<ReturnType<typeof prisma.task.findFirst>> & {
@@ -69,12 +70,17 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const { title, description, priority, dueDate, assignedToId, relatedTo, relatedType } = body;
 
-  if (!title?.trim()) return err("Title is required");
+  const titleError = validateText(title, "Task Title");
+  if (titleError) return err(titleError);
+  if (relatedTo) {
+    const relatedError = validateText(relatedTo, "Related To");
+    if (relatedError) return err(relatedError);
+  }
 
   const task = await prisma.task.create({
     data: {
       title: title.trim(),
-      description: description?.trim() ?? null,
+      description: description?.trim() || null,
       priority: (priority as TaskPriority) ?? TaskPriority.MEDIUM,
       dueDate: dueDate ? new Date(dueDate) : null,
       assignedToId: assignedToId ?? null,
