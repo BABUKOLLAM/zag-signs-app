@@ -79,7 +79,7 @@ export default function MachinesPage() {
       setForm(BLANK_MACHINE);
       setShowForm(false);
       fetchData();
-    } catch (e) { toast.error("Failed to add machine"); }
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Failed to add machine"); }
     finally { setLoading(false); }
   };
 

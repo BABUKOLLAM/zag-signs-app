@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { requirePathAccess, ok, err } from "@/lib/api-helpers";
 import { prisma } from "@/lib/prisma";
+import { validateText, isNegative } from "@/lib/validation";
 
 function fjpNo(count: number) {
   const d = new Date();
@@ -54,6 +55,24 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { routes = [], notes, status = "SUBMITTED" } = body;
     const userId = (session.user as any).id;
+
+    if (notes) {
+      const notesError = validateText(notes, "Additional Notes");
+      if (notesError) return err(notesError);
+    }
+    for (const r of routes) {
+      const fromError = validateText(r.fromPlace, "From");
+      if (fromError) return err(fromError);
+      const toError = validateText(r.toPlace, "To");
+      if (toError) return err(toError);
+      const purposeError = validateText(r.purpose, "Purpose");
+      if (purposeError) return err(purposeError);
+      if (r.customerOrProspect) {
+        const custError = validateText(r.customerOrProspect, "Customer / Prospect");
+        if (custError) return err(custError);
+      }
+      if (isNegative(r.estimatedKm)) return err("Estimated KM must be greater than 0");
+    }
 
     const submissionWindow = getSubmissionWindow();
 

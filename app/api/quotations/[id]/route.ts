@@ -128,9 +128,11 @@ export async function PUT(
     const items = body.items as { description: string; qty: number; unit: string; unitPrice: number }[];
     const taxRate  = Number(body.taxRate  ?? 0);
     const discount = Number(body.discount ?? 0);
+    if (discount < 0) return err("Discount cannot be negative");
     const subtotal = items.reduce((s, i) => s + Number(i.qty) * Number(i.unitPrice), 0);
     const tax      = Math.round(subtotal * taxRate) / 100;
     const total    = subtotal + tax - discount;
+    if (total < 0) return err("Discount cannot exceed the subtotal plus tax — total amount cannot be negative");
 
     Object.assign(scalar, { subtotal, taxRate, tax, discount, total });
 

@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { requireSession, ok, err } from "@/lib/api-helpers";
 import { prisma } from "@/lib/prisma";
+import { validateText, isNegative } from "@/lib/validation";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -19,6 +20,20 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!session) return err("Unauthorized", 401);
   try {
     const body = await req.json();
+    if (body.name) {
+      const nameError = validateText(body.name, "Machine name");
+      if (nameError) return err(nameError);
+    }
+    if (body.model) {
+      const modelError = validateText(body.model, "Model / Make");
+      if (modelError) return err(modelError);
+    }
+    if (body.location) {
+      const locationError = validateText(body.location, "Location");
+      if (locationError) return err(locationError);
+    }
+    if (isNegative(body.hourlyRate)) return err("Hourly Rate cannot be negative");
+    if (isNegative(body.capacityPerHour)) return err("Capacity/hr cannot be negative");
     const machine = await prisma.machine.update({
       where: { id },
       data: {

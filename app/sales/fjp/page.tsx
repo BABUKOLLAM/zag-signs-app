@@ -59,8 +59,8 @@ export default function FJPPage() {
       setRoutes([newRoute()]);
       setNotes("");
       fetchFJPs();
-    } catch {
-      toast.error("Submission failed. Please try again.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Submission failed. Please try again.");
     } finally {
       setSubmitting(false);
     }

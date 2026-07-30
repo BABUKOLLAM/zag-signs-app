@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { requireSession, ok, err } from "@/lib/api-helpers";
 import { prisma } from "@/lib/prisma";
 import { normBranch } from "@/lib/bulk-helpers";
+import { validateText, isNegative } from "@/lib/validation";
 
 const CAT_CODES: Record<string, string> = {
   "Printing":         "PRT",
@@ -65,6 +66,19 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
+
+    const nameError = validateText(body.name, "Machine name");
+    if (nameError) return err(nameError);
+    if (body.model) {
+      const modelError = validateText(body.model, "Model / Make");
+      if (modelError) return err(modelError);
+    }
+    if (body.location) {
+      const locationError = validateText(body.location, "Location");
+      if (locationError) return err(locationError);
+    }
+    if (isNegative(body.hourlyRate)) return err("Hourly Rate cannot be negative");
+    if (isNegative(body.capacityPerHour)) return err("Capacity/hr cannot be negative");
 
     // Generate structured machine code: [BRANCH]-[CAT]-[SEQ]
     const machineNo = await genMachineCode(body.branch || "TVM", body.type || "Other");

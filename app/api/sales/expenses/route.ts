@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { requirePathAccess, ok, err } from "@/lib/api-helpers";
 import { prisma } from "@/lib/prisma";
+import { validateText, isNegative } from "@/lib/validation";
 
 function expNo(count: number) {
   const d = new Date();
@@ -60,6 +61,13 @@ export async function POST(req: NextRequest) {
 
     if (!expenseType || !description) {
       return err("expenseType and description are required");
+    }
+    const descError = validateText(description, "Description / Purpose");
+    if (descError) return err(descError);
+    if (isNegative(advanceReceived)) return err("Advance Received cannot be negative");
+    for (const i of items) {
+      if (isNegative(i.km)) return err("KM cannot be negative");
+      if (isNegative(i.amount)) return err("Amount cannot be negative");
     }
 
     const count = await prisma.expenseReport.count();

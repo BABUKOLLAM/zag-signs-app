@@ -113,7 +113,7 @@ export default function ExpensesPage() {
       setUploadedLinks([]);
       setForm({ expenseType: "TRAVEL", description: "", fjpId: "", advanceReceived: "" });
       fetchData();
-    } catch { toast.error("Submission failed."); }
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Submission failed."); }
     finally { setSubmitting(false); }
   };
 

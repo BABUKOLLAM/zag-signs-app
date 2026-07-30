@@ -124,10 +124,16 @@ export async function POST(request: NextRequest) {
 
   if (!customerId && !leadId) return err("Customer or Lead is required");
   if (!items.length) return err("At least one item is required");
+  if (Number(discount) < 0) return err("Discount cannot be negative");
+  if (validUntil) {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    if (new Date(validUntil) < today) return err("Valid Until date cannot be in the past");
+  }
 
   const subtotal = items.reduce((s, i) => s + Number(i.qty) * Number(i.unitPrice), 0);
   const tax      = Math.round(subtotal * Number(taxRate)) / 100;
   const total    = subtotal + tax - Number(discount);
+  if (total < 0) return err("Discount cannot exceed the subtotal plus tax — total amount cannot be negative");
 
   // Generate client code from customer company name
   let code = "";

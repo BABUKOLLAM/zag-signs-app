@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok, err, requireSession, toDate } from "@/lib/api-helpers";
+import { validateText, isNegative } from "@/lib/validation";
 
 function stockStatus(current: number, minimum: number): string {
   if (current <= 0)               return "Out";
@@ -71,12 +72,19 @@ export async function POST(request: NextRequest) {
     branch?: string;
   };
 
-  if (!body.name?.trim())     return err("name is required");
+  const nameError = validateText(body.name, "Material name");
+  if (nameError) return err(nameError);
   if (!body.category?.trim()) return err("category is required");
+  if (body.supplier) {
+    const supplierError = validateText(body.supplier, "Supplier");
+    if (supplierError) return err(supplierError);
+  }
+  if (isNegative(body.currentStock)) return err("Opening Stock cannot be negative");
+  if (isNegative(body.minimumStock)) return err("Reorder Level cannot be negative");
 
   const material = await prisma.material.create({
     data: {
-      name:         body.name.trim(),
+      name:         (body.name as string).trim(),
       category:     body.category.trim(),
       unit:         body.unit        ?? "Nos",
       currentStock: body.currentStock ?? 0,

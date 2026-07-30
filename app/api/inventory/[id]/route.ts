@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok, err, requireSession } from "@/lib/api-helpers";
+import { validateText, isNegative } from "@/lib/validation";
 
 export async function PUT(
   request: NextRequest,
@@ -21,6 +22,16 @@ export async function PUT(
 
   const m = await prisma.material.findUnique({ where: { id } });
   if (!m) return err("Material not found", 404);
+
+  if (body.name) {
+    const nameError = validateText(body.name, "Material name");
+    if (nameError) return err(nameError);
+  }
+  if (body.supplier) {
+    const supplierError = validateText(body.supplier, "Supplier");
+    if (supplierError) return err(supplierError);
+  }
+  if (isNegative(body.minimumStock)) return err("Reorder Level cannot be negative");
 
   const updated = await prisma.material.update({
     where: { id },
