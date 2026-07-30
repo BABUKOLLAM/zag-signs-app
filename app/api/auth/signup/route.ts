@@ -4,6 +4,7 @@ import { ok, err } from "@/lib/api-helpers";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { sendApprovalEmail } from "@/lib/email";
+import { validateText, validateEmail, validatePhone } from "@/lib/validation";
 
 const VALID_ROLES = ["MD","AVP","BUSINESS_MANAGER","SALES_EXECUTIVE","CRES","PRODUCTION","ACCOUNTS","HR","IT_ADMIN","DESIGNER"];
 const VALID_BRANCHES = ["HO","TVM","KTYM","EKM","CLT"];
@@ -28,8 +29,13 @@ export async function POST(request: NextRequest) {
 
   const { name, email, password, role, branch, phone } = body;
 
-  if (!name?.trim())    return err("Name is required");
+  const nameError = validateText(name, "Full Name");
+  if (nameError) return err(nameError);
   if (!email?.trim())   return err("Email is required");
+  const emailError = validateEmail(email, "Work Email");
+  if (emailError) return err(emailError);
+  const phoneError = validatePhone(phone, "Phone");
+  if (phoneError) return err(phoneError);
   if (!password)        return err("Password is required");
   if (password.length < 8) return err("Password must be at least 8 characters");
   if (!role || !VALID_ROLES.includes(role)) return err("Valid role is required");
@@ -48,7 +54,7 @@ export async function POST(request: NextRequest) {
 
   await prisma.user.create({
     data: {
-      name:          name.trim(),
+      name:          (name as string).trim(),
       email:         normalEmail,
       password:      hashed,
       role:          role as never,
@@ -76,7 +82,7 @@ export async function POST(request: NextRequest) {
       sendApprovalEmail({
         toEmail:        a.email,
         toName:         a.name,
-        applicantName:  name.trim(),
+        applicantName:  (name as string).trim(),
         applicantEmail: normalEmail,
         applicantRole:  ROLE_LABELS[role] ?? role,
         approveUrl:     approve,
@@ -88,7 +94,7 @@ export async function POST(request: NextRequest) {
     await sendApprovalEmail({
       toEmail:        process.env.EMAIL_USER ?? "admin@zagsigns.com",
       toName:         "Admin",
-      applicantName:  name.trim(),
+      applicantName:  (name as string).trim(),
       applicantEmail: normalEmail,
       applicantRole:  ROLE_LABELS[role] ?? role,
       approveUrl:     approve,
