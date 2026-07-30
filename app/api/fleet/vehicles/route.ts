@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok, err, requirePathAccess } from "@/lib/api-helpers";
 
 export async function GET(req: NextRequest) {
   const session = await requirePathAccess("/fleet");
-  if (!session) return NextResponse.json(err("Forbidden"), { status: 403 });
+  if (!session) return err("Forbidden", 403);
   const { searchParams } = new URL(req.url);
   const branch = searchParams.get("branch") || undefined;
   const rows = await prisma.vehicle.findMany({
@@ -15,12 +15,12 @@ export async function GET(req: NextRequest) {
     },
     orderBy: { vehicleNo: "asc" },
   });
-  return NextResponse.json(ok(rows));
+  return ok(rows);
 }
 
 export async function POST(req: NextRequest) {
   const session = await requirePathAccess("/fleet");
-  if (!session) return NextResponse.json(err("Forbidden"), { status: 403 });
+  if (!session) return err("Forbidden", 403);
   const body = await req.json();
   const row = await prisma.vehicle.create({
     data: {
@@ -36,5 +36,5 @@ export async function POST(req: NextRequest) {
       notes: body.notes ?? null,
     },
   });
-  return NextResponse.json(ok(row), { status: 201 });
+  return ok(row, 201);
 }

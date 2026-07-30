@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok, err, requirePathAccess } from "@/lib/api-helpers";
 
 export async function GET(req: NextRequest) {
   const session = await requirePathAccess("/fleet");
-  if (!session) return NextResponse.json(err("Forbidden"), { status: 403 });
+  if (!session) return err("Forbidden", 403);
   const { searchParams } = new URL(req.url);
   const vehicleId = searchParams.get("vehicleId") || undefined;
   const rows = await prisma.fleetTrip.findMany({
@@ -16,12 +16,12 @@ export async function GET(req: NextRequest) {
     orderBy: { startTime: "desc" },
     take: 100,
   });
-  return NextResponse.json(ok(rows));
+  return ok(rows);
 }
 
 export async function POST(req: NextRequest) {
   const session = await requirePathAccess("/fleet");
-  if (!session) return NextResponse.json(err("Forbidden"), { status: 403 });
+  if (!session) return err("Forbidden", 403);
   const body = await req.json();
   const count = await prisma.fleetTrip.count();
   const tripNo = `TRIP-${new Date().getFullYear()}-${String(count + 1).padStart(4, "0")}`;
@@ -41,5 +41,5 @@ export async function POST(req: NextRequest) {
       notes: body.notes ?? null,
     },
   });
-  return NextResponse.json(ok(row), { status: 201 });
+  return ok(row, 201);
 }

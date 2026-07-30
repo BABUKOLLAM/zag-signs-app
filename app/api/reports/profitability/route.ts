@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -6,7 +6,7 @@ import { ok, err } from "@/lib/api-helpers";
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json(err("Unauthorized"), { status: 401 });
+  if (!session) return err("Unauthorized", 401);
   const { searchParams } = new URL(req.url);
   const branch = searchParams.get("branch") || undefined;
   const from = searchParams.get("from");
@@ -74,7 +74,7 @@ export async function GET(req: NextRequest) {
     };
   });
 
-  return NextResponse.json(ok({
+  return ok({
     jobs,
     branchRevenue,
     branchCollections,
@@ -84,5 +84,5 @@ export async function GET(req: NextRequest) {
       totalProfit: jobs.reduce((s, j) => s + j.grossProfit, 0),
       avgMarginPct: jobs.length ? jobs.reduce((s, j) => s + j.grossMarginPct, 0) / jobs.length : 0,
     },
-  }));
+  });
 }

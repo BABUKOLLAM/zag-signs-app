@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -6,7 +6,7 @@ import { ok, err } from "@/lib/api-helpers";
 
 export async function GET(_req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json(err("Unauthorized"), { status: 401 });
+  if (!session) return err("Unauthorized", 401);
 
   const now = new Date();
   const d90 = new Date(now); d90.setDate(d90.getDate() - 90);
@@ -105,11 +105,11 @@ export async function GET(_req: NextRequest) {
   });
   const revenueTrend = Object.entries(weekMap).map(([week, revenue]) => ({ week, revenue }));
 
-  return NextResponse.json(ok({
+  return ok({
     leadPriority,
     churnRisk,
     branchPerf,
     revenueTrend,
     summary: { totalLeads, openOrders, openComplaints, openTickets },
-  }));
+  });
 }

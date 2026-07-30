@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -6,7 +6,7 @@ import { ok, err } from "@/lib/api-helpers";
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json(err("Unauthorized"), { status: 401 });
+  if (!session) return err("Unauthorized", 401);
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status") || undefined;
   const priority = searchParams.get("priority") || undefined;
@@ -22,12 +22,12 @@ export async function GET(req: NextRequest) {
     },
     orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
   });
-  return NextResponse.json(ok(rows));
+  return ok(rows);
 }
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json(err("Unauthorized"), { status: 401 });
+  if (!session) return err("Unauthorized", 401);
   const body = await req.json();
   const count = await prisma.serviceTicket.count();
   const ticketNo = `SVC-${new Date().getFullYear()}-${String(count + 1).padStart(4, "0")}`;
@@ -47,5 +47,5 @@ export async function POST(req: NextRequest) {
       assignedTo: { select: { name: true } },
     },
   });
-  return NextResponse.json(ok(row), { status: 201 });
+  return ok(row, 201);
 }

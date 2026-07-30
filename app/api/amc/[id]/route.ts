@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok, err, requirePathAccess } from "@/lib/api-helpers";
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await requirePathAccess("/amc");
-  if (!session) return NextResponse.json(err("Forbidden"), { status: 403 });
+  if (!session) return err("Forbidden", 403);
   const { id } = await params;
   const body = await req.json();
   const row = await prisma.aMCContract.update({
@@ -16,5 +16,5 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       ...(body.notes !== undefined && { notes: body.notes }),
     },
   });
-  return NextResponse.json(ok(row));
+  return ok(row);
 }

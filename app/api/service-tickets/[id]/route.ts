@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -6,7 +6,7 @@ import { ok, err } from "@/lib/api-helpers";
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json(err("Unauthorized"), { status: 401 });
+  if (!session) return err("Unauthorized", 401);
   const { id } = await params;
   const body = await req.json();
   const data: any = {};
@@ -20,5 +20,5 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     data,
     include: { customer: { select: { name: true } }, assignedTo: { select: { name: true } } },
   });
-  return NextResponse.json(ok(row));
+  return ok(row);
 }

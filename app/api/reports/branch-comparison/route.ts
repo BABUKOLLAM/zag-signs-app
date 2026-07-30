@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -8,7 +8,7 @@ const BRANCHES = ["HO", "TVM", "KTYM", "EKM", "CLT"];
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json(err("Unauthorized"), { status: 401 });
+  if (!session) return err("Unauthorized", 401);
 
   const { searchParams } = new URL(req.url);
   const from = searchParams.get("from");
@@ -79,5 +79,5 @@ export async function GET(req: NextRequest) {
     branches[0]
   ).branch;
 
-  return NextResponse.json(ok({ branches, topBranch }));
+  return ok({ branches, topBranch });
 }

@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok, err, requirePathAccess } from "@/lib/api-helpers";
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await requirePathAccess("/projects");
-  if (!session) return NextResponse.json(err("Forbidden"), { status: 403 });
+  if (!session) return err("Forbidden", 403);
   const { id } = await params;
   const body = await req.json();
   const row = await prisma.project.update({
@@ -17,13 +17,13 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     },
     include: { customer: { select: { name: true } }, manager: { select: { name: true } }, milestones: true },
   });
-  return NextResponse.json(ok(row));
+  return ok(row);
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await requirePathAccess("/projects");
-  if (!session) return NextResponse.json(err("Forbidden"), { status: 403 });
+  if (!session) return err("Forbidden", 403);
   const { id } = await params;
   await prisma.project.delete({ where: { id } });
-  return NextResponse.json(ok({ deleted: true }));
+  return ok({ deleted: true });
 }
