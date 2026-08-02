@@ -3,20 +3,23 @@ import { prisma } from "@/lib/prisma";
 import { sendFollowUpReminderEmail, sendDARReminderEmail, sendClaimsReminderEmail } from "@/lib/email-service";
 
 
-export async function POST(req: NextRequest) {
+async function handleReminders(req: NextRequest) {
   try {
     // Only allow requests from internal cron or with API key
     const authHeader = req.headers.get("authorization");
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     }
 
     let sentCount = 0;
     let errors: any[] = [];
 
+    // Server clock runs in UTC — shift the whole timestamp to IST (UTC+5:30)
+    // before deriving any hour/day/date so day-boundary checks below match Kerala local time.
+    const istNow = new Date(Date.now() + 5.5 * 60 * 60 * 1000);
+    const today = new Date(Date.UTC(istNow.getUTCFullYear(), istNow.getUTCMonth(), istNow.getUTCDate()));
+
     // 1. Send follow-up reminder emails
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
 
     const overdueReminders = await prisma.followUpReminder.findMany({
       where: {
@@ -59,20 +62,18 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 2. Send DAR reminder emails to all sales staff daily at 9 PM
-    const currentHour = new Date().getHours();
-    if (currentHour === 21) {
+    // 2. Send DAR reminder emails to all sales staff daily at 9 PM IST.
+    if (istNow.getUTCHours() === 21) {
       const salesUsers = await prisma.user.findMany({
         where: {
           role: { in: ["SALES_EXECUTIVE", "CRES", "BUSINESS_MANAGER"] },
         },
       });
 
-      const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-      const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-      const daysOpen = today.getDate();
+      const daysInMonth = new Date(Date.UTC(istNow.getUTCFullYear(), istNow.getUTCMonth() + 1, 0)).getUTCDate();
+      const daysOpen = istNow.getUTCDate();
       const daysLeft = daysInMonth - daysOpen;
-      const claimsWindowStatus = today.getDate() <= 10 ? "open" : "closed";
+      const claimsWindowStatus = daysOpen <= 10 ? "open" : "closed";
 
       for (const user of salesUsers) {
         const result = await sendDARReminderEmail({
@@ -96,7 +97,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Send claims window reminder every weekend
-    const dayOfWeek = today.getDay();
+    const dayOfWeek = istNow.getUTCDay();
     if (dayOfWeek === 0 || dayOfWeek === 6) {
       const salesUsers = await prisma.user.findMany({
         where: {
@@ -104,7 +105,7 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      const dayOfMonth = today.getDate();
+      const dayOfMonth = istNow.getUTCDate();
       const daysLeft = Math.max(11 - dayOfMonth, 0);
 
       for (const user of salesUsers) {
@@ -150,4 +151,14 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// Vercel Cron triggers this via GET, sending `Authorization: Bearer $CRON_SECRET` automatically.
+export async function GET(req: NextRequest) {
+  return handleReminders(req);
+}
+
+// Kept for manual/external triggering with the same secret.
+export async function POST(req: NextRequest) {
+  return handleReminders(req);
 }

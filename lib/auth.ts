@@ -39,13 +39,39 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.email || !credentials?.password) return null;
         const normalizedEmail = credentials.email.trim().toLowerCase();
 
+        const MAX_ATTEMPTS = 5;
+        const LOCKOUT_MINUTES = 15;
+
         // 1. Try database first
         try {
           const dbUser = await prisma.user.findUnique({ where: { email: normalizedEmail } });
           if (dbUser) {
             if (dbUser.status !== "ACTIVE" || !dbUser.isActive) return null;
+
+            if (dbUser.lockedUntil && dbUser.lockedUntil > new Date()) return null;
+
             const match = await bcrypt.compare(credentials.password, dbUser.password);
-            if (!match) return null;
+            if (!match) {
+              const attempts = dbUser.failedLoginAttempts + 1;
+              await prisma.user.update({
+                where: { id: dbUser.id },
+                data: {
+                  failedLoginAttempts: attempts,
+                  lockedUntil: attempts >= MAX_ATTEMPTS
+                    ? new Date(Date.now() + LOCKOUT_MINUTES * 60 * 1000)
+                    : null,
+                },
+              });
+              return null;
+            }
+
+            if (dbUser.failedLoginAttempts > 0 || dbUser.lockedUntil) {
+              await prisma.user.update({
+                where: { id: dbUser.id },
+                data: { failedLoginAttempts: 0, lockedUntil: null },
+              });
+            }
+
             return {
               id:     dbUser.id,
               name:   dbUser.name,

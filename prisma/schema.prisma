@@ -198,6 +198,8 @@ model User {
   tokenExpiry        DateTime?
   resetToken         String?   @unique
   resetTokenExpiry   DateTime?
+  failedLoginAttempts Int      @default(0)
+  lockedUntil         DateTime?
   reportingToId  String?
   reportingTo    User?     @relation("Hierarchy", fields: [reportingToId], references: [id])
   reportees      User[]    @relation("Hierarchy")
