@@ -64,6 +64,7 @@ const SECTIONS = [
       { href: "/accounts",     label: "Accounts",         sub: "P&L & ledger",          icon: Wallet,    grad: "from-indigo-500 to-indigo-700" },
       { href: "/collections",  label: "Collections",      sub: "Receipts & outstanding", icon: Wallet,    grad: "from-teal-500 to-teal-700" },
       { href: "/job-costing",  label: "Job Costing",      sub: "Cost vs margin",         icon: DollarSign, grad: "from-amber-500 to-amber-600" },
+      { href: "/budgets",      label: "Budgeting",        sub: "Budget vs actual",       icon: Wallet,     grad: "from-green-500 to-green-700" },
     ],
   },
   {

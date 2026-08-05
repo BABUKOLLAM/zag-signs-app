@@ -250,6 +250,7 @@ model User {
   projectsManaged       Project[]         @relation("ProjectManager")
   approvalsCreated      DigitalApproval[] @relation("ApprovalCreator")
   serviceTicketsAssigned ServiceTicket[]  @relation("ServiceAssignee")
+  budgetsCreated        Budget[]          @relation("BudgetCreator")
 
   @@map("users")
 }
@@ -1804,4 +1805,25 @@ model ServiceTicket {
   @@index([status])
   @@index([priority])
   @@map("service_tickets")
+}
+
+// ─── BUDGETING ─────────────────────────────────────────────────────────────
+
+model Budget {
+  id             String   @id @default(cuid())
+  branch         String
+  category       String   // free-text cost category, e.g. Materials, Labour, Marketing, Overheads — mirrors JobCostLine.category
+  fiscalYear     Int
+  month          Int      // 1-12
+  budgetedAmount Float    @default(0)
+  actualAmount   Float    @default(0)
+  notes          String?
+  createdById    String?
+  createdBy      User?    @relation("BudgetCreator", fields: [createdById], references: [id])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([branch, category, fiscalYear, month])
+  @@index([fiscalYear, month])
+  @@map("budgets")
 }

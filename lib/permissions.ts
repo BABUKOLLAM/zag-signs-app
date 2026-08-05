@@ -31,7 +31,7 @@ const ROLE_PATHS: Record<Role, string[]> = {
     "/admin/settings", "/admin/users", "/admin/privileges",
     "/admin/database", "/admin/audit",
     "/amc", "/digital-approvals", "/fleet", "/installation",
-    "/job-costing", "/procurement", "/projects", "/sales", "/tender",
+    "/job-costing", "/procurement", "/projects", "/sales", "/tender", "/budgets",
   ],
 
   AVP:        ["*"],
@@ -47,7 +47,7 @@ const ROLE_PATHS: Record<Role, string[]> = {
     "/complaints", "/tasks", "/hr", "/field-visits",
     "/reports", "/reports/tax", "/ai-insights",
     "/amc", "/digital-approvals", "/fleet", "/installation",
-    "/job-costing", "/procurement", "/projects", "/sales", "/tender",
+    "/job-costing", "/procurement", "/projects", "/sales", "/tender", "/budgets",
   ],
 
   "Sales Executive": [
@@ -75,7 +75,7 @@ const ROLE_PATHS: Record<Role, string[]> = {
   Accounts: [
     "/kpi", "/customers", "/accounts", "/collections",
     "/reports", "/reports/tax", "/tasks",
-    "/sales", "/job-costing", "/amc",
+    "/sales", "/job-costing", "/amc", "/budgets",
   ],
 
   HR: ["/hr", "/tasks"],
@@ -131,6 +131,7 @@ export const MODULE_INTRODUCED: Record<string, string> = {
   "/projects": "2026-07-06",
   "/sales": "2026-07-06",
   "/tender": "2026-07-06",
+  "/budgets": "2026-08-05",
 };
 
 /** Modules introduced after `since` that a custom override doesn't include. */
@@ -155,7 +156,7 @@ export const ALL_MODULE_PATHS = [
   "/admin/settings", "/admin/privileges",
   "/help",
   "/amc", "/digital-approvals", "/fleet", "/installation",
-  "/job-costing", "/procurement", "/projects", "/sales", "/tender",
+  "/job-costing", "/procurement", "/projects", "/sales", "/tender", "/budgets",
 ];
 
 /** True if a path is a guarded module page. */
@@ -202,6 +203,7 @@ export const MODULE_GROUPS: { group: string; color: string; items: { path: strin
     items: [
       { path: "/accounts",    label: "Accounts / Invoices" },
       { path: "/collections", label: "Collections" },
+      { path: "/budgets",     label: "Budgeting" },
     ],
   },
   {
