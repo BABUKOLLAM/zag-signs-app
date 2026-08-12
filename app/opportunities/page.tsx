@@ -60,8 +60,11 @@ export default function OpportunitiesPage() {
   const [saving, setSaving] = useState(false);
   const [converting, setConverting] = useState<string | null>(null);
 
+  // Deliberately NOT passing `stage` here — the funnel below counts every stage
+  // from this same result set, so filtering it server-side by the selected
+  // stage would collapse every other stage's count to 0. The table applies
+  // the stage filter client-side instead (see the .filter() before .map()).
   const { data, loading, error, refetch } = useApi<Opportunity[]>("/opportunities", {
-    stage:  filterStage  || undefined,
     branch: filterBranch || undefined,
     limit: 100,
   });
