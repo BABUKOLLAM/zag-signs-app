@@ -29,7 +29,7 @@ const ROLE_PATHS: Record<Role, string[]> = {
     "/reports", "/reports/tax", "/ai-insights",
     "/team-reports", "/documents",
     "/admin/settings", "/admin/users", "/admin/privileges",
-    "/admin/database", "/admin/audit",
+    "/admin/database", "/admin/audit", "/admin/error-log",
     "/amc", "/digital-approvals", "/fleet", "/installation",
     "/job-costing", "/procurement", "/projects", "/sales", "/tender",
   ],
@@ -122,6 +122,7 @@ export function homePath(): string {
  * override is never mistaken for a deliberate restriction.
  */
 export const MODULE_INTRODUCED: Record<string, string> = {
+  "/admin/error-log": "2026-08-12",
   "/amc": "2026-07-06",
   "/digital-approvals": "2026-07-06",
   "/fleet": "2026-07-06",
@@ -151,7 +152,7 @@ export const ALL_MODULE_PATHS = [
   "/accounts", "/collections", "/invoices",
   "/complaints", "/tasks", "/hr", "/field-visits",
   "/team-reports", "/reports", "/reports/tax", "/ai-insights", "/documents",
-  "/admin/users", "/admin/database", "/admin/audit",
+  "/admin/users", "/admin/database", "/admin/audit", "/admin/error-log",
   "/admin/settings", "/admin/privileges",
   "/help",
   "/amc", "/digital-approvals", "/fleet", "/installation",
@@ -231,6 +232,7 @@ export const MODULE_GROUPS: { group: string; color: string; items: { path: strin
       { path: "/admin/privileges", label: "Privilege Management" },
       { path: "/admin/database",   label: "Database Studio" },
       { path: "/admin/audit",      label: "Audit Logs" },
+      { path: "/admin/error-log",  label: "Error Log" },
     ],
   },
   {

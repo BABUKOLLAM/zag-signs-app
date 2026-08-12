@@ -114,6 +114,7 @@ const SECTIONS = [
       { href: "/admin/privileges", label: "Privileges",         sub: "Module permissions",  icon: Shield,    grad: "from-violet-500 to-violet-700" },
       { href: "/admin/database",   label: "Database Admin",     sub: "Tables & migrations", icon: Database,  grad: "from-red-500 to-red-700" },
       { href: "/admin/audit",      label: "Audit Trail",        sub: "All system actions",  icon: ScrollText, grad: "from-amber-500 to-amber-700" },
+      { href: "/admin/error-log",  label: "Error Log",          sub: "Unhandled server errors", icon: AlertCircle, grad: "from-red-500 to-orange-600" },
     ],
   },
   {

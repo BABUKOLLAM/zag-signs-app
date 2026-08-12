@@ -111,6 +111,7 @@ const groups = [
       { href: "/admin/privileges", label: "Privilege Settings", icon: Shield },
       { href: "/admin/database",   label: "Database Admin",     icon: Database },
       { href: "/admin/audit",      label: "Audit Trail",        icon: ScrollText },
+      { href: "/admin/error-log",  label: "Error Log",          icon: AlertCircle },
     ],
   },
   {

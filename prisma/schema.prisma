@@ -943,6 +943,23 @@ model AuditLog {
   @@map("audit_logs")
 }
 
+// Server-side crash log, populated by instrumentation.ts's onRequestError hook.
+// No third-party observability account exists yet — this is the interim,
+// self-hosted way to see what broke in production without flying blind.
+model ErrorLog {
+  id           String   @id @default(cuid())
+  message      String
+  digest       String?
+  stack        String?
+  path         String?
+  method       String?
+  routeType    String?
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("error_logs")
+}
+
 // ─── WORK ORDER TICKETS ───────────────────────────────────────────────────────
 // Front-office tickets opened from walk-in / phone / WhatsApp / quotation flow.
 // Distinct from `WorkOrder` (production tracking downstream of a SalesOrder).
