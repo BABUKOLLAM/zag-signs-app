@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
-import { currentAuditUserId } from "./audit-context";
+import { getServerSession } from "next-auth";
+import { authOptions } from "./auth";
 
 // Singleton pattern — prevents exhausting DB connections in dev (hot-reload creates new instances)
 const globalForPrisma = globalThis as unknown as { prisma: ReturnType<typeof withAudit> | undefined };
@@ -31,6 +32,32 @@ function safeJson(value: unknown): unknown {
   }
 }
 
+/**
+ * Who's making this request, right now — read directly via NextAuth's own
+ * getServerSession() rather than a custom AsyncLocalStorage.
+ *
+ * A custom AsyncLocalStorage populated inside requireSession() (in
+ * lib/api-helpers.ts) and read here was tried first and does NOT survive:
+ * enterWith() called inside a nested awaited helper does not propagate to
+ * the caller's continuation in this Next.js runtime, confirmed by live
+ * testing — setting it directly in a route handler's own top-level frame
+ * worked, setting it inside requireSession() did not, even with zero
+ * intervening awaits. Next's own request context (which getServerSession
+ * relies on via cookies()/headers()) is the one mechanism proven to survive
+ * all the way to this point, so we ask it directly instead of trying to
+ * shadow it with our own.
+ */
+async function currentUserId(): Promise<string | null> {
+  try {
+    const session = await getServerSession(authOptions);
+    return (session?.user as { id?: string } | undefined)?.id ?? null;
+  } catch {
+    // No request context at all (a maintenance script, a build step) — fine,
+    // the write below just attributes to "System".
+    return null;
+  }
+}
+
 function withAudit(client: PrismaClient) {
   return client.$extends({
     name: "audit-log",
@@ -58,7 +85,7 @@ function withAudit(client: PrismaClient) {
                 tableName: model,
                 recordId: String(recordId),
                 newValues: safeJson(result) as never,
-                userId: currentAuditUserId(),
+                userId: await currentUserId(),
               },
             });
           } catch {
