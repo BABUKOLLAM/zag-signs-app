@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "./auth";
 import { prisma } from "./prisma";
 import { canAccess, canAccessModules } from "./permissions";
+import { setAuditActor } from "./audit-context";
 
 export const ok = (data: unknown, status = 200) =>
   NextResponse.json({ data }, { status });
@@ -13,6 +14,7 @@ export const err = (message: string, status = 400) =>
 export async function requireSession() {
   const session = await getServerSession(authOptions);
   if (!session?.user) return null;
+  setAuditActor((session.user as { id?: string }).id ?? null);
   return session;
 }
 
@@ -25,6 +27,7 @@ export async function requireRole(allowed: string[] = []) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return null;
   if (allowed.length > 0 && !allowed.includes(session.user.role)) return null;
+  setAuditActor((session.user as { id?: string }).id ?? null);
   return session;
 }
 
@@ -55,7 +58,9 @@ export async function requireAnyPathAccess(paths: string[]) {
   const allowed = override
     ? paths.some((p) => canAccessModules(override.modules, p))
     : paths.some((p) => canAccess(role, p));
-  return allowed ? session : null;
+  if (!allowed) return null;
+  setAuditActor(userId ?? null);
+  return session;
 }
 
 /** Convert DB enum like IN_PRODUCTION → "In Production" */

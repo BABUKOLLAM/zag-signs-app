@@ -1,11 +1,9 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { ok, err } from "@/lib/api-helpers";
+import { ok, err, requireSession } from "@/lib/api-helpers";
 
 export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await requireSession();
   if (!session) return err("Unauthorized", 401);
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status") || undefined;
@@ -26,7 +24,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await requireSession();
   if (!session) return err("Unauthorized", 401);
   const body = await req.json();
   const count = await prisma.serviceTicket.count();
