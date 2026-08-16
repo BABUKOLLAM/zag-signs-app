@@ -9,7 +9,17 @@ export interface AuditActor {
 // enterWith() so every route that authenticates via them is covered without
 // having to individually wire an audit call into each of the ~100 mutating
 // API routes. Read by the Prisma $extends hook in lib/prisma.ts.
-export const auditContext = new AsyncLocalStorage<AuditActor>();
+//
+// Pinned to globalThis (same pattern as the Prisma singleton in lib/prisma.ts)
+// — Next.js's bundler can pull this module into more than one chunk, and
+// without a shared global each copy gets its own AsyncLocalStorage instance,
+// silently breaking propagation (setAuditActor writes to one instance,
+// currentAuditUserId reads from another — every write then falls back to
+// "System" instead of the real actor, since getStore() returns undefined).
+const globalForAudit = globalThis as unknown as { auditContext: AsyncLocalStorage<AuditActor> | undefined };
+
+export const auditContext = globalForAudit.auditContext ?? new AsyncLocalStorage<AuditActor>();
+globalForAudit.auditContext = auditContext;
 
 export function setAuditActor(userId: string | null) {
   auditContext.enterWith({ userId });
