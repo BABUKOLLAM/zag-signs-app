@@ -1,14 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, err, requireSession, toLabel, toDate } from "@/lib/api-helpers";
+import { ok, err, toLabel, toDate, requireAnyPathAccess } from "@/lib/api-helpers";
+import { ROUTE_ACCESS } from "@/lib/route-access";
 import { ComplaintStatus, ComplaintPriority } from "@prisma/client";
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await requireSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAnyPathAccess(ROUTE_ACCESS.complaints);
+  if (!session) return err("Forbidden", 403);
 
   const { id } = await params;
   const body = await request.json();
@@ -34,8 +35,8 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await requireSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAnyPathAccess(ROUTE_ACCESS.complaints);
+  if (!session) return err("Forbidden", 403);
 
   const { id } = await params;
   const c = await prisma.complaint.findUnique({

@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, err, requireSession } from "@/lib/api-helpers";
+import { ok, err, requireAnyPathAccess } from "@/lib/api-helpers";
+import { ROUTE_ACCESS } from "@/lib/route-access";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -16,8 +17,8 @@ const INCLUDE = {
 };
 
 export async function GET(_req: NextRequest, { params }: Ctx) {
-  const session = await requireSession();
-  if (!session) return err("Unauthorized", 401);
+  const session = await requireAnyPathAccess(ROUTE_ACCESS.workOrderTickets);
+  if (!session) return err("Forbidden", 403);
   const { id } = await params;
 
   const t = await prisma.workOrderTicket.findUnique({
@@ -82,8 +83,8 @@ const STATUS_TIMESTAMPS: Record<string, string> = {
 };
 
 export async function PUT(request: NextRequest, { params }: Ctx) {
-  const session = await requireSession();
-  if (!session) return err("Unauthorized", 401);
+  const session = await requireAnyPathAccess(ROUTE_ACCESS.workOrderTickets);
+  if (!session) return err("Forbidden", 403);
   const su = session.user as { id?: string };
   const { id } = await params;
 
@@ -164,8 +165,8 @@ export async function PUT(request: NextRequest, { params }: Ctx) {
 }
 
 export async function DELETE(_req: NextRequest, { params }: Ctx) {
-  const session = await requireSession();
-  if (!session) return err("Unauthorized", 401);
+  const session = await requireAnyPathAccess(ROUTE_ACCESS.workOrderTickets);
+  if (!session) return err("Forbidden", 403);
   const { id } = await params;
 
   await prisma.workOrderTicket.delete({ where: { id } });

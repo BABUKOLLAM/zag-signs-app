@@ -1,12 +1,13 @@
 import { NextRequest } from "next/server";
-import { requireSession, ok, err } from "@/lib/api-helpers";
+import { ok, err, requireAnyPathAccess } from "@/lib/api-helpers";
+import { ROUTE_ACCESS } from "@/lib/route-access";
 import { prisma } from "@/lib/prisma";
 import { validateText, isNegative } from "@/lib/validation";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const session = await requireSession();
-  if (!session) return err("Unauthorized", 401);
+  const session = await requireAnyPathAccess(ROUTE_ACCESS.production);
+  if (!session) return err("Forbidden", 403);
   try {
     const machine = await prisma.machine.findUnique({ where: { id } });
     if (!machine) return err("Not found", 404);
@@ -16,8 +17,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const session = await requireSession();
-  if (!session) return err("Unauthorized", 401);
+  const session = await requireAnyPathAccess(ROUTE_ACCESS.production);
+  if (!session) return err("Forbidden", 403);
   try {
     const body = await req.json();
     if (body.name) {
@@ -54,8 +55,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const session = await requireSession();
-  if (!session) return err("Unauthorized", 401);
+  const session = await requireAnyPathAccess(ROUTE_ACCESS.production);
+  if (!session) return err("Forbidden", 403);
   try {
     await prisma.machine.delete({ where: { id } });
     return ok({ deleted: true });

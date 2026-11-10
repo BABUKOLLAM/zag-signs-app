@@ -326,3 +326,14 @@ export const rejectionWhere = (o: { workOrderId?: string | null; action?: string
 
 export const errorLogWhere = (o: { range: Range }) =>
   withRange({}, "createdAt", o.range, "timestamp") as Prisma.ErrorLogWhereInput;
+
+/** Opportunities header figures from (stage, probability) groups. */
+export function summarizeOpportunities(groups: { stage: string; probability: number; value: number; count: number }[]) {
+  const isOpen = (st: string) => st !== "CLOSED_WON" && st !== "CLOSED_LOST";
+  return {
+    openCount: groups.filter((g) => isOpen(g.stage)).reduce((s, g) => s + g.count, 0),
+    weightedPipeline: groups.filter((g) => isOpen(g.stage)).reduce((s, g) => s + (g.value * g.probability) / 100, 0),
+    wonValue: groups.filter((g) => g.stage === "CLOSED_WON").reduce((s, g) => s + g.value, 0),
+    totalValue: groups.reduce((s, g) => s + g.value, 0),
+  };
+}

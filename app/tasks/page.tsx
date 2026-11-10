@@ -157,6 +157,11 @@ function TasksPageInner() {
             </select>
             <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError} basisLabel="Due date" />
             <ListCapNote shown={(data ?? []).length} total={listMeta?.total} inline />
+            {dr.range && Number(listMeta?.undatedHidden) > 0 && (
+              <p className="w-full text-xs text-slate-500" role="status">
+                {String(listMeta?.undatedHidden)} task{Number(listMeta?.undatedHidden) === 1 ? "" : "s"} with no due date not shown — clear the dates to see them.
+              </p>
+            )}
             <button onClick={refetch} title="Refresh"
               className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">
               <RefreshCw size={14} />

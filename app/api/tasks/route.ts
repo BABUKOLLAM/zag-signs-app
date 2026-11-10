@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
   if (rangeError) return rangeError;
   const where = taskWhere({ status, priority, assignedToId, range });
 
-  const [tasks, total] = await Promise.all([
+  const [tasks, total, undatedHidden] = await Promise.all([
     prisma.task.findMany({
       where,
       orderBy: [{ priority: "desc" }, { dueDate: "asc" }],
@@ -55,11 +55,13 @@ export async function GET(request: NextRequest) {
       },
     }),
     prisma.task.count({ where }),
+    // Tasks with no due date can't match a date range; count them so the page can say so.
+    range ? prisma.task.count({ where: { ...taskWhere({ status, priority, assignedToId, range: null }), dueDate: null } }) : Promise.resolve(0),
   ]);
 
   return NextResponse.json({
     data: tasks.map((t) => shape(t as Parameters<typeof shape>[0])),
-    pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+    pagination: { page, limit, total, pages: Math.ceil(total / limit), undatedHidden },
   });
 }
 

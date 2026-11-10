@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
-import { requireSession, ok, err } from "@/lib/api-helpers";
+import { ok, err, requireAnyPathAccess } from "@/lib/api-helpers";
+import { ROUTE_ACCESS } from "@/lib/route-access";
 import { prisma } from "@/lib/prisma";
 import { normBranch } from "@/lib/bulk-helpers";
 import { validateText, isNegative } from "@/lib/validation";
@@ -34,8 +35,8 @@ async function genMachineCode(branch: string, type: string): Promise<string> {
 }
 
 export async function GET(req: NextRequest) {
-  const session = await requireSession();
-  if (!session) return err("Unauthorized", 401);
+  const session = await requireAnyPathAccess(ROUTE_ACCESS.production);
+  if (!session) return err("Forbidden", 403);
 
   try {
     const searchParams = req.nextUrl.searchParams;
@@ -61,8 +62,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await requireSession();
-  if (!session) return err("Unauthorized", 401);
+  const session = await requireAnyPathAccess(ROUTE_ACCESS.production);
+  if (!session) return err("Forbidden", 403);
 
   try {
     const body = await req.json();

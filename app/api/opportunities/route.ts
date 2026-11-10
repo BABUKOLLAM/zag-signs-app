@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok, toDate, requireAnyPathAccess, err, rangeFromQuery } from "@/lib/api-helpers";
-import { opportunityWhere } from "@/lib/list-filters";
+import { opportunityWhere, summarizeOpportunities } from "@/lib/list-filters";
 import { ROUTE_ACCESS } from "@/lib/route-access";
 import { OpportunityStage } from "@prisma/client";
 
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
   if (rangeError) return rangeError;
   const where = opportunityWhere({ stage, branch, leadId, range });
 
-  const [opps, total] = await Promise.all([
+  const [opps, total, groups] = await Promise.all([
     prisma.opportunity.findMany({
       where,
       orderBy: { createdAt: "desc" },
@@ -66,16 +66,13 @@ export async function GET(request: NextRequest) {
       include: { lead: { select: { id: true, name: true, company: true, phone: true } } },
     }),
     prisma.opportunity.count({ where }),
+    // Header figures over ALL matching opportunities, not just this page of rows.
+    // Grouping by (stage, probability) lets the weighted pipeline be summed in the DB.
+    prisma.opportunity.groupBy({ by: ["stage", "probability"], where, _sum: { value: true }, _count: { _all: true } }),
   ]);
-  // Header figures over ALL matching opportunities, not just this page of rows.
-  const all = await prisma.opportunity.findMany({ where, select: { value: true, probability: true, stage: true } });
-  const isOpen = (st: string) => st !== "CLOSED_WON" && st !== "CLOSED_LOST";
-  const summary = {
-    openCount: all.filter((o) => isOpen(o.stage)).length,
-    weightedPipeline: all.filter((o) => isOpen(o.stage)).reduce((s, o) => s + (o.value * o.probability) / 100, 0),
-    wonValue: all.filter((o) => o.stage === "CLOSED_WON").reduce((s, o) => s + o.value, 0),
-    totalValue: all.reduce((s, o) => s + o.value, 0),
-  };
+  const summary = summarizeOpportunities(groups.map((g) => ({
+    stage: g.stage, probability: g.probability, value: g._sum.value ?? 0, count: g._count._all,
+  })));
 
   return NextResponse.json({
     data: opps.map((o) => shape(o)),

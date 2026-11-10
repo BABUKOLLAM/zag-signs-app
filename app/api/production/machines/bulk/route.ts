@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireSession } from "@/lib/api-helpers";
+import { requireAnyPathAccess, err } from "@/lib/api-helpers";
+import { ROUTE_ACCESS } from "@/lib/route-access";
 import {
   str, num, normBranch, rowNo, maxTrailingInt
 } from "@/lib/bulk-helpers";
@@ -27,8 +28,8 @@ interface RowResult {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await requireSession();
-  if (!session) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+  const session = await requireAnyPathAccess(ROUTE_ACCESS.production);
+  if (!session) return err("Forbidden", 403);
 
   try {
     const body = await req.json();
