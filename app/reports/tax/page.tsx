@@ -1,11 +1,12 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import TopBar from "@/components/TopBar";
 import { fmt } from "@/lib/utils";
 import { useApi } from "@/lib/use-api";
 import { LoadingState, ErrorState } from "@/components/States";
 import { FileText, RefreshCw } from "lucide-react";
 import DriveButton from "@/components/DriveButton";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
 
 interface TaxSummaryRow {
   taxRate: number;
@@ -39,9 +40,10 @@ const RATE_BADGE: Record<number, string> = {
   18: "bg-red-100 text-red-700",
 };
 
-export default function TaxReportPage() {
-  const [from, setFrom] = useState("");
-  const [to,   setTo]   = useState("");
+function TaxReportPageInner() {
+  const dr = useDateRangeQuery();
+  const from = dr.range?.from ?? "";
+  const to   = dr.range?.to ?? "";
   const [activeRate, setActiveRate] = useState<number | null>(null);
 
   const { data, loading, error, refetch } = useApi<TaxReport>("/reports/tax", {
@@ -72,17 +74,8 @@ export default function TaxReportPage() {
 
         {/* Filters */}
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-wrap gap-3 items-end justify-between">
-          <div className="flex gap-3 flex-wrap items-end">
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">From</label>
-              <input type="date" value={from} onChange={(e) => setFrom(e.target.value)}
-                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none" />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">To</label>
-              <input type="date" value={to} onChange={(e) => setTo(e.target.value)}
-                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none" />
-            </div>
+          <div className="flex gap-3 flex-wrap items-center">
+            <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError} basisLabel="Quotation date" />
             <button onClick={refetch}
               className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50">
               <RefreshCw size={13} /> Refresh
@@ -213,5 +206,14 @@ export default function TaxReportPage() {
         )}
       </div>
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function TaxReportPage() {
+  return (
+    <Suspense fallback={null}>
+      <TaxReportPageInner />
+    </Suspense>
   );
 }

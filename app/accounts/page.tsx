@@ -1,9 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import TopBar from "@/components/TopBar";
 import { useApi } from "@/lib/use-api";
 import { fmt } from "@/lib/utils";
 import { Plus, Search, RefreshCw, FileText, Loader2 } from "lucide-react";
+import { LoadingState } from "@/components/States";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
 
 type Invoice = {
   id: string; invoiceNo: string; invoiceDate: string; dueDate: string;
@@ -18,13 +20,17 @@ const STATUS_COLORS: Record<string,string> = {
   OVERDUE: "bg-red-100   text-red-700",
 };
 
-export default function AccountsPage() {
+function AccountsPageInner() {
+  const dr = useDateRangeQuery();
   const [status, setStatus]   = useState("");
   const [search, setSearch]   = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [saving, setSaving]   = useState(false);
 
-  const params = new URLSearchParams({ ...(status?{status}:{}), ...(search?{search}:{}) });
+  const params = new URLSearchParams({
+    ...(status?{status}:{}), ...(search?{search}:{}),
+    ...(dr.range ? { from: dr.range.from, to: dr.range.to } : {}),
+  });
   const { data: raw, loading, refetch } = useApi<Invoice[]>(`/invoices?${params}`);
   const invoices = raw ?? [];
 
@@ -88,6 +94,7 @@ export default function AccountsPage() {
             <option value="">All Statuses</option>
             {["PENDING","PARTIAL","PAID","OVERDUE"].map(s => <option key={s}>{s}</option>)}
           </select>
+          <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError} basisLabel="Invoice date" />
           <button onClick={refetch} className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500">
             <RefreshCw size={14} className={loading?"animate-spin":""} />
           </button>
@@ -176,5 +183,14 @@ export default function AccountsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function AccountsPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <AccountsPageInner />
+    </Suspense>
   );
 }

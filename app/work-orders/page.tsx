@@ -1,11 +1,12 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import TopBar from "@/components/TopBar";
 import { useApi } from "@/lib/use-api";
 import { api } from "@/lib/api-client";
 import { LoadingState, ErrorState, EmptyState, TableSkeleton } from "@/components/States";
 import { useToast } from "@/components/Toaster";
 import { Plus, RefreshCw, Wrench, ChevronRight, X, Calendar } from "lucide-react";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
 
 const STATUSES = ["Pending", "In Progress", "Quality Check", "Dispatch Ready", "Completed", "On Hold"];
 const PRIORITIES = ["Low", "Medium", "High", "Urgent"];
@@ -48,7 +49,8 @@ const emptyForm = {
 
 const ic = "border border-gray-200 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-500";
 
-export default function WorkOrdersPage() {
+function WorkOrdersPageInner() {
+  const dr = useDateRangeQuery();
   const toast = useToast();
   const [statusFilter, setStatusFilter]   = useState("");
   const [priorityFilter, setPriorityFilter] = useState("");
@@ -60,6 +62,7 @@ export default function WorkOrdersPage() {
   const { data, loading, error, refetch } = useApi<WorkOrder[]>("/work-orders", {
     status:   statusFilter   || undefined,
     priority: priorityFilter || undefined,
+    ...dr.params,
   });
 
   const orders = data ?? [];
@@ -148,6 +151,7 @@ export default function WorkOrdersPage() {
               <option value="">All Priority</option>
               {PRIORITIES.map((p) => <option key={p}>{p}</option>)}
             </select>
+            <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError} basisLabel="Created" />
             <button onClick={refetch} className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">
               <RefreshCw size={14} />
             </button>
@@ -319,5 +323,14 @@ export default function WorkOrdersPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function WorkOrdersPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <WorkOrdersPageInner />
+    </Suspense>
   );
 }

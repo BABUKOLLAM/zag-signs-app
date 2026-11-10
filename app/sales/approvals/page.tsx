@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { api } from "@/lib/api-client";
 import { CheckCircle, XCircle, AlertCircle, Clock, ChevronDown, ChevronUp, Loader2, Paperclip, ExternalLink } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/components/Toaster";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
 
 type Tab = "pending" | "reviewed" | "all";
 type Stage = "HOD" | "ACCOUNTS" | "CEO";
@@ -53,7 +54,8 @@ function getStageForRole(role: string): Stage | null {
   return ROLE_STAGE[role] || null;
 }
 
-export default function ApprovalsPage() {
+function ApprovalsPageInner() {
+  const dr = useDateRangeQuery();
   const toast = useToast();
   const { data: session } = useSession();
   const [expenses, setExpenses] = useState<any[]>([]);
@@ -69,12 +71,15 @@ export default function ApprovalsPage() {
   const stage = getStageForRole(role);
   const isCEO = role === "MD";
 
-  useEffect(() => { fetchExpenses(); }, []);
+  useEffect(() => {
+    fetchExpenses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dr.range?.from, dr.range?.to]);
 
   const fetchExpenses = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/sales/expenses") as any;
+      const res = await api.get("/sales/expenses", dr.params) as any;
       if (res?.data) setExpenses(res.data);
     } finally {
       setLoading(false);
@@ -185,6 +190,11 @@ export default function ApprovalsPage() {
             <p className="text-xs mt-0.5">{s.label}</p>
           </div>
         ))}
+      </div>
+
+      {/* Date filter (date the expense report was raised) */}
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+        <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError} basisLabel="Raised on" />
       </div>
 
       {/* Tabs */}
@@ -431,5 +441,14 @@ export default function ApprovalsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function ApprovalsPage() {
+  return (
+    <Suspense fallback={null}>
+      <ApprovalsPageInner />
+    </Suspense>
   );
 }

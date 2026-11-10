@@ -1,13 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { api } from "@/lib/api-client";
 import { Loader2, Download, Send } from "lucide-react";
 import { useToast } from "@/components/Toaster";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
+import { formatRange, todayIst } from "@/lib/date-range";
 
-export default function DARPage() {
+const todayRange = () => ({ from: todayIst(), to: todayIst() });
+
+function DARPageInner() {
   const toast = useToast();
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  // Range defaults to today (India). A single day can be submitted as that day's DAR;
+  // a longer range is a summary for review/download only.
+  const dr = useDateRangeQuery({ defaultRange: todayRange });
+  const range = dr.range ?? todayRange();
+  const date = range.from;
+  const singleDay = range.from === range.to;
   const [darData, setDarData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -15,7 +24,7 @@ export default function DARPage() {
   const handleGenerateDAR = async () => {
     setLoading(true);
     try {
-      const res = await api.get(`/sales/dar/generate?date=${date}`);
+      const res = await api.get(`/sales/dar/generate`, { from: range.from, to: range.to });
       if ((res as any)?.data) {
         setDarData((res as any).data);
         setSubmitted(false);
@@ -29,7 +38,7 @@ export default function DARPage() {
   };
 
   const handleSubmitDAR = async () => {
-    if (!darData) return;
+    if (!darData || !singleDay) return;
 
     setLoading(true);
     try {
@@ -51,7 +60,7 @@ export default function DARPage() {
 
     const content = `
 DAILY ACTIVITY REPORT (DAR)
-${new Date(date).toLocaleDateString()}
+${formatRange(range)}
 
 ACTIVITIES SUMMARY:
 - Calls Made: ${darData.activities.calls}
@@ -67,7 +76,7 @@ OUTCOMES:
 - Quotations Sent: ${darData.outcomes.quotationsSent}
 
 HIGHLIGHTS:
-${darData.activityDetails.map((a: any) => `- ${a.time}: ${a.type} with ${a.customerOrLead} - ${a.outcome || a.purpose}`).join("\n")}
+${darData.activityDetails.map((a: any) => `- ${singleDay ? "" : a.day + " "}${a.time}: ${a.type} with ${a.customerOrLead} - ${a.outcome || a.purpose}`).join("\n")}
 
 CHALLENGES/NOTES:
 [Add any challenges faced or important notes]
@@ -77,7 +86,7 @@ CHALLENGES/NOTES:
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `DAR_${date}.txt`;
+    a.download = singleDay ? `DAR_${date}.txt` : `DAR_${range.from}_to_${range.to}.txt`;
     a.click();
   };
 
@@ -93,17 +102,15 @@ CHALLENGES/NOTES:
 
       {/* Date Picker */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-        <div className="flex items-end gap-4">
-          <div className="flex-1">
-            <label className="text-sm font-medium">Select Date</label>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => {
-                setDate(e.target.value);
-                setDarData(null);
-              }}
-              className="w-full border rounded px-3 py-2 mt-2"
+        <div className="flex flex-wrap items-end gap-4">
+          <div className="flex-1 min-w-0">
+            <label className="text-sm font-medium block mb-2">Date range</label>
+            <DateRangeFilter
+              value={range}
+              onChange={(r) => { dr.setRange(r); setDarData(null); }}
+              urlError={dr.urlError}
+              basisLabel="Activity date"
+              allowAll={false}
             />
           </div>
           <button
@@ -121,7 +128,7 @@ CHALLENGES/NOTES:
       {darData && (
         <div className="space-y-4">
           {/* Summary Cards */}
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
               <p className="text-xs text-gray-500 uppercase">Calls Made</p>
               <p className="text-3xl font-bold text-blue-600 mt-2">{darData.activities.calls}</p>
@@ -172,7 +179,7 @@ CHALLENGES/NOTES:
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <p className="font-medium text-sm">{a.customerOrLead}</p>
-                        <p className="text-xs text-gray-600">{a.time} • {a.type}</p>
+                        <p className="text-xs text-gray-600">{!singleDay && a.day ? `${a.day} ` : ""}{a.time} • {a.type}</p>
                       </div>
                       <span className="text-xs font-semibold text-green-600">
                         {a.duration ? `${a.duration}m` : ""}
@@ -187,7 +194,7 @@ CHALLENGES/NOTES:
                   </div>
                 ))
               ) : (
-                <p className="text-gray-500 text-center py-8">No activities logged for this date</p>
+                <p className="text-gray-500 text-center py-8">No activities logged for {singleDay ? "this date" : "this range"}</p>
               )}
             </div>
           </div>
@@ -203,7 +210,8 @@ CHALLENGES/NOTES:
             </button>
             <button
               onClick={handleSubmitDAR}
-              disabled={loading || submitted}
+              disabled={loading || submitted || !singleDay}
+              title={singleDay ? undefined : "Pick a single day to submit it as that day's DAR"}
               className={`flex-1 px-4 py-3 rounded-lg text-white flex items-center justify-center gap-2 ${
                 submitted
                   ? "bg-green-600 hover:bg-green-700"
@@ -225,5 +233,14 @@ CHALLENGES/NOTES:
         </div>
       )}
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function DARPage() {
+  return (
+    <Suspense fallback={null}>
+      <DARPageInner />
+    </Suspense>
   );
 }

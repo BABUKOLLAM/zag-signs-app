@@ -1,10 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import TopBar from "@/components/TopBar";
 import { useApi } from "@/lib/use-api";
 import { fmt } from "@/lib/utils";
 import { RefreshCw, TrendingUp, TrendingDown, DollarSign, BarChart2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
 
 type Job = {
   id: string; orderNo: string; customer: string; company: string;
@@ -19,10 +20,11 @@ type ProfitabilityData = { jobs: Job[]; branchRevenue: BranchRevenue[]; branchCo
 const BRANCHES = ["HO", "TVM", "KTYM", "EKM", "CLT"];
 const BRANCH_COLORS = ["#4F46E5", "#7C3AED", "#0EA5E9", "#10B981"];
 
-export default function ProfitabilityPage() {
+function ProfitabilityPageInner() {
   const [branch, setBranch] = useState("");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
+  const dr = useDateRangeQuery();
+  const from = dr.range?.from ?? "";
+  const to = dr.range?.to ?? "";
 
   const params = new URLSearchParams();
   if (branch) params.set("branch", branch);
@@ -47,7 +49,7 @@ export default function ProfitabilityPage() {
   return (
     <div className="flex-1 flex flex-col min-h-screen bg-slate-50">
       <TopBar title="Profitability Reports" />
-      <div className="flex-1 p-6 max-w-7xl mx-auto w-full space-y-5">
+      <div className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full space-y-5">
 
         {/* Filters */}
         <div className="flex gap-3 flex-wrap items-center bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
@@ -56,16 +58,8 @@ export default function ProfitabilityPage() {
             <option value="">All Branches</option>
             {BRANCHES.map(b => <option key={b}>{b}</option>)}
           </select>
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-slate-500">From</label>
-            <input type="date" value={from} onChange={e => setFrom(e.target.value)}
-              className="px-3 py-2 rounded-xl border border-slate-200 text-sm" />
-          </div>
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-slate-500">To</label>
-            <input type="date" value={to} onChange={e => setTo(e.target.value)}
-              className="px-3 py-2 rounded-xl border border-slate-200 text-sm" />
-          </div>
+          <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError}
+            basisLabel="Job-cost / invoice / collection date" />
           <button onClick={refetch} className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50">
             <RefreshCw size={14} className={loading ? "animate-spin text-slate-400" : "text-slate-400"} />
           </button>
@@ -192,5 +186,14 @@ export default function ProfitabilityPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function ProfitabilityPage() {
+  return (
+    <Suspense fallback={null}>
+      <ProfitabilityPageInner />
+    </Suspense>
   );
 }

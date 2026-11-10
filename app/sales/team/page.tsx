@@ -1,24 +1,30 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { api } from "@/lib/api-client";
 import { Loader2, TrendingUp } from "lucide-react";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
+import { formatRange, monthToRange, todayIst } from "@/lib/date-range";
 
-export default function TeamPerformancePage() {
+// Default (as before): the current month. Old ?month=YYYY-MM links open that month.
+const thisMonth = () => monthToRange(todayIst().slice(0, 7))!;
+
+function TeamPerformancePageInner() {
   const [teamData, setTeamData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [month, setMonth] = useState(
-    new Date().toISOString().slice(0, 7)
-  );
+  const dr = useDateRangeQuery({ defaultRange: thisMonth });
+  const range = dr.range ?? thisMonth();
 
   useEffect(() => {
     fetchTeamData();
-  }, [month]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [range.from, range.to]);
 
   const fetchTeamData = async () => {
     setLoading(true);
     try {
-      const res = await api.get(`/api/sales/team/performance?month=${month}`);
+      // (was "/api/sales/team/performance" — api.get already prefixes /api, so it 404'd)
+      const res = await api.get("/sales/team/performance", { from: range.from, to: range.to });
       if ((res as any)?.data) setTeamData((res as any).data);
     } catch (error) {
       console.error("Error fetching team data:", error);
@@ -43,21 +49,16 @@ export default function TeamPerformancePage() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold">Sales Team Performance</h1>
           <p className="text-gray-600 mt-1">Monitor team metrics and achievements</p>
         </div>
-        <input
-          type="month"
-          value={month}
-          onChange={(e) => setMonth(e.target.value)}
-          className="px-4 py-2 border rounded-lg"
-        />
+        <DateRangeFilter value={range} onChange={dr.setRange} urlError={dr.urlError} basisLabel="Activity / collection date" allowAll={false} />
       </div>
 
       {/* Team Summary Cards */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
           <p className="text-xs text-gray-500 uppercase">Team Size</p>
           <p className="text-3xl font-bold mt-2">{teamData.length}</p>
@@ -89,7 +90,7 @@ export default function TeamPerformancePage() {
           <p className="text-3xl font-bold text-green-600 mt-2">
             ₹{(teamData.reduce((sum, t) => sum + t.metrics.totalCollected, 0) / 100000).toFixed(1)}L
           </p>
-          <p className="text-xs text-gray-500 mt-2">Received this month</p>
+          <p className="text-xs text-gray-500 mt-2">Received {formatRange(range)}</p>
         </div>
       </div>
 
@@ -249,12 +250,21 @@ export default function TeamPerformancePage() {
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
         <p className="font-semibold text-blue-900">💡 Manager Tips</p>
         <ul className="text-sm text-blue-800 mt-2 space-y-1">
-          <li>• Target achievement % shows how much of monthly target is completed</li>
+          <li>• Target achievement % shows how much of the target is completed (monthly targets are summed over every month the range touches)</li>
           <li>• Green = on track (100%+), Amber = at risk (80–99%), Red = behind (&lt; 80%)</li>
           <li>• Click team member names to see detailed activity logs</li>
           <li>• Review collections regularly to ensure cash flow targets are met</li>
         </ul>
       </div>
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function TeamPerformancePage() {
+  return (
+    <Suspense fallback={null}>
+      <TeamPerformancePageInner />
+    </Suspense>
   );
 }

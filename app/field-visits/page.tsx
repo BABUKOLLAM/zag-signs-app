@@ -1,14 +1,15 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import TopBar from "@/components/TopBar";
 import { useApi } from "@/lib/use-api";
 import { api } from "@/lib/api-client";
-import { ErrorState, EmptyState, TableSkeleton } from "@/components/States";
+import { ErrorState, EmptyState, TableSkeleton, LoadingState } from "@/components/States";
 import { useToast } from "@/components/Toaster";
 import { fieldVisitSchema, parseErrors, type FormErrors } from "@/lib/schemas";
 import { exportExcel } from "@/lib/export";
 import DriveButton from "@/components/DriveButton";
 import { Plus, X, MapPin, Eye, Clock, CheckCircle, Navigation, RefreshCw, Download } from "lucide-react";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
 
 type VisitType = "SALES_CALL" | "SITE_SURVEY" | "INSTALLATION" | "SERVICE_COMPLAINT" | "COLLECTION" | "FOLLOW_UP";
 type VisitOutcome = "POSITIVE" | "ORDER_EXPECTED" | "FOLLOW_UP_NEEDED" | "NOT_INTERESTED" | "COMPLETED";
@@ -62,7 +63,8 @@ const blank = {
   orderValue: "", nextAction: "", notes: "",
 };
 
-export default function FieldVisitsPage() {
+function FieldVisitsPageInner() {
+  const dr = useDateRangeQuery();
   const toast = useToast();
   const [showModal, setShowModal] = useState(false);
   const [viewVisit, setViewVisit] = useState<FieldVisit | null>(null);
@@ -70,7 +72,7 @@ export default function FieldVisitsPage() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [saving, setSaving] = useState(false);
 
-  const { data, loading, error, refetch } = useApi<FieldVisit[]>("/field-visits", { limit: 100 });
+  const { data, loading, error, refetch } = useApi<FieldVisit[]>("/field-visits", { limit: 100, ...dr.params });
   const visits = data ?? [];
 
   const set = (f: keyof typeof blank) =>
@@ -163,7 +165,8 @@ export default function FieldVisitsPage() {
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 flex flex-wrap gap-3 items-center justify-between">
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap items-center">
+            <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError} basisLabel="Visit date" />
             <button onClick={refetch} title="Refresh"
               className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">
               <RefreshCw size={14} />
@@ -339,5 +342,14 @@ export default function FieldVisitsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function FieldVisitsPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <FieldVisitsPageInner />
+    </Suspense>
   );
 }

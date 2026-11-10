@@ -64,8 +64,9 @@ interface Props {
   className?: string;
 }
 
-const inputCls =
-  "border border-gray-200 rounded-lg px-2 py-1.5 text-sm w-full sm:w-[9.5rem] focus:outline-none focus:ring-2 focus:ring-indigo-500";
+// Theme tokens from globals.css so the control follows light/dark mode.
+const fieldCls = "bg-[var(--input-bg)] border-[var(--input-border)] text-[var(--text-primary)] border rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500";
+const inputCls = `${fieldCls} w-full min-w-0 sm:w-[9.5rem]`;
 
 export default function DateRangeFilter(props: Props) {
   // Remount the editor whenever the applied range changes so its draft resets.
@@ -98,15 +99,15 @@ function Editor({ value, onChange, basisLabel, allowAll = true, urlError, classN
   };
 
   return (
-    <div className={`flex flex-wrap items-center gap-2 w-full sm:w-auto ${className}`} role="group" aria-label={`${basisLabel} date range`}>
-      <span className="flex items-center gap-1 text-xs text-gray-500 whitespace-nowrap">
+    <div className={`flex flex-wrap items-center gap-2 w-full sm:w-auto ${className}`} role="group" aria-label={`Date range (${basisLabel})`}>
+      <span className="flex items-center gap-1 text-xs text-[var(--text-secondary)] whitespace-nowrap">
         <CalendarRange size={14} aria-hidden /> {basisLabel}
       </span>
       <select
         aria-label="Date range preset"
         value={value ? (preset ?? "custom") : "all"}
         onChange={(e) => onPreset(e.target.value)}
-        className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none w-full sm:w-auto"
+        className={`${fieldCls} w-full sm:w-auto`}
       >
         {allowAll && <option value="all">All dates</option>}
         {PRESETS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
@@ -118,7 +119,7 @@ function Editor({ value, onChange, basisLabel, allowAll = true, urlError, classN
           onChange={(e) => { setFrom(e.target.value); commit(e.target.value, to || e.target.value); }}
           className={inputCls}
         />
-        <span className="text-gray-400 text-xs">to</span>
+        <span className="text-[var(--text-secondary)] text-xs">to</span>
         <input
           type="date" aria-label="To date" value={to} min={from || "2000-01-01"} max="2100-12-31"
           onChange={(e) => { setTo(e.target.value); commit(from || e.target.value, e.target.value); }}
@@ -126,7 +127,7 @@ function Editor({ value, onChange, basisLabel, allowAll = true, urlError, classN
         />
         {allowAll && value && (
           <button type="button" onClick={() => onChange(null)} title="Clear dates" aria-label="Clear dates"
-            className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">
+            className="p-1.5 rounded-lg border border-[var(--input-border)] text-[var(--text-secondary)] hover:opacity-80 shrink-0">
             <X size={14} />
           </button>
         )}

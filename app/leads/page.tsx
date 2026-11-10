@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import TopBar from "@/components/TopBar";
 import { fmt } from "@/lib/utils";
@@ -14,6 +14,7 @@ import { LEAD_COLUMNS } from "@/lib/import-specs";
 import DriveButton from "@/components/DriveButton";
 import DocumentsPanel from "@/components/DocumentsPanel";
 import { Plus, Phone, Mail, Calendar, RefreshCw, Download, Paperclip, X, TrendingUp, UserCheck, FileText, Upload } from "lucide-react";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
 
 const BRANCHES = ["HO", "TVM", "KTYM", "EKM", "CLT"];
 const STATUSES = [
@@ -50,7 +51,8 @@ const emptyForm = {
 const ic = (err?: string) =>
   `border rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 ${err ? "border-red-400 focus:ring-red-300" : "border-gray-200 focus:ring-indigo-500"}`;
 
-export default function LeadsPage() {
+function LeadsPageInner() {
+  const dr = useDateRangeQuery();
   const toast = useToast();
   const router = useRouter();
   const [search, setSearch] = useState("");
@@ -69,6 +71,7 @@ export default function LeadsPage() {
     status: statusFilter || undefined,
     search: search || undefined,
     limit: 100,
+    ...dr.params,
   });
 
   const leads = data ?? [];
@@ -178,6 +181,7 @@ export default function LeadsPage() {
               <option value="">All Status</option>
               {STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
             </select>
+            <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError} basisLabel="Created" />
             <button onClick={refetch} title="Refresh"
               className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">
               <RefreshCw size={14} />
@@ -387,5 +391,14 @@ export default function LeadsPage() {
         />
       )}
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function LeadsPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <LeadsPageInner />
+    </Suspense>
   );
 }

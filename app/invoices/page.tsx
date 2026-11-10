@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import TopBar from "@/components/TopBar";
 import { fmt } from "@/lib/utils";
 import { useApi } from "@/lib/use-api";
@@ -14,6 +14,7 @@ import {
   CheckCircle, Clock, AlertCircle, FileDown, BadgeCheck,
 } from "lucide-react";
 import WhatsAppShare from "@/components/WhatsAppShare";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
 interface Invoice {
   id: string; invoiceNo: string; invoiceDate: string; dueDate: string;
   subtotal: number; taxRate: number; taxAmount: number; discount: number; totalAmount: number;
@@ -35,7 +36,8 @@ const STATUS_COLOR: Record<string, string> = {
   OVERDUE:  "bg-red-50 text-red-700",
 };
 
-export default function InvoicesPage() {
+function InvoicesPageInner() {
+  const dr = useDateRangeQuery();
   const toast = useToast();
   const [search, setSearch]           = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -48,6 +50,7 @@ export default function InvoicesPage() {
   const { data, loading, error, refetch } = useApi<Invoice[]>("/invoices", {
     status: statusFilter || undefined,
     search: search || undefined,
+    ...dr.params,
   });
   const invoices = data ?? [];
 
@@ -220,6 +223,7 @@ export default function InvoicesPage() {
                 </button>
               ))}
             </div>
+            <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError} basisLabel="Invoice date" />
             <button onClick={refetch} className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">
               <RefreshCw size={14} />
             </button>
@@ -349,5 +353,14 @@ export default function InvoicesPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function InvoicesPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <InvoicesPageInner />
+    </Suspense>
   );
 }

@@ -1,12 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { api } from "@/lib/api-client";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/components/Toaster";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
+import { formatRange, todayIst } from "@/lib/date-range";
 
-export default function ActivitiesPage() {
+const todayRange = () => ({ from: todayIst(), to: todayIst() });
+
+function ActivitiesPageInner() {
   const toast = useToast();
+  // Defaults to today (India), as before; activity start time is the date basis.
+  const dr = useDateRangeQuery({ defaultRange: todayRange });
+  const range = dr.range ?? todayRange();
+  const isToday = range.from === range.to && range.from === todayIst();
   const [activities, setActivities] = useState<any[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
   const [leads, setLeads] = useState<any[]>([]);
@@ -29,14 +37,15 @@ export default function ActivitiesPage() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [range.from, range.to]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const today = new Date().toISOString().split("T")[0];
       const [actRes, custRes, leadsRes] = await Promise.all([
-        api.get(`/api/sales/activities?date=${today}`),
+        // (was "/api/sales/activities" — api.get already prefixes /api, so it 404'd)
+        api.get("/sales/activities", { from: range.from, to: range.to }),
         api.get("/customers"),
         api.get("/leads"),
       ]) as any[];
@@ -260,8 +269,11 @@ export default function ActivitiesPage() {
 
       {/* Today's Activities Timeline */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
-        <div className="px-4 py-3 border-b border-gray-100">
-          <h2 className="font-semibold">Today's Activities ({activities.length})</h2>
+        <div className="px-4 py-3 border-b border-gray-100 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-semibold">
+            {isToday ? "Today's Activities" : `Activities — ${formatRange(range)}`} ({activities.length})
+          </h2>
+          <DateRangeFilter value={range} onChange={dr.setRange} urlError={dr.urlError} basisLabel="Activity date" allowAll={false} />
         </div>
         <div className="p-4 space-y-3 max-h-96 overflow-y-auto">
           {loading ? (
@@ -300,10 +312,19 @@ export default function ActivitiesPage() {
               </div>
             ))
           ) : (
-            <p className="text-gray-500 text-center py-8">No activities logged today. Click "Quick Log" to add one!</p>
+            <p className="text-gray-500 text-center py-8">{isToday ? "No activities logged today. Click \"Quick Log\" to add one!" : "No activities in this range."}</p>
           )}
         </div>
       </div>
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function ActivitiesPage() {
+  return (
+    <Suspense fallback={null}>
+      <ActivitiesPageInner />
+    </Suspense>
   );
 }

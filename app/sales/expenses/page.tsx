@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { api } from "@/lib/api-client";
 import { uploadToDrive, isDriveConfigured } from "@/lib/google-drive";
 import { Plus, Trash2, Printer, Send, Loader2, Paperclip, CheckCircle, Clock, XCircle, AlertCircle, Upload, ExternalLink } from "lucide-react";
 import { useToast } from "@/components/Toaster";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
 
 const EXPENSE_TYPES = ["TRAVEL", "ACCOMMODATION", "FOOD", "CLIENT_ENTERTAINMENT", "COMMUNICATION", "OTHER"];
 const CATEGORIES = ["Fuel", "Toll", "Parking", "Hotel", "Food", "Client Lunch/Dinner", "Train", "Bus", "Flight", "Auto/Taxi", "Other"];
@@ -29,7 +30,8 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }>
   HOLD:               { label: "On Hold",                color: "text-orange-700 bg-orange-100", icon: AlertCircle },
 };
 
-export default function ExpensesPage() {
+function ExpensesPageInner() {
+  const dr = useDateRangeQuery();
   const toast = useToast();
   const [expenses, setExpenses] = useState<any[]>([]);
   const [fjps, setFjps] = useState<any[]>([]);
@@ -51,7 +53,11 @@ export default function ExpensesPage() {
   const [uploading, setUploading] = useState(false);
   const [driveReady, setDriveReady] = useState(false);
 
-  useEffect(() => { fetchData(); checkDrive(); }, []);
+  useEffect(() => { checkDrive(); }, []);
+  useEffect(() => {
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dr.range?.from, dr.range?.to]);
 
   const checkDrive = async () => {
     const ok = await isDriveConfigured();
@@ -79,7 +85,7 @@ export default function ExpensesPage() {
     setLoading(true);
     try {
       const [expRes, fjpRes] = await Promise.all([
-        api.get("/sales/expenses"),
+        api.get("/sales/expenses", dr.params),
         api.get("/sales/fjp"),
       ]) as any[];
       if (expRes?.data) setExpenses(expRes.data);
@@ -408,6 +414,11 @@ export default function ExpensesPage() {
           ))}
         </div>
 
+        {/* Date filter (date the expense report was raised) */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-4">
+          <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError} basisLabel="Raised on" />
+        </div>
+
         {/* Expense List */}
         {loading ? (
           <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-blue-600" /></div>
@@ -470,5 +481,14 @@ export default function ExpensesPage() {
         )}
       </div>
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function ExpensesPage() {
+  return (
+    <Suspense fallback={null}>
+      <ExpensesPageInner />
+    </Suspense>
   );
 }

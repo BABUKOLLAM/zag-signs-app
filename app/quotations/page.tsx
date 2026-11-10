@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, Suspense } from "react";
 import TopBar from "@/components/TopBar";
 import { fmt } from "@/lib/utils";
 import { useApi } from "@/lib/use-api";
@@ -14,6 +14,7 @@ import { makeClientCode } from "@/lib/utils";
 import { uploadToDrive, isDriveConfigured } from "@/lib/google-drive";
 import { useToast } from "@/components/Toaster";
 import { usePermissions } from "@/lib/permission-context";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
 
 const STATUS_COLORS: Record<string, string> = {
   DRAFT:     "bg-gray-100 text-gray-700",
@@ -64,7 +65,8 @@ const STATUS_OPTS   = [
   { label: "Submitted",     value: "SUBMITTED" },
 ];
 
-export default function QuotationsPage() {
+function QuotationsPageInner() {
+  const dr = useDateRangeQuery();
   const toast = useToast();
   const router = useRouter();
   const { canUse } = usePermissions();
@@ -100,6 +102,7 @@ export default function QuotationsPage() {
   const { data, loading, error, refetch } = useApi<Quotation[]>("/quotations", {
     status: statusFilter || undefined,
     limit: 100,
+    ...dr.params,
   });
 
   const quotations = data ?? [];
@@ -453,6 +456,7 @@ export default function QuotationsPage() {
               <option value="REJECTED">Rejected</option>
               <option value="EXPIRED">Expired</option>
             </select>
+            <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError} basisLabel="Created" />
             <button onClick={refetch} title="Refresh"
               className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">
               <RefreshCw size={14} />
@@ -1210,5 +1214,14 @@ export default function QuotationsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function QuotationsPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <QuotationsPageInner />
+    </Suspense>
   );
 }

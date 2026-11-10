@@ -5,9 +5,10 @@ import { useApi } from "@/lib/use-api";
 import { LoadingState, ErrorState, EmptyState, TableSkeleton } from "@/components/States";
 import { exportExcel } from "@/lib/export";
 import DriveButton from "@/components/DriveButton";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import DocumentsPanel from "@/components/DocumentsPanel";
 import { RefreshCw, Download, Paperclip, X } from "lucide-react";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
 
 const STATUS_COLORS: Record<string, string> = {
   DRAFT: "bg-gray-100 text-gray-700",
@@ -27,13 +28,15 @@ interface SalesOrder {
   customerId: string; customerName: string; quotationNo: string;
 }
 
-export default function SalesOrdersPage() {
+function SalesOrdersPageInner() {
+  const dr = useDateRangeQuery();
   const [statusFilter, setStatusFilter] = useState("");
   const [docsFor, setDocsFor] = useState<SalesOrder | null>(null);
 
   const { data, loading, error, refetch } = useApi<SalesOrder[]>("/sales-orders", {
     status: statusFilter || undefined,
     limit: 100,
+    ...dr.params,
   });
 
   const orders = data ?? [];
@@ -86,6 +89,7 @@ export default function SalesOrdersPage() {
               <option value="INVOICED">Invoiced</option>
               <option value="COLLECTED">Collected</option>
             </select>
+            <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError} basisLabel="Order date" />
             <button onClick={refetch} title="Refresh"
               className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">
               <RefreshCw size={14} />
@@ -184,5 +188,14 @@ export default function SalesOrdersPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function SalesOrdersPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <SalesOrdersPageInner />
+    </Suspense>
   );
 }

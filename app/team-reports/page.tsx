@@ -1,10 +1,11 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import TopBar from "@/components/TopBar";
 import { api } from "@/lib/api-client";
 import { fmt } from "@/lib/utils";
 import { Plus, X, Eye, ChevronRight, AlertCircle, Loader2, RefreshCw } from "lucide-react";
 import { useToast } from "@/components/Toaster";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
 
 const branches = ["HO", "TVM", "KTYM", "EKM", "CLT"];
 const depts = ["Sales / CRE", "Production", "Accounts", "Administration"];
@@ -71,7 +72,9 @@ const blankMWR = {
   collectionEfficiencyPct: "", outstandingReduction: "", totalCollected: "",
 };
 
-export default function TeamReportsPage() {
+function TeamReportsPageInner() {
+  const dr = useDateRangeQuery();
+  const rf = dr.range?.from, rt = dr.range?.to;
   const toast = useToast();
   const [tab, setTab] = useState<"dar" | "wwr" | "mwr">("dar");
   const [darList, setDarList] = useState<DARReport[]>([]);
@@ -95,26 +98,26 @@ export default function TeamReportsPage() {
   const loadDAR = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.get<any>("/team-reports/dars", { branch: filterBranch !== "All" ? filterBranch : undefined, limit: "100" });
+      const res = await api.get<any>("/team-reports/dars", { branch: filterBranch !== "All" ? filterBranch : undefined, limit: "100", from: rf, to: rt });
       setDarList(res?.data ?? []);
     } finally { setLoading(false); }
-  }, [filterBranch]);
+  }, [filterBranch, rf, rt]);
 
   const loadWWR = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.get<any>("/team-reports/wwrs", { branch: filterBranch !== "All" ? filterBranch : undefined, limit: "100" });
+      const res = await api.get<any>("/team-reports/wwrs", { branch: filterBranch !== "All" ? filterBranch : undefined, limit: "100", from: rf, to: rt });
       setWwrList(res?.data ?? []);
     } finally { setLoading(false); }
-  }, [filterBranch]);
+  }, [filterBranch, rf, rt]);
 
   const loadMWR = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.get<any>("/team-reports/mwrs", { branch: filterBranch !== "All" ? filterBranch : undefined, limit: "100" });
+      const res = await api.get<any>("/team-reports/mwrs", { branch: filterBranch !== "All" ? filterBranch : undefined, limit: "100", from: rf, to: rt });
       setMwrList(res?.data ?? []);
     } finally { setLoading(false); }
-  }, [filterBranch]);
+  }, [filterBranch, rf, rt]);
 
   useEffect(() => {
     // DAR/WWR/MWR employeeId is a foreign key to User.id, not the HR payroll
@@ -259,6 +262,8 @@ export default function TeamReportsPage() {
             <select value={filterDept} onChange={e => setFilterDept(e.target.value)} className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none">
               <option value="All">All Departments</option>{depts.map(d => <option key={d}>{d}</option>)}
             </select>
+            <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError}
+              basisLabel={tab === "dar" ? "Report date" : tab === "wwr" ? "Week overlaps" : "Report month"} />
             <button onClick={() => { if (tab === "dar") loadDAR(); else if (tab === "wwr") loadWWR(); else loadMWR(); }}
               className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500" title="Refresh">
               <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
@@ -714,5 +719,14 @@ export default function TeamReportsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function TeamReportsPage() {
+  return (
+    <Suspense fallback={null}>
+      <TeamReportsPageInner />
+    </Suspense>
   );
 }

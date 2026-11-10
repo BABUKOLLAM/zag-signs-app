@@ -1,9 +1,15 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import TopBar from "@/components/TopBar";
 import { useApi } from "@/lib/use-api";
 import { fmt } from "@/lib/utils";
 import { Plus, RefreshCw, Wallet, Loader2 } from "lucide-react";
+import { LoadingState } from "@/components/States";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
+import { formatRange, monthToRange, todayIst } from "@/lib/date-range";
+
+// Default view (as before): the current month. Old ?month=YYYY-MM links still open that month.
+const thisMonth = () => monthToRange(todayIst().slice(0, 7));
 
 type Collection = {
   id: string; collectionDate: string; amount: number; paymentMode: string;
@@ -18,12 +24,12 @@ const MODE_COLORS: Record<string,string> = {
   BANK_TRANSFER:"bg-teal-100 text-teal-700",
 };
 
-export default function CollectionsPage() {
-  const [month, setMonth]   = useState(new Date().toISOString().slice(0,7));
+function CollectionsPageInner() {
+  const dr = useDateRangeQuery({ defaultRange: thisMonth });
   const [showCreate, setShowCreate] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const { data: raw, loading, refetch } = useApi<Collection[]>(`/collections?month=${month}`);
+  const { data: raw, loading, refetch } = useApi<Collection[]>(`/collections?from=${dr.range?.from ?? ""}&to=${dr.range?.to ?? ""}`);
   const collections = raw ?? [];
 
   const { data: customers } = useApi<{ id:string; name:string; company:string }[]>("/customers");
@@ -68,7 +74,7 @@ export default function CollectionsPage() {
         {/* Month summary */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-            <p className="text-xs text-slate-500 mb-1">Total Collected ({month})</p>
+            <p className="text-xs text-slate-500 mb-1">Total Collected ({formatRange(dr.range)})</p>
             <p className="text-2xl font-bold text-emerald-600">{fmt(totalMonth)}</p>
             <p className="text-xs text-slate-400 mt-1">{collections.length} transactions</p>
           </div>
@@ -82,8 +88,7 @@ export default function CollectionsPage() {
 
         {/* Filters */}
         <div className="flex gap-3 mb-5 flex-wrap">
-          <input type="month" value={month} onChange={e => setMonth(e.target.value)}
-            className="px-3 py-2 rounded-xl border border-slate-200 text-sm" />
+          <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError} basisLabel="Collection date" allowAll={false} />
           <button onClick={refetch} className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500">
             <RefreshCw size={14} className={loading?"animate-spin":""} />
           </button>
@@ -114,7 +119,7 @@ export default function CollectionsPage() {
                   <td className="px-4 py-3 text-slate-500 text-xs">{c.reference || "—"}</td>
                 </tr>
               ))}
-              {!loading && collections.length === 0 && <tr><td colSpan={6} className="text-center py-8 text-slate-400">No collections for {month}</td></tr>}
+              {!loading && collections.length === 0 && <tr><td colSpan={6} className="text-center py-8 text-slate-400">No collections for {formatRange(dr.range)}</td></tr>}
             </tbody>
           </table>
         </div>
@@ -182,5 +187,14 @@ export default function CollectionsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function CollectionsPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <CollectionsPageInner />
+    </Suspense>
   );
 }

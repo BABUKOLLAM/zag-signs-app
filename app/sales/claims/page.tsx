@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { api } from "@/lib/api-client";
 import { Loader2, Plus, Download } from "lucide-react";
 import { useToast } from "@/components/Toaster";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
 
-export default function ClaimsPage() {
+function ClaimsPageInner() {
+  const dr = useDateRangeQuery();
   const toast = useToast();
   const [claims, setClaims] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -21,12 +23,13 @@ export default function ClaimsPage() {
 
   useEffect(() => {
     fetchClaims();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dr.range?.from, dr.range?.to]);
 
   const fetchClaims = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/sales/claims");
+      const res = await api.get("/sales/claims", dr.params);
       if ((res as any)?.data) setClaims((res as any).data);
     } catch (error) {
       console.error("Error fetching claims:", error);
@@ -213,6 +216,11 @@ export default function ClaimsPage() {
         </div>
       )}
 
+      {/* Date filter (submitted date) */}
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+        <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError} basisLabel="Submitted" />
+      </div>
+
       {/* Tabs */}
       <div className="flex gap-4 border-b">
         <button
@@ -338,5 +346,14 @@ export default function ClaimsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function ClaimsPage() {
+  return (
+    <Suspense fallback={null}>
+      <ClaimsPageInner />
+    </Suspense>
   );
 }

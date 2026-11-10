@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { Suspense } from "react";
 import TopBar from "@/components/TopBar";
 import { useApi } from "@/lib/use-api";
 import { fmt } from "@/lib/utils";
@@ -9,6 +9,11 @@ import {
   ResponsiveContainer, RadarChart, Radar, PolarGrid,
   PolarAngleAxis, Legend, Cell,
 } from "recharts";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
+import { presetRange, todayIst } from "@/lib/date-range";
+
+// Default view (as before): 1st of last month through today, India dates.
+const defaultBranchRange = () => ({ from: presetRange("last-month").from, to: todayIst() });
 
 const BRANCHES = ["HO", "TVM", "KTYM", "EKM", "CLT"];
 const BRANCH_LABELS: Record<string, string> = {
@@ -25,12 +30,9 @@ type BranchStats = {
 
 type BranchCompareData = { branches: BranchStats[]; topBranch: string; };
 
-export default function BranchComparisonPage() {
-  const [from, setFrom] = useState(() => {
-    const d = new Date(); d.setMonth(d.getMonth() - 1); d.setDate(1);
-    return d.toISOString().slice(0, 10);
-  });
-  const [to, setTo] = useState(() => new Date().toISOString().slice(0, 10));
+function BranchComparisonPageInner() {
+  const dr = useDateRangeQuery({ defaultRange: defaultBranchRange });
+  const { from, to } = dr.range ?? defaultBranchRange();
 
   const { data, loading, refetch } = useApi<BranchCompareData>(
     `/reports/branch-comparison?from=${from}&to=${to}`
@@ -71,29 +73,8 @@ export default function BranchComparisonPage() {
         {/* ── Date filter ──────────────────────────────────────────────── */}
         <div className="flex gap-3 flex-wrap items-center rounded-2xl border p-4 shadow-sm"
           style={{ background: "var(--card-bg)", borderColor: "var(--card-border)" }}>
-          <div className="flex items-center gap-2">
-            <label className="text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>From</label>
-            <input type="date" value={from} onChange={e => setFrom(e.target.value)}
-              className="px-3 py-2 rounded-xl border text-sm"
-              style={{ background: "var(--input-bg)", borderColor: "var(--input-border)", color: "var(--text-primary)" }} />
-          </div>
-          <div className="flex items-center gap-2">
-            <label className="text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>To</label>
-            <input type="date" value={to} onChange={e => setTo(e.target.value)}
-              className="px-3 py-2 rounded-xl border text-sm"
-              style={{ background: "var(--input-bg)", borderColor: "var(--input-border)", color: "var(--text-primary)" }} />
-          </div>
-          {[
-            { label: "This Month", fn: () => { const n = new Date(); setFrom(new Date(n.getFullYear(), n.getMonth(), 1).toISOString().slice(0,10)); setTo(n.toISOString().slice(0,10)); } },
-            { label: "Last Month", fn: () => { const n = new Date(); const m = n.getMonth() - 1; const y = m < 0 ? n.getFullYear()-1 : n.getFullYear(); const mo = ((m+12)%12); setFrom(new Date(y,mo,1).toISOString().slice(0,10)); setTo(new Date(y,mo+1,0).toISOString().slice(0,10)); } },
-            { label: "Last 3M",    fn: () => { const d = new Date(); d.setMonth(d.getMonth()-3); setFrom(d.toISOString().slice(0,10)); setTo(new Date().toISOString().slice(0,10)); } },
-          ].map(q => (
-            <button key={q.label} onClick={q.fn}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold border"
-              style={{ background: "var(--input-bg)", borderColor: "var(--input-border)", color: "var(--text-secondary)" }}>
-              {q.label}
-            </button>
-          ))}
+          <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError}
+            basisLabel="Invoice / created date" allowAll={false} />
           <button onClick={refetch} className="p-2 rounded-xl border ml-auto"
             style={{ borderColor: "var(--input-border)", background: "var(--input-bg)" }}>
             <RefreshCw size={14} className={loading ? "animate-spin text-indigo-400" : "text-slate-400"} />
@@ -236,5 +217,14 @@ export default function BranchComparisonPage() {
 
       </div>
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function BranchComparisonPage() {
+  return (
+    <Suspense fallback={null}>
+      <BranchComparisonPageInner />
+    </Suspense>
   );
 }
