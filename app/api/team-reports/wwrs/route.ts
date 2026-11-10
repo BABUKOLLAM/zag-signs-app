@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, err, requireSession, toLabel, toDate } from "@/lib/api-helpers";
+import { ok, err, requireSession, toLabel, toDate, rangeFromQuery } from "@/lib/api-helpers";
+import { teamWwrWhere } from "@/lib/list-filters";
 import { ApprovalStatus } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
@@ -13,10 +14,11 @@ export async function GET(request: NextRequest) {
   const page = Math.max(1, Number(searchParams.get("page") ?? "1"));
   const limit = Math.min(100, Number(searchParams.get("limit") ?? "30"));
 
-  const where = {
-    ...(employeeId ? { employeeId } : {}),
-    ...(branch ? { branch } : {}),
-  };
+  const { range, error: rangeError } = rangeFromQuery(searchParams, { allowMonth: false });
+  if (rangeError) return rangeError;
+
+  // A week matches when it overlaps the range.
+  const where = teamWwrWhere({ employeeId, branch, range });
 
   const [wwrs, total] = await Promise.all([
     prisma.wWR.findMany({

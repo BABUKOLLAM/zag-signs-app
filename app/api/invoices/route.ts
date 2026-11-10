@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, err, requirePathAccess } from "@/lib/api-helpers";
+import { ok, err, requirePathAccess, rangeFromQuery } from "@/lib/api-helpers";
+import { invoiceWhere } from "@/lib/list-filters";
 
 const BRANCH_MAP: Record<string, string> = {
   TVM: "TVM", KTYM: "KTYM", EKM: "EKM", CLT: "CLT", HO: "HO",
@@ -64,15 +65,11 @@ export async function GET(request: NextRequest) {
   const status = searchParams.get("status");
   const search = searchParams.get("search") ?? "";
 
+  const { range, error: rangeError } = rangeFromQuery(searchParams, { allowMonth: false });
+  if (rangeError) return rangeError;
+
   const invoices = await prisma.invoice.findMany({
-    where: {
-      ...(status ? { status: status as never } : {}),
-      ...(search ? { OR: [
-        { invoiceNo: { contains: search, mode: "insensitive" } },
-        { customerName: { contains: search, mode: "insensitive" } },
-        { customer: { name: { contains: search, mode: "insensitive" } } },
-      ]} : {}),
-    },
+    where: invoiceWhere({ status, search, range }),
     orderBy: { createdAt: "desc" },
     take: 200,
     include: INCLUDE,

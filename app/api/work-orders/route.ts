@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, err, requireSession, toDate, autoNo } from "@/lib/api-helpers";
+import { ok, err, requireSession, toDate, autoNo, rangeFromQuery } from "@/lib/api-helpers";
+import { workOrderWhere } from "@/lib/list-filters";
 
 type WOWithRelations = {
   id: string; workOrderNo: string; description: string; status: string; priority: string;
@@ -36,17 +37,11 @@ export async function GET(request: NextRequest) {
   const priority = searchParams.get("priority");
   const search   = searchParams.get("search") ?? "";
 
+  const { range, error: rangeError } = rangeFromQuery(searchParams, { allowMonth: false });
+  if (rangeError) return rangeError;
+
   const items = await prisma.workOrder.findMany({
-    where: {
-      ...(status   ? { status }   : {}),
-      ...(priority ? { priority } : {}),
-      ...(search   ? {
-        OR: [
-          { workOrderNo:  { contains: search, mode: "insensitive" } },
-          { description:  { contains: search, mode: "insensitive" } },
-        ],
-      } : {}),
-    },
+    where: workOrderWhere({ status, priority, search, range }),
     orderBy: { createdAt: "desc" },
     take: 200,
     include: {

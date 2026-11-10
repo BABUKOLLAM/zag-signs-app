@@ -1,24 +1,19 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, err, requirePathAccess } from "@/lib/api-helpers";
+import { ok, err, requirePathAccess, rangeFromQuery } from "@/lib/api-helpers";
+import { collectionWhere } from "@/lib/list-filters";
 
 export async function GET(request: NextRequest) {
   const session = await requirePathAccess("/collections");
   if (!session) return err("Forbidden", 403);
   const { searchParams } = new URL(request.url);
   const customerId = searchParams.get("customerId");
-  const month      = searchParams.get("month");
+  // ?month=YYYY-MM (old links) is mapped to that month's from–to range.
+  const { range, error: rangeError } = rangeFromQuery(searchParams);
+  if (rangeError) return rangeError;
 
   const collections = await prisma.collection.findMany({
-    where: {
-      ...(customerId ? { customerId } : {}),
-      ...(month ? {
-        collectionDate: {
-          gte: new Date(`${month}-01`),
-          lt:  new Date(new Date(`${month}-01`).setMonth(new Date(`${month}-01`).getMonth() + 1)),
-        },
-      } : {}),
-    },
+    where: collectionWhere({ customerId, range }),
     orderBy: { collectionDate: "desc" },
     take: 200,
     include: {

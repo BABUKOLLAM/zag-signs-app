@@ -2,20 +2,18 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { ok, err } from "@/lib/api-helpers";
+import { ok, err, rangeFromQuery } from "@/lib/api-helpers";
+import { rangeToWhere } from "@/lib/date-range";
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session) return err("Unauthorized", 401);
   const { searchParams } = new URL(req.url);
   const branch = searchParams.get("branch") || undefined;
-  const from = searchParams.get("from");
-  const to = searchParams.get("to");
-
-  const dateFilter = {
-    ...(from ? { gte: new Date(from) } : {}),
-    ...(to ? { lte: new Date(to) } : {}),
-  };
+  const { range, error: rangeError } = rangeFromQuery(searchParams, { allowMonth: false });
+  if (rangeError) return rangeError;
+  // Inclusive India-day ranges: job-cost createdAt is a timestamp; invoice and
+  // collection dates are calendar dates.
 
   // Job costs with linked sales orders
   const jobCosts = await prisma.jobCost.findMany({
@@ -28,9 +26,7 @@ export async function GET(req: NextRequest) {
       },
       lines: true,
     },
-    ...(from || to ? {
-      where: { createdAt: Object.keys(dateFilter).length ? dateFilter : undefined },
-    } : {}),
+    ...(range ? { where: { createdAt: rangeToWhere(range, "timestamp") } } : {}),
   });
 
   // Branch-level revenue from invoices
@@ -38,7 +34,7 @@ export async function GET(req: NextRequest) {
     by: ["branch" as any],
     where: {
       status: { in: ["PAID", "PARTIAL"] },
-      ...(from || to ? { invoiceDate: Object.keys(dateFilter).length ? dateFilter : undefined } : {}),
+      ...(range ? { invoiceDate: rangeToWhere(range, "date") } : {}),
     },
     _sum: { totalAmount: true },
   }).catch(() => []);
@@ -46,7 +42,7 @@ export async function GET(req: NextRequest) {
   // Collections by branch
   const branchCollections = await prisma.collection.groupBy({
     by: ["branch" as any],
-    where: from || to ? { collectionDate: Object.keys(dateFilter).length ? { gte: from ? new Date(from) : undefined, lte: to ? new Date(to) : undefined } : undefined } : {},
+    where: range ? { collectionDate: rangeToWhere(range, "date") } : {},
     _sum: { amount: true },
   }).catch(() => []);
 

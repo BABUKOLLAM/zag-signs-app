@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, err, requireSession, toLabel, toDate } from "@/lib/api-helpers";
+import { ok, err, requireSession, toLabel, toDate, rangeFromQuery } from "@/lib/api-helpers";
+import { teamMwrWhere } from "@/lib/list-filters";
 
 export async function GET(request: NextRequest) {
   const session = await requireSession();
@@ -13,11 +14,11 @@ export async function GET(request: NextRequest) {
   const page = Math.max(1, Number(searchParams.get("page") ?? "1"));
   const limit = Math.min(100, Number(searchParams.get("limit") ?? "24"));
 
-  const where = {
-    ...(employeeId ? { employeeId } : {}),
-    ...(branch ? { branch } : {}),
-    ...(year ? { year } : {}),
-  };
+  const { range, error: rangeError } = rangeFromQuery(searchParams, { allowMonth: false });
+  if (rangeError) return rangeError;
+
+  // A month matches when the range touches it; ?year= still works on its own.
+  const where = teamMwrWhere({ employeeId, branch, year, range });
 
   const [mwrs, total] = await Promise.all([
     prisma.mWR.findMany({

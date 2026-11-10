@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server";
-import { requirePathAccess, ok, err } from "@/lib/api-helpers";
+import { requirePathAccess, ok, err, rangeFromQuery } from "@/lib/api-helpers";
+import { darActivityWhere } from "@/lib/list-filters";
+import { isValidYmd, istDayOf, todayIst } from "@/lib/date-range";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
@@ -9,18 +11,11 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { date } = body; // YYYY-MM-DD format
+    if (!isValidYmd(date)) return err("date must be a valid YYYY-MM-DD date between 2000 and 2100");
 
-    // Get activities for the specified date
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
-
+    // Get the user's activities for that India day
     const activities = await prisma.activityLog.findMany({
-      where: {
-        userId: (session.user as any).id,
-        startTime: { gte: startOfDay, lte: endOfDay },
-      },
+      where: darActivityWhere({ myId: (session.user as any).id, range: { from: date, to: date } }),
       include: {
         customer: true,
         lead: true,
@@ -68,18 +63,22 @@ export async function GET(req: NextRequest) {
 
   try {
     const searchParams = req.nextUrl.searchParams;
-    const date = searchParams.get("date") || new Date().toISOString().split("T")[0];
-
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
+    // from/to (or the legacy single ?date=) — defaults to today in India.
+    const legacyDate = searchParams.get("date");
+    const { range: parsed, error: rangeError } = rangeFromQuery(
+      new URLSearchParams({
+        from: searchParams.get("from") || legacyDate || "",
+        to: searchParams.get("to") || legacyDate || "",
+      }),
+      { allowMonth: false },
+    );
+    if (rangeError) return rangeError;
+    const range = parsed ?? { from: todayIst(), to: todayIst() };
+    const date = range.from;
 
     const activities = await prisma.activityLog.findMany({
-      where: {
-        userId: (session.user as any).id,
-        startTime: { gte: startOfDay, lte: endOfDay },
-      },
+      where: darActivityWhere({ myId: (session.user as any).id, range }),
+      orderBy: { startTime: "asc" },
       include: {
         customer: true,
         lead: true,
@@ -88,6 +87,8 @@ export async function GET(req: NextRequest) {
 
     const darData = {
       date,
+      from: range.from,
+      to: range.to,
       activities: {
         calls: activities.filter((a) => a.type === "CALL").length,
         visits: activities.filter((a) => a.type === "VISIT").length,
@@ -105,7 +106,8 @@ export async function GET(req: NextRequest) {
         purpose: a.purpose,
         outcome: a.outcome,
         duration: a.duration,
-        time: a.startTime.toLocaleTimeString(),
+        day: istDayOf(a.startTime),
+        time: a.startTime.toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata" }),
       })),
       totalTime: activities.reduce((sum, a) => sum + (a.duration || 0), 0),
     };

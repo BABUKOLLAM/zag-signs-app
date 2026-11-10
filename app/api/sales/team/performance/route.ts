@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requirePathAccess, ok, err } from "@/lib/api-helpers";
+import { requirePathAccess, ok, err, rangeFromQuery } from "@/lib/api-helpers";
+import { monthToRange, monthsInRange, rangeToWhere, todayIst } from "@/lib/date-range";
 
 
 export async function GET(req: NextRequest) {
@@ -9,7 +10,12 @@ export async function GET(req: NextRequest) {
 
   try {
     const searchParams = req.nextUrl.searchParams;
-    const month = searchParams.get("month") || new Date().toISOString().slice(0, 7); // YYYY-MM
+    // from/to, or the legacy ?month=YYYY-MM; defaults to the current month (India).
+    const { range: parsed, error: rangeError } = rangeFromQuery(searchParams);
+    if (rangeError) return rangeError;
+    const range = parsed ?? monthToRange(todayIst().slice(0, 7))!;
+    const months = monthsInRange(range);
+    const startTime = rangeToWhere(range, "timestamp");
 
     // Get all users (filter to sales team)
     const users = await prisma.user.findMany({
@@ -22,16 +28,9 @@ export async function GET(req: NextRequest) {
     // Calculate metrics for each team member
     const teamMetrics = await Promise.all(
       users.map(async (user) => {
-        // Activities this month
-        const monthStart = new Date(`${month}-01`);
-        const monthEnd = new Date(monthStart);
-        monthEnd.setMonth(monthEnd.getMonth() + 1);
-
+        // Activities in the range (India days)
         const activities = await prisma.activityLog.findMany({
-          where: {
-            userId: user.id,
-            startTime: { gte: monthStart, lt: monthEnd },
-          },
+          where: { userId: user.id, startTime },
         });
 
         const calls = activities.filter((a) => a.type === "CALL").length;
@@ -69,21 +68,26 @@ export async function GET(req: NextRequest) {
         // Collections
         const collections = await prisma.collection.findMany({
           where: {
-            createdAt: { gte: monthStart, lt: monthEnd },
+            createdAt: startTime,
           },
         });
 
         const totalCollected = collections.reduce((sum, c) => sum + c.amount, 0);
 
-        // Get sales target for this month
-        const target = await prisma.salesTarget.findUnique({
-          where: {
-            userId_month: {
-              userId: user.id,
-              month,
-            },
-          },
+        // Monthly targets for every month the range touches, summed. For a
+        // single month this is exactly the old findUnique(userId_month).
+        const targetRows = await prisma.salesTarget.findMany({
+          where: { userId: user.id, month: { in: months } },
         });
+        const sumOf = (k: "callsTarget" | "visitsTarget" | "followUpsTarget" | "ordersTarget" | "revenueTarget" | "collectionTarget") =>
+          targetRows.reduce((acc, t) => acc + (Number(t[k]) || 0), 0);
+        const target = targetRows.length
+          ? {
+              callsTarget: sumOf("callsTarget"), visitsTarget: sumOf("visitsTarget"),
+              followUpsTarget: sumOf("followUpsTarget"), ordersTarget: sumOf("ordersTarget"),
+              revenueTarget: sumOf("revenueTarget"), collectionTarget: sumOf("collectionTarget"),
+            }
+          : null;
 
         return {
           userId: user.id,

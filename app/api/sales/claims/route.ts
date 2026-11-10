@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requirePathAccess, ok, err, autoNo } from "@/lib/api-helpers";
+import { requirePathAccess, ok, err, autoNo, rangeFromQuery } from "@/lib/api-helpers";
+import { claimWhere } from "@/lib/list-filters";
 
 
 // Claim submission window: 1st to 10th of month
@@ -26,10 +27,10 @@ export async function GET(req: NextRequest) {
     const submittedByUserId = searchParams.get("submittedByUserId");
     const status = searchParams.get("status");
 
-    const where: any = {};
-    if (month) where.submissionWindow = month;
-    if (submittedByUserId) where.submittedByUserId = submittedByUserId;
-    if (status) where.status = status;
+    // ?month= keeps its old meaning (submission window); from/to = submitted date (India day).
+    const { range, error: rangeError } = rangeFromQuery(searchParams, { allowMonth: false });
+    if (rangeError) return rangeError;
+    const where = claimWhere({ month, submittedByUserId, status, range });
 
     const claims = await prisma.salesClaim.findMany({
       where,

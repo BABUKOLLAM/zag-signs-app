@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requirePathAccess, ok, err, autoNo } from "@/lib/api-helpers";
+import { requirePathAccess, ok, err, autoNo, rangeFromQuery } from "@/lib/api-helpers";
+import { activityWhere } from "@/lib/list-filters";
 
 
 export async function GET(req: NextRequest) {
@@ -15,22 +16,13 @@ export async function GET(req: NextRequest) {
     const leadId = searchParams.get("leadId");
     const type = searchParams.get("type");
 
-    const where: any = {};
-    if (userId) where.userId = userId;
-    if (customerId) where.customerId = customerId;
-    if (leadId) where.leadId = leadId;
-    if (type) where.type = type;
-
-    if (date) {
-      const startOfDay = new Date(date);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(date);
-      endOfDay.setHours(23, 59, 59, 999);
-      where.AND = [
-        { startTime: { gte: startOfDay } },
-        { startTime: { lte: endOfDay } },
-      ];
-    }
+    // Legacy ?date=YYYY-MM-DD is treated as a one-day range. Days are India days.
+    const { range, error: rangeError } = rangeFromQuery(
+      new URLSearchParams({ from: searchParams.get("from") || date || "", to: searchParams.get("to") || date || "" }),
+      { allowMonth: false },
+    );
+    if (rangeError) return rangeError;
+    const where = activityWhere({ userId, customerId, leadId, type, range });
 
     const activities = await prisma.activityLog.findMany({
       where,

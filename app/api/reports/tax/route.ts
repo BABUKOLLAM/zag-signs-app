@@ -1,19 +1,17 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, requireSession } from "@/lib/api-helpers";
+import { ok, requireSession, rangeFromQuery } from "@/lib/api-helpers";
+import { rangeToWhere } from "@/lib/date-range";
 
 export async function GET(request: NextRequest) {
   const session = await requireSession();
   if (!session) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
 
   const { searchParams } = new URL(request.url);
-  const from = searchParams.get("from");
-  const to   = searchParams.get("to");
-
-  const dateFilter = {
-    ...(from ? { gte: new Date(from) } : {}),
-    ...(to   ? { lte: new Date(to + "T23:59:59.999Z") } : {}),
-  };
+  const { range, error: rangeError } = rangeFromQuery(searchParams, { allowMonth: false });
+  if (rangeError) return rangeError;
+  // Quotation createdAt is a timestamp → India days, inclusive.
+  const dateFilter = range ? rangeToWhere(range, "timestamp") : {};
 
   const quotations = await prisma.quotation.findMany({
     where: {

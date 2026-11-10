@@ -2,7 +2,8 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { ok, err } from "@/lib/api-helpers";
+import { ok, err, rangeFromQuery } from "@/lib/api-helpers";
+import { rangeToWhere } from "@/lib/date-range";
 
 const BRANCHES = ["HO", "TVM", "KTYM", "EKM", "CLT"];
 
@@ -11,27 +12,25 @@ export async function GET(req: NextRequest) {
   if (!session) return err("Unauthorized", 401);
 
   const { searchParams } = new URL(req.url);
-  const from = searchParams.get("from");
-  const to   = searchParams.get("to");
-
-  const dateRange = {
-    ...(from ? { gte: new Date(from) } : {}),
-    ...(to   ? { lte: new Date(to)   } : {}),
-  };
-  const hasDate = !!(from || to);
+  const { range, error: rangeError } = rangeFromQuery(searchParams, { allowMonth: false });
+  if (rangeError) return rangeError;
+  // Inclusive India-day ranges: invoiceDate is a calendar date, the rest are timestamps.
+  const hasDate = !!range;
+  const dateRange = range ? rangeToWhere(range, "timestamp") : {};
+  const invoiceRange = range ? rangeToWhere(range, "date") : {};
 
   const [revenue, invoiced, leads, quotations, customers, tickets] = await Promise.all([
     // Revenue collected (paid + partial invoices)
     prisma.invoice.groupBy({
       by: ["branch" as any],
-      where: { ...(hasDate ? { invoiceDate: dateRange } : {}), status: { in: ["PAID", "PARTIAL"] } },
+      where: { ...(hasDate ? { invoiceDate: invoiceRange } : {}), status: { in: ["PAID", "PARTIAL"] } },
       _sum: { totalAmount: true },
     }).catch(() => []),
 
     // Total invoiced (all statuses)
     prisma.invoice.groupBy({
       by: ["branch" as any],
-      where: hasDate ? { invoiceDate: dateRange } : {},
+      where: hasDate ? { invoiceDate: invoiceRange } : {},
       _sum: { totalAmount: true },
     }).catch(() => []),
 

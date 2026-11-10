@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, err, requireSession, toDate } from "@/lib/api-helpers";
+import { ok, err, requireSession, toDate, rangeFromQuery } from "@/lib/api-helpers";
+import { teamDarWhere } from "@/lib/list-filters";
 
 export async function GET(request: NextRequest) {
   const session = await requireSession();
@@ -12,10 +13,10 @@ export async function GET(request: NextRequest) {
   const page = Math.max(1, Number(searchParams.get("page") ?? "1"));
   const limit = Math.min(100, Number(searchParams.get("limit") ?? "30"));
 
-  const where = {
-    ...(employeeId ? { employeeId } : {}),
-    ...(branch ? { branch } : {}),
-  };
+  const { range, error: rangeError } = rangeFromQuery(searchParams, { allowMonth: false });
+  if (rangeError) return rangeError;
+
+  const where = teamDarWhere({ employeeId, branch, range });
 
   const [dars, total] = await Promise.all([
     prisma.dAR.findMany({

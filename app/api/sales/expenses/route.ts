@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
-import { requirePathAccess, ok, err } from "@/lib/api-helpers";
+import { requirePathAccess, ok, err, rangeFromQuery } from "@/lib/api-helpers";
+import { expenseWhere } from "@/lib/list-filters";
 import { prisma } from "@/lib/prisma";
 import { validateText, isNegative } from "@/lib/validation";
 
@@ -20,14 +21,12 @@ export async function GET(req: NextRequest) {
     const role = (session.user as any).role;
     const myId = (session.user as any).id;
 
-    // HOD/Accounts/CEO/MD/AVP see pending approvals; others see own
-    const isApprover = ["MD", "AVP", "Business Manager", "Accounts"].includes(role);
+    // ?month= keeps its old meaning (forMonth); from/to = date the report was raised (India day).
+    const { range, error: rangeError } = rangeFromQuery(sp, { allowMonth: false });
+    if (rangeError) return rangeError;
 
-    const where: any = {};
-    if (userId) where.userId = userId;
-    else if (!isApprover) where.userId = myId;
-    if (status) where.status = status;
-    if (month) where.forMonth = month;
+    // HOD/Accounts/CEO/MD/AVP see pending approvals; others see own (see expenseWhere)
+    const where = expenseWhere({ role, myId, userId, status, month, range });
 
     const expenses = await prisma.expenseReport.findMany({
       where,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, err, requireSession, toLabel, toDate } from "@/lib/api-helpers";
+import { ok, err, requireSession, toLabel, toDate, rangeFromQuery } from "@/lib/api-helpers";
+import { fieldVisitWhere } from "@/lib/list-filters";
 import { VisitType, VisitOutcome } from "@prisma/client";
 import { validateText, isNegative } from "@/lib/validation";
 
@@ -36,9 +37,10 @@ export async function GET(request: NextRequest) {
   const page = Math.max(1, Number(searchParams.get("page") ?? "1"));
   const limit = Math.min(100, Number(searchParams.get("limit") ?? "50"));
 
-  const where = {
-    ...(employeeId ? { employeeId } : {}),
-  };
+  const { range, error: rangeError } = rangeFromQuery(searchParams, { allowMonth: false });
+  if (rangeError) return rangeError;
+
+  const where = fieldVisitWhere({ employeeId, range });
 
   const [visits, total] = await Promise.all([
     prisma.fieldVisit.findMany({

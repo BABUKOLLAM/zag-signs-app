@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "./auth";
 import { prisma } from "./prisma";
 import { canAccess, canAccessModules } from "./permissions";
+import { parseRangeParams, type DateRange } from "./date-range";
 
 export const ok = (data: unknown, status = 200) =>
   NextResponse.json({ data }, { status });
@@ -76,4 +77,18 @@ export function toDate(d: Date | null | undefined): string {
 /** Generate next sequential number: autoNo("L", 5) → "L006" */
 export function autoNo(prefix: string, count: number): string {
   return `${prefix}${String(count + 1).padStart(3, "0")}`;
+}
+
+/**
+ * Reads and validates ?from=&to= (and, unless allowMonth is false, the legacy
+ * ?month=YYYY-MM) for list filtering. On bad input returns a ready 400
+ * response; otherwise the inclusive range, or null for "no date filter".
+ */
+export function rangeFromQuery(
+  sp: URLSearchParams,
+  opts: { allowMonth?: boolean } = {},
+): { range: DateRange | null; error: null } | { range: null; error: NextResponse } {
+  const r = parseRangeParams(sp, opts);
+  if (!r.ok) return { range: null, error: err(r.error, 400) };
+  return { range: r.range, error: null };
 }

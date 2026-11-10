@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, err, requireSession, toDate } from "@/lib/api-helpers";
+import { ok, err, requireSession, toDate, rangeFromQuery } from "@/lib/api-helpers";
+import { quotationWhere } from "@/lib/list-filters";
 import { QuotationStatus } from "@prisma/client";
 import { makeClientCode } from "@/lib/utils";
 
@@ -73,11 +74,10 @@ export async function GET(request: NextRequest) {
   const page  = Math.max(1, Number(searchParams.get("page")  ?? "1"));
   const limit = Math.min(100, Number(searchParams.get("limit") ?? "50"));
 
-  const where = {
-    ...(status     ? { status }     : {}),
-    ...(customerId ? { customerId } : {}),
-    ...(leadId     ? { leadId }     : {}),
-  };
+  const { range, error: rangeError } = rangeFromQuery(searchParams, { allowMonth: false });
+  if (rangeError) return rangeError;
+
+  const where = quotationWhere({ status, customerId, leadId, range });
 
   const [quotations, total] = await Promise.all([
     prisma.quotation.findMany({
