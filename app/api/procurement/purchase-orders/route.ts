@@ -1,14 +1,17 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, err, requirePathAccess } from "@/lib/api-helpers";
+import { ok, err, requirePathAccess, rangeFromQuery } from "@/lib/api-helpers";
+import { purchaseOrderWhere } from "@/lib/list-filters";
 
 export async function GET(req: NextRequest) {
   const session = await requirePathAccess("/procurement");
   if (!session) return err("Forbidden", 403);
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status") || undefined;
+  const { range, error: rangeError } = rangeFromQuery(searchParams, { allowMonth: false });
+  if (rangeError) return rangeError;
   const rows = await prisma.purchaseOrder.findMany({
-    where: status ? { status } : {},
+    where: purchaseOrderWhere({ status, range }),
     include: {
       vendor: { select: { name: true, vendorCode: true } },
       lines: true,

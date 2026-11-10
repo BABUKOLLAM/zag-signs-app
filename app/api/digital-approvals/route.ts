@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, err, requirePathAccess } from "@/lib/api-helpers";
+import { ok, err, requirePathAccess, rangeFromQuery } from "@/lib/api-helpers";
+import { digitalApprovalWhere } from "@/lib/list-filters";
 
 export async function GET(req: NextRequest) {
   const session = await requirePathAccess("/digital-approvals");
@@ -8,11 +9,10 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const type = searchParams.get("type") || undefined;
   const status = searchParams.get("status") || undefined;
+  const { range, error: rangeError } = rangeFromQuery(searchParams, { allowMonth: false });
+  if (rangeError) return rangeError;
   const rows = await prisma.digitalApproval.findMany({
-    where: {
-      ...(type ? { type } : {}),
-      ...(status ? { status } : {}),
-    },
+    where: digitalApprovalWhere({ type, status, range }),
     include: { createdBy: { select: { name: true } } },
     orderBy: { createdAt: "desc" },
   });

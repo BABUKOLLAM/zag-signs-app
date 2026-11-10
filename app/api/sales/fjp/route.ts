@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
-import { requirePathAccess, ok, err } from "@/lib/api-helpers";
+import { requirePathAccess, ok, err, rangeFromQuery } from "@/lib/api-helpers";
+import { fjpWhere } from "@/lib/list-filters";
 import { prisma } from "@/lib/prisma";
 import { validateText, isNegative } from "@/lib/validation";
 
@@ -25,14 +26,18 @@ export async function GET(req: NextRequest) {
 
   try {
     const sp = req.nextUrl.searchParams;
-    const userId = sp.get("userId") || (session.user as any).id;
     const month = sp.get("month");
+    const { range, error: rangeError } = rangeFromQuery(sp, { allowMonth: false });
+    if (rangeError) return rangeError;
+    // Non-managers only ever see their own plans (?userId= used to expose anyone's).
+    const where = fjpWhere({
+      role: (session.user as { role?: string }).role,
+      myId: (session.user as { id?: string }).id,
+      userId: sp.get("userId"), month, range,
+    });
 
     const fjps = await prisma.fJP.findMany({
-      where: {
-        userId,
-        ...(month ? { forMonth: month } : {}),
-      },
+      where,
       include: {
         routes: { orderBy: { dayDate: "asc" } },
         user: { select: { id: true, name: true, branch: true, role: true } },

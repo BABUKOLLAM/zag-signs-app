@@ -1,11 +1,13 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireSession, ok, err, autoNo } from "@/lib/api-helpers";
+import { ok, err, autoNo, requireAnyPathAccess, rangeFromQuery, okList } from "@/lib/api-helpers";
+import { scheduleWhere } from "@/lib/list-filters";
+import { ROUTE_ACCESS } from "@/lib/route-access";
 
 
 export async function GET(req: NextRequest) {
-  const session = await requireSession();
-  if (!session) return err("Unauthorized", 401);
+  const session = await requireAnyPathAccess(ROUTE_ACCESS.production);
+  if (!session) return err("Forbidden", 403);
 
   try {
     const searchParams = req.nextUrl.searchParams;
@@ -14,22 +16,15 @@ export async function GET(req: NextRequest) {
     const status = searchParams.get("status");
     const date = searchParams.get("date"); // YYYY-MM-DD for filtering
 
-    const where: any = {};
-    if (machineId) where.machineId = machineId;
-    if (workOrderId) where.workOrderId = workOrderId;
-    if (status) where.status = status;
+    // from/to; the older single ?date=YYYY-MM-DD is a one-day range. Start times are India days.
+    const { range, error: rangeError } = rangeFromQuery(new URLSearchParams({
+      from: searchParams.get("from") || date || "",
+      to: searchParams.get("to") || date || "",
+    }), { allowMonth: false });
+    if (rangeError) return rangeError;
+    const where = scheduleWhere({ machineId, workOrderId, status, range });
 
-    if (date) {
-      const startOfDay = new Date(date);
-      const endOfDay = new Date(date);
-      endOfDay.setDate(endOfDay.getDate() + 1);
-      where.AND = [
-        { scheduledStartAt: { gte: startOfDay } },
-        { scheduledStartAt: { lt: endOfDay } },
-      ];
-    }
-
-    const schedules = await prisma.machineSchedule.findMany({
+    const [schedules, total] = await Promise.all([prisma.machineSchedule.findMany({
       where,
       include: {
         machine: true,
@@ -38,17 +33,17 @@ export async function GET(req: NextRequest) {
       },
       orderBy: { scheduledStartAt: "asc" },
       take: 300,
-    });
+    }), prisma.machineSchedule.count({ where })]);
 
-    return ok(schedules, 200);
+    return okList(schedules, { total, limit: 300 });
   } catch (error: any) {
     return err(error.message, 500);
   }
 }
 
 export async function POST(req: NextRequest) {
-  const session = await requireSession();
-  if (!session) return err("Unauthorized", 401);
+  const session = await requireAnyPathAccess(ROUTE_ACCESS.production);
+  if (!session) return err("Forbidden", 403);
 
   try {
     const body = await req.json();

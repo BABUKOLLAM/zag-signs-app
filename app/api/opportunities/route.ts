@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, requireSession, toDate } from "@/lib/api-helpers";
+import { ok, toDate, requireAnyPathAccess, err, rangeFromQuery } from "@/lib/api-helpers";
+import { opportunityWhere } from "@/lib/list-filters";
+import { ROUTE_ACCESS } from "@/lib/route-access";
 import { OpportunityStage } from "@prisma/client";
 
 const STAGE_LABELS: Record<string, string> = {
@@ -41,8 +43,8 @@ function shape(o: {
 }
 
 export async function GET(request: NextRequest) {
-  const session = await requireSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAnyPathAccess(ROUTE_ACCESS.opportunities);
+  if (!session) return err("Forbidden", 403);
 
   const { searchParams } = new URL(request.url);
   const stage  = searchParams.get("stage") as OpportunityStage | null;
@@ -51,11 +53,9 @@ export async function GET(request: NextRequest) {
   const page   = Math.max(1, Number(searchParams.get("page")  ?? "1"));
   const limit  = Math.min(100, Number(searchParams.get("limit") ?? "50"));
 
-  const where = {
-    ...(stage  ? { stage }  : {}),
-    ...(branch ? { branch } : {}),
-    ...(leadId ? { leadId } : {}),
-  };
+  const { range, error: rangeError } = rangeFromQuery(searchParams, { allowMonth: false });
+  if (rangeError) return rangeError;
+  const where = opportunityWhere({ stage, branch, leadId, range });
 
   const [opps, total] = await Promise.all([
     prisma.opportunity.findMany({
@@ -75,8 +75,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await requireSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAnyPathAccess(ROUTE_ACCESS.opportunities);
+  if (!session) return err("Forbidden", 403);
 
   const body = await request.json() as {
     title: string; stage?: string; value?: number;
@@ -106,8 +106,8 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-  const session = await requireSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAnyPathAccess(ROUTE_ACCESS.opportunities);
+  if (!session) return err("Forbidden", 403);
 
   const body = await request.json() as { id: string; stage?: string; probability?: number; notes?: string };
   if (!body.id) return NextResponse.json({ error: "id required" }, { status: 400 });

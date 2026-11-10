@@ -1,14 +1,18 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, err, requirePathAccess } from "@/lib/api-helpers";
+import { ok, err, requirePathAccess, rangeFromQuery } from "@/lib/api-helpers";
+import { amcWhere } from "@/lib/list-filters";
 
 export async function GET(req: NextRequest) {
   const session = await requirePathAccess("/amc");
   if (!session) return err("Forbidden", 403);
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status") || undefined;
+  const { range, error: rangeError } = rangeFromQuery(searchParams, { allowMonth: false });
+  if (rangeError) return rangeError;
+  // A contract matches when its start–end period overlaps the range.
   const rows = await prisma.aMCContract.findMany({
-    where: status ? { status } : {},
+    where: amcWhere({ status, range }),
     include: {
       customer: { select: { name: true, company: true, phone: true } },
       _count: { select: { serviceTickets: true } },

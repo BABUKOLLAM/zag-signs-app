@@ -1,44 +1,43 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, err, requireSession } from "@/lib/api-helpers";
+import { ok, err, requireAnyPathAccess, rangeFromQuery, okList } from "@/lib/api-helpers";
+import { attendanceWhere } from "@/lib/list-filters";
+import { ROUTE_ACCESS } from "@/lib/route-access";
 
 export async function GET(request: NextRequest) {
-  const session = await requireSession();
-  if (!session) return err("Unauthorized", 401);
+  const session = await requireAnyPathAccess(ROUTE_ACCESS.attendance);
+  if (!session) return err("Forbidden", 403);
   const { searchParams } = new URL(request.url);
   const employeeId = searchParams.get("employeeId");
   const date       = searchParams.get("date");
   const month      = searchParams.get("month"); // YYYY-MM
 
-  const records = await prisma.attendance.findMany({
-    where: {
-      ...(employeeId ? { employeeId } : {}),
-      ...(date ? { date: new Date(date) } : {}),
-      ...(month ? {
-        date: {
-          gte: new Date(`${month}-01`),
-          lt:  new Date(`${month}-01`).setMonth(new Date(`${month}-01`).getMonth() + 1) > 0
-            ? new Date(new Date(`${month}-01`).setMonth(new Date(`${month}-01`).getMonth() + 1))
-            : new Date(),
-        },
-      } : {}),
-    },
+  // from/to; the older ?date=YYYY-MM-DD (one day) and ?month=YYYY-MM still work.
+  const { range, error: rangeError } = rangeFromQuery(new URLSearchParams({
+    from: searchParams.get("from") || date || "",
+    to: searchParams.get("to") || date || "",
+    ...(month ? { month } : {}),
+  }));
+  if (rangeError) return rangeError;
+  const where = attendanceWhere({ employeeId, range });
+  const [records, total] = await Promise.all([prisma.attendance.findMany({
+    where,
     include: { employee: { select: { name: true, employeeNo: true, department: true } } },
     orderBy: { date: "desc" },
     take: 500,
-  });
-  return ok(records.map(r => ({
+  }), prisma.attendance.count({ where })]);
+  return okList(records.map(r => ({
     id: r.id, date: r.date.toISOString().split("T")[0],
     status: r.status, checkIn: r.checkIn?.toISOString() ?? null,
     checkOut: r.checkOut?.toISOString() ?? null, notes: r.notes ?? "",
     employeeId: r.employeeId ?? "", employeeName: r.employee?.name ?? "",
     employeeNo: r.employee?.employeeNo ?? "", department: r.employee?.department ?? "",
-  })));
+  })), { total, limit: 500 });
 }
 
 export async function POST(request: NextRequest) {
-  const session = await requireSession();
-  if (!session) return err("Unauthorized", 401);
+  const session = await requireAnyPathAccess(ROUTE_ACCESS.attendance);
+  if (!session) return err("Forbidden", 403);
   const body = await request.json() as {
     employeeId?: string; date?: string; status?: string;
     checkIn?: string; checkOut?: string; notes?: string;

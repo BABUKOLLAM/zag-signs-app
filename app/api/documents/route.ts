@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, err, requireSession, toDate } from "@/lib/api-helpers";
+import { ok, err, requireSession, toDate, rangeFromQuery, okList } from "@/lib/api-helpers";
+import { documentWhere } from "@/lib/list-filters";
 
 function shape(d: Awaited<ReturnType<typeof prisma.document.findFirst>> & {
   uploadedBy?: { id: string; name: string } | null;
@@ -32,8 +33,9 @@ export async function GET(request: NextRequest) {
   const category = searchParams.get("category");
   const search = searchParams.get("search") ?? "";
 
-  const docs = await prisma.document.findMany({
-    where: {
+  const { range, error: rangeError } = rangeFromQuery(searchParams, { allowMonth: false });
+  if (rangeError) return rangeError;
+  const where = documentWhere({
       ...(relatedTo ? { relatedTo } : {}),
       ...(relatedType ? { relatedType } : {}),
       ...(category ? { category } : {}),
@@ -46,13 +48,15 @@ export async function GET(request: NextRequest) {
             ],
           }
         : {}),
-    },
+  }, range);
+  const [docs, total] = await Promise.all([prisma.document.findMany({
+    where,
     orderBy: { createdAt: "desc" },
     take: 200,
     include: { uploadedBy: { select: { id: true, name: true } } },
-  });
+  }), prisma.document.count({ where })]);
 
-  return ok(docs.map(shape));
+  return okList(docs.map(shape), { total, limit: 200 });
 }
 
 export async function POST(request: NextRequest) {

@@ -1,11 +1,15 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, err, requirePathAccess } from "@/lib/api-helpers";
+import { ok, err, requirePathAccess, rangeFromQuery } from "@/lib/api-helpers";
+import { grnWhere } from "@/lib/list-filters";
 
 export async function GET(req: NextRequest) {
   const session = await requirePathAccess("/procurement");
   if (!session) return err("Forbidden", 403);
+  const { range, error: rangeError } = rangeFromQuery(new URL(req.url).searchParams, { allowMonth: false });
+  if (rangeError) return rangeError;
   const rows = await prisma.goodsReceived.findMany({
+    where: grnWhere({ range }),
     include: {
       po: { include: { vendor: { select: { name: true } } } },
       items: true,

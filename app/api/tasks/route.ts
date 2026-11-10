@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, err, requireSession, toLabel, toDate } from "@/lib/api-helpers";
+import { ok, err, toLabel, toDate, requireAnyPathAccess, rangeFromQuery } from "@/lib/api-helpers";
+import { taskWhere } from "@/lib/list-filters";
+import { ROUTE_ACCESS } from "@/lib/route-access";
 import { validateText } from "@/lib/validation";
 import { TaskStatus, TaskPriority } from "@prisma/client";
 
@@ -27,8 +29,8 @@ function shape(t: Awaited<ReturnType<typeof prisma.task.findFirst>> & {
 }
 
 export async function GET(request: NextRequest) {
-  const session = await requireSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAnyPathAccess(ROUTE_ACCESS.tasks);
+  if (!session) return err("Forbidden", 403);
 
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status") as TaskStatus | null;
@@ -37,11 +39,9 @@ export async function GET(request: NextRequest) {
   const page = Math.max(1, Number(searchParams.get("page") ?? "1"));
   const limit = Math.min(100, Number(searchParams.get("limit") ?? "50"));
 
-  const where = {
-    ...(status ? { status } : {}),
-    ...(priority ? { priority } : {}),
-    ...(assignedToId ? { assignedToId } : {}),
-  };
+  const { range, error: rangeError } = rangeFromQuery(searchParams, { allowMonth: false });
+  if (rangeError) return rangeError;
+  const where = taskWhere({ status, priority, assignedToId, range });
 
   const [tasks, total] = await Promise.all([
     prisma.task.findMany({
@@ -64,8 +64,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await requireSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAnyPathAccess(ROUTE_ACCESS.tasks);
+  if (!session) return err("Forbidden", 403);
 
   const body = await request.json();
   const { title, description, priority, dueDate, assignedToId, relatedTo, relatedType } = body;

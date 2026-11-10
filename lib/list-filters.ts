@@ -200,3 +200,129 @@ export function teamMwrWhere(o: { employeeId?: string | null; branch?: string | 
   }
   return w;
 }
+
+// ─── Second batch: the remaining dated lists ─────────────────────────────────
+// Date basis:
+//   complaints         createdAt          timestamp (raised)
+//   tasks              dueDate            calendar date (tasks with no due date drop out while filtered)
+//   opportunities      createdAt          timestamp
+//   AMC contracts      startDate..endDate overlapping the range (active during it)
+//   service tickets    createdAt          timestamp
+//   projects           createdAt          timestamp (start/end dates are optional)
+//   purchase orders    createdAt          timestamp (PO raised)
+//   goods received     receivedDate       calendar date
+//   fleet trips        startTime          timestamp
+//   fuel logs          date               calendar date
+//   attendance         date               calendar date
+//   leave requests     fromDate..toDate   overlapping the range
+//   field plans (FJP)  forMonth           every plan month the range touches
+//   work-order tickets receivedAt         timestamp
+//   audit log          createdAt          timestamp
+//   documents          createdAt          timestamp (uploaded)
+//   digital approvals  createdAt          timestamp
+//   tenders            createdAt          timestamp
+//   machine schedules  scheduledStartAt   timestamp
+//   material consumption, quality defects, rejections  createdAt  timestamp
+//   quality checkpoints checkedAt         timestamp
+//   error log          createdAt          timestamp
+
+type Where = Record<string, unknown>;
+
+/** Adds `{ [field]: {gte, lt} }` to a where object (no-op without a range). */
+export function withRange<W extends Where>(where: W, field: string, range: Range, basis: "date" | "timestamp"): W {
+  return range ? ({ ...where, [field]: rangeToWhere(range, basis) } as W) : where;
+}
+
+/** Records whose [startField, endField] period overlaps the range (both calendar dates). */
+export function withOverlap<W extends Where>(where: W, startField: string, endField: string, range: Range): W {
+  if (!range) return where;
+  const { gte, lt } = rangeToWhere(range, "date");
+  return { ...where, [startField]: { lt }, [endField]: { gte } } as W;
+}
+
+const pick = (o: Record<string, unknown>) =>
+  Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined && v !== null && v !== ""));
+
+export const complaintWhere = (o: { status?: string | null; priority?: string | null; range: Range }) =>
+  withRange(pick({ status: o.status, priority: o.priority }), "createdAt", o.range, "timestamp") as Prisma.ComplaintWhereInput;
+
+export const taskWhere = (o: { status?: string | null; priority?: string | null; assignedToId?: string | null; range: Range }) =>
+  withRange(pick({ status: o.status, priority: o.priority, assignedToId: o.assignedToId }), "dueDate", o.range, "date") as Prisma.TaskWhereInput;
+
+export const opportunityWhere = (o: { stage?: string | null; branch?: string | null; leadId?: string | null; range: Range }) =>
+  withRange(pick({ stage: o.stage, branch: o.branch, leadId: o.leadId }), "createdAt", o.range, "timestamp") as Prisma.OpportunityWhereInput;
+
+export const amcWhere = (o: { status?: string | null; range: Range }) =>
+  withOverlap(pick({ status: o.status }), "startDate", "endDate", o.range) as Prisma.AMCContractWhereInput;
+
+export const serviceTicketWhere = (o: { status?: string | null; priority?: string | null; range: Range }) =>
+  withRange(pick({ status: o.status, priority: o.priority }), "createdAt", o.range, "timestamp") as Prisma.ServiceTicketWhereInput;
+
+export const projectWhere = (o: { status?: string | null; branch?: string | null; range: Range }) =>
+  withRange(pick({ status: o.status, branch: o.branch }), "createdAt", o.range, "timestamp") as Prisma.ProjectWhereInput;
+
+export const purchaseOrderWhere = (o: { status?: string | null; range: Range }) =>
+  withRange(pick({ status: o.status }), "createdAt", o.range, "timestamp") as Prisma.PurchaseOrderWhereInput;
+
+export const grnWhere = (o: { range: Range }) =>
+  withRange({}, "receivedDate", o.range, "date") as Prisma.GoodsReceivedWhereInput;
+
+export const tripWhere = (o: { vehicleId?: string | null; range: Range }) =>
+  withRange(pick({ vehicleId: o.vehicleId }), "startTime", o.range, "timestamp") as Prisma.FleetTripWhereInput;
+
+export const fuelWhere = (o: { vehicleId?: string | null; range: Range }) =>
+  withRange(pick({ vehicleId: o.vehicleId }), "date", o.range, "date") as Prisma.FuelLogWhereInput;
+
+/** `date` (single day) and `month` are folded into `range` by the route. */
+export const attendanceWhere = (o: { employeeId?: string | null; range: Range }) =>
+  withRange(pick({ employeeId: o.employeeId }), "date", o.range, "date") as Prisma.AttendanceWhereInput;
+
+export const leaveWhere = (o: { status?: string | null; employeeId?: string | null; range: Range }) =>
+  withOverlap(pick({ status: o.status, employeeId: o.employeeId }), "fromDate", "toDate", o.range) as Prisma.LeaveRequestWhereInput;
+
+/**
+ * Field journey plans: sales managers may look at anyone's (?userId=);
+ * everyone else only ever gets their own (a non-manager's ?userId= used to
+ * expose other people's plans). `month` keeps its exact-match meaning;
+ * from/to matches every plan month the range touches.
+ */
+export function fjpWhere(o: { role: string | undefined; myId: string | undefined; userId?: string | null; month?: string | null; range: Range }): Prisma.FJPWhereInput {
+  const userId = isSalesManager(o.role) && o.userId ? o.userId : o.myId ?? "__none__";
+  const w: Prisma.FJPWhereInput = { userId };
+  if (o.month) w.forMonth = o.month;
+  else if (o.range) w.forMonth = { in: monthsInRange(o.range) };
+  return w;
+}
+
+export const workOrderTicketWhere = (base: Where, range: Range) =>
+  withRange(base, "receivedAt", range, "timestamp") as Prisma.WorkOrderTicketWhereInput;
+
+export const auditLogWhere = (o: { table?: string | null; userId?: string | null; range: Range }) =>
+  withRange(pick({ tableName: o.table, userId: o.userId }), "createdAt", o.range, "timestamp") as Prisma.AuditLogWhereInput;
+
+export const documentWhere = (base: Where, range: Range) =>
+  withRange(base, "createdAt", range, "timestamp") as Prisma.DocumentWhereInput;
+
+export const digitalApprovalWhere = (o: { type?: string | null; status?: string | null; range: Range }) =>
+  withRange(pick({ type: o.type, status: o.status }), "createdAt", o.range, "timestamp") as Prisma.DigitalApprovalWhereInput;
+
+export const tenderWhere = (o: { status?: string | null; branch?: string | null; range: Range }) =>
+  withRange(pick({ status: o.status, branch: o.branch }), "createdAt", o.range, "timestamp") as Prisma.TenderWhereInput;
+
+export const scheduleWhere = (o: { machineId?: string | null; workOrderId?: string | null; status?: string | null; range: Range }) =>
+  withRange(pick({ machineId: o.machineId, workOrderId: o.workOrderId, status: o.status }), "scheduledStartAt", o.range, "timestamp") as Prisma.MachineScheduleWhereInput;
+
+export const consumptionWhere = (o: { workOrderId?: string | null; materialId?: string | null; range: Range }) =>
+  withRange(pick({ workOrderId: o.workOrderId, materialId: o.materialId }), "createdAt", o.range, "timestamp") as Prisma.MaterialConsumptionWhereInput;
+
+export const checkpointWhere = (o: { workOrderId?: string | null; stage?: string | null; status?: string | null; range: Range }) =>
+  withRange(pick({ workOrderId: o.workOrderId, stage: o.stage, status: o.status }), "checkedAt", o.range, "timestamp") as Prisma.QualityCheckpointWhereInput;
+
+export const defectWhere = (o: { checkpointId?: string | null; severity?: string | null; range: Range }) =>
+  withRange(pick({ checkpointId: o.checkpointId, severity: o.severity }), "createdAt", o.range, "timestamp") as Prisma.QualityDefectWhereInput;
+
+export const rejectionWhere = (o: { workOrderId?: string | null; action?: string | null; range: Range }) =>
+  withRange(pick({ workOrderId: o.workOrderId, action: o.action }), "createdAt", o.range, "timestamp") as Prisma.ProductionRejectionWhereInput;
+
+export const errorLogWhere = (o: { range: Range }) =>
+  withRange({}, "createdAt", o.range, "timestamp") as Prisma.ErrorLogWhereInput;

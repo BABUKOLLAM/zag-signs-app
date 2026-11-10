@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, err, requirePathAccess } from "@/lib/api-helpers";
+import { ok, err, requirePathAccess, rangeFromQuery } from "@/lib/api-helpers";
+import { projectWhere } from "@/lib/list-filters";
 
 export async function GET(req: NextRequest) {
   const session = await requirePathAccess("/projects");
@@ -8,11 +9,10 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status") || undefined;
   const branch = searchParams.get("branch") || undefined;
+  const { range, error: rangeError } = rangeFromQuery(searchParams, { allowMonth: false });
+  if (rangeError) return rangeError;
   const rows = await prisma.project.findMany({
-    where: {
-      ...(status ? { status } : {}),
-      ...(branch ? { branch: branch as any } : {}),
-    },
+    where: projectWhere({ status, branch, range }),
     include: {
       customer: { select: { name: true, company: true } },
       manager: { select: { name: true } },

@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, err, requireSession } from "@/lib/api-helpers";
+import { ok, err, requireAnyPathAccess, rangeFromQuery, okList } from "@/lib/api-helpers";
+import { workOrderTicketWhere } from "@/lib/list-filters";
+import { ROUTE_ACCESS } from "@/lib/route-access";
 
 const BRANCH_MAP: Record<string, string> = {
   TVM: "TVM", KTYM: "KTYM", EKM: "EKM", CLT: "CLT", HO: "HO",
@@ -79,8 +81,8 @@ const INCLUDE = {
 };
 
 export async function GET(request: NextRequest) {
-  const session = await requireSession();
-  if (!session) return err("Unauthorized", 401);
+  const session = await requireAnyPathAccess(ROUTE_ACCESS.workOrderTickets);
+  if (!session) return err("Forbidden", 403);
   const { searchParams } = new URL(request.url);
   const status   = searchParams.get("status");
   const branch   = searchParams.get("branch");
@@ -103,19 +105,22 @@ export async function GET(request: NextRequest) {
     ];
   }
 
-  const tickets = await prisma.workOrderTicket.findMany({
-    where,
+  const { range, error: rangeError } = rangeFromQuery(searchParams, { allowMonth: false });
+  if (rangeError) return rangeError;
+  const filtered = workOrderTicketWhere(where, range);
+  const [tickets, total] = await Promise.all([prisma.workOrderTicket.findMany({
+    where: filtered,
     orderBy: [{ createdAt: "desc" }],
     take: 300,
     include: INCLUDE,
-  });
+  }), prisma.workOrderTicket.count({ where: filtered })]);
 
-  return ok(tickets.map((t) => shape(t as TicketRow)));
+  return okList(tickets.map((t) => shape(t as TicketRow)), { total, limit: 300 });
 }
 
 export async function POST(request: NextRequest) {
-  const session = await requireSession();
-  if (!session) return err("Unauthorized", 401);
+  const session = await requireAnyPathAccess(ROUTE_ACCESS.workOrderTickets);
+  if (!session) return err("Forbidden", 403);
   const su = session.user as { id?: string; branch?: string };
   const branch = branchCode(su.branch);
 

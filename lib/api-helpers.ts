@@ -45,7 +45,7 @@ export async function requirePathAccess(path: string) {
  * paths. Use when one endpoint backs more than one page with different role
  * sets (e.g. /api/sales-orders serves both /sales-orders and /installation).
  */
-export async function requireAnyPathAccess(paths: string[]) {
+export async function requireAnyPathAccess(paths: readonly string[]) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return null;
   const userId = (session.user as { id?: string }).id;

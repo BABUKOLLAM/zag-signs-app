@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, err, requireSession } from "@/lib/api-helpers";
+import { ok, err, requireSession, rangeFromQuery } from "@/lib/api-helpers";
+import { errorLogWhere } from "@/lib/list-filters";
 
 function isAdmin(role: string) {
   return ["MD", "IT Admin", "IT_ADMIN", "AVP"].some(
@@ -17,13 +18,17 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const page = Math.max(1, Number(searchParams.get("page") ?? 1));
 
+  const { range, error: rangeError } = rangeFromQuery(searchParams, { allowMonth: false });
+  if (rangeError) return rangeError;
+  const where = errorLogWhere({ range });
   const [logs, total] = await Promise.all([
     prisma.errorLog.findMany({
+      where,
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * 50,
       take: 50,
     }),
-    prisma.errorLog.count(),
+    prisma.errorLog.count({ where }),
   ]);
 
   return ok({

@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, err, requireSession } from "@/lib/api-helpers";
+import { ok, err, requireSession, rangeFromQuery, okList } from "@/lib/api-helpers";
+import { auditLogWhere } from "@/lib/list-filters";
 
 export async function GET(request: NextRequest) {
   const session = await requireSession();
@@ -14,23 +15,23 @@ export async function GET(request: NextRequest) {
   const userId = searchParams.get("userId");
   const page   = Math.max(1, Number(searchParams.get("page") ?? 1));
 
-  const logs = await prisma.auditLog.findMany({
-    where: {
-      ...(table  ? { tableName: table } : {}),
-      ...(userId ? { userId }           : {}),
-    },
+  const { range, error: rangeError } = rangeFromQuery(searchParams, { allowMonth: false });
+  if (rangeError) return rangeError;
+  const where = auditLogWhere({ table, userId, range });
+  const [logs, total] = await Promise.all([prisma.auditLog.findMany({
+    where,
     orderBy: { createdAt: "desc" },
     skip: (page - 1) * 100,
     take: 100,
     include: { user: { select: { name: true, email: true } } },
-  });
+  }), prisma.auditLog.count({ where })]);
 
-  return ok(logs.map(l => ({
+  return okList(logs.map(l => ({
     id: l.id, action: l.action, tableName: l.tableName, recordId: l.recordId,
     oldValues: l.oldValues, newValues: l.newValues,
     ipAddress: l.ipAddress ?? "", createdAt: l.createdAt.toISOString(),
     userName: l.user?.name ?? "System", userEmail: l.user?.email ?? "",
-  })));
+  })), { total, limit: 100, page });
 }
 
 // Helper called from API routes to write audit entries

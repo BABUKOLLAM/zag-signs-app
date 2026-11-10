@@ -1,22 +1,24 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireSession, ok, err, autoNo } from "@/lib/api-helpers";
+import { ok, err, autoNo, requireAnyPathAccess, rangeFromQuery, okList } from "@/lib/api-helpers";
+import { consumptionWhere } from "@/lib/list-filters";
+import { ROUTE_ACCESS } from "@/lib/route-access";
 
 
 export async function GET(req: NextRequest) {
-  const session = await requireSession();
-  if (!session) return err("Unauthorized", 401);
+  const session = await requireAnyPathAccess(ROUTE_ACCESS.production);
+  if (!session) return err("Forbidden", 403);
 
   try {
     const searchParams = req.nextUrl.searchParams;
     const workOrderId = searchParams.get("workOrderId");
     const materialId = searchParams.get("materialId");
 
-    const where: any = {};
-    if (workOrderId) where.workOrderId = workOrderId;
-    if (materialId) where.materialId = materialId;
+    const { range, error: rangeError } = rangeFromQuery(searchParams, { allowMonth: false });
+    if (rangeError) return rangeError;
+    const where = consumptionWhere({ workOrderId, materialId, range });
 
-    const consumptions = await prisma.materialConsumption.findMany({
+    const [consumptions, total] = await Promise.all([prisma.materialConsumption.findMany({
       where,
       include: {
         material: true,
@@ -24,17 +26,17 @@ export async function GET(req: NextRequest) {
       },
       orderBy: { createdAt: "desc" },
       take: 300,
-    });
+    }), prisma.materialConsumption.count({ where })]);
 
-    return ok(consumptions, 200);
+    return okList(consumptions, { total, limit: 300 });
   } catch (error: any) {
     return err(error.message, 500);
   }
 }
 
 export async function POST(req: NextRequest) {
-  const session = await requireSession();
-  if (!session) return err("Unauthorized", 401);
+  const session = await requireAnyPathAccess(ROUTE_ACCESS.production);
+  if (!session) return err("Forbidden", 403);
 
   try {
     const body = await req.json();
@@ -78,8 +80,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  const session = await requireSession();
-  if (!session) return err("Unauthorized", 401);
+  const session = await requireAnyPathAccess(ROUTE_ACCESS.production);
+  if (!session) return err("Forbidden", 403);
 
   try {
     const body = await req.json();

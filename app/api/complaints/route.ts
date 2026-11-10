@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, err, requireSession, toLabel, toDate, autoNo } from "@/lib/api-helpers";
+import { ok, err, toLabel, toDate, autoNo, requireAnyPathAccess, rangeFromQuery } from "@/lib/api-helpers";
+import { complaintWhere } from "@/lib/list-filters";
+import { ROUTE_ACCESS } from "@/lib/route-access";
 import { ComplaintStatus, ComplaintPriority } from "@prisma/client";
 
 function shape(c: Awaited<ReturnType<typeof prisma.complaint.findFirst>> & {
@@ -28,8 +30,8 @@ function shape(c: Awaited<ReturnType<typeof prisma.complaint.findFirst>> & {
 }
 
 export async function GET(request: NextRequest) {
-  const session = await requireSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAnyPathAccess(ROUTE_ACCESS.complaints);
+  if (!session) return err("Forbidden", 403);
 
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status") as ComplaintStatus | null;
@@ -37,10 +39,9 @@ export async function GET(request: NextRequest) {
   const page = Math.max(1, Number(searchParams.get("page") ?? "1"));
   const limit = Math.min(100, Number(searchParams.get("limit") ?? "50"));
 
-  const where = {
-    ...(status ? { status } : {}),
-    ...(priority ? { priority } : {}),
-  };
+  const { range, error: rangeError } = rangeFromQuery(searchParams, { allowMonth: false });
+  if (rangeError) return rangeError;
+  const where = complaintWhere({ status, priority, range });
 
   const [complaints, total] = await Promise.all([
     prisma.complaint.findMany({
@@ -63,8 +64,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await requireSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAnyPathAccess(ROUTE_ACCESS.complaints);
+  if (!session) return err("Forbidden", 403);
 
   const body = await request.json();
   const { customerId, subject, description, priority, assignedToId } = body;
