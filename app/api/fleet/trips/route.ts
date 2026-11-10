@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
   const { range, error: rangeError } = rangeFromQuery(searchParams, { allowMonth: false });
   if (rangeError) return rangeError;
   const where = tripWhere({ vehicleId, range });
-  const [rows, total] = await Promise.all([prisma.fleetTrip.findMany({
+  const [rows, total, done] = await Promise.all([prisma.fleetTrip.findMany({
     where,
     include: {
       vehicle: { select: { vehicleNo: true, make: true, model: true } },
@@ -19,8 +19,10 @@ export async function GET(req: NextRequest) {
     },
     orderBy: { startTime: "desc" },
     take: 100,
-  }), prisma.fleetTrip.count({ where })]);
-  return okList(rows, { total, limit: 100 });
+  }), prisma.fleetTrip.count({ where }),
+    // km over ALL matching completed trips (end km recorded), not just the rows returned
+    prisma.fleetTrip.aggregate({ where: { ...where, endKm: { not: null } }, _sum: { endKm: true, startKm: true } })]);
+  return okList(rows, { total, limit: 100, totalKm: (done._sum.endKm ?? 0) - (done._sum.startKm ?? 0) });
 }
 
 export async function POST(req: NextRequest) {

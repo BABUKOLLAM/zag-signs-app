@@ -1,11 +1,12 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import TopBar from "@/components/TopBar";
 import { useApi } from "@/lib/use-api";
 import { api } from "@/lib/api-client";
 import { fmt } from "@/lib/utils";
 import { Plus, RefreshCw, Search, X, Trash2 } from "lucide-react";
 import { useToast } from "@/components/Toaster";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
 
 const BRANCHES = ["HO", "TVM", "KTYM", "EKM", "CLT"];
 const PO_STATUSES = ["DRAFT", "SENT", "PARTIAL", "RECEIVED", "COMPLETED", "CANCELLED"];
@@ -31,7 +32,8 @@ const PO_EMPTY = { vendorId: "", branch: "TVM", status: "DRAFT", deliveryDate: "
 type GRN = { id: string; grnNo: string; po: { poNo: string; vendor: { name: string } }; receivedDate: string; receivedBy: { name: string } };
 const GRN_EMPTY = { poId: "", receivedDate: new Date().toISOString().slice(0, 10), items: [{ description: "", orderedQty: 1, receivedQty: 1, rejectedQty: 0, unit: "Nos" }] };
 
-export default function ProcurementPage() {
+function ProcurementPageInner() {
+  const dr = useDateRangeQuery();
   const [tab, setTab] = useState<"vendors" | "po" | "grn">("vendors");
   const toast = useToast();
 
@@ -51,14 +53,14 @@ export default function ProcurementPage() {
   const [showPOForm, setShowPOForm] = useState(false);
   const [poForm, setPoForm] = useState<any>(PO_EMPTY);
   const [savingPO, setSavingPO] = useState(false);
-  const { data: pos, loading: poLoading, refetch: refetchPOs } = useApi<PO[]>("/procurement/purchase-orders");
+  const { data: pos, loading: poLoading, refetch: refetchPOs } = useApi<PO[]>("/procurement/purchase-orders", dr.params);
   const filteredPOs = (pos ?? []).filter(p => !poStatusFilter || p.status === poStatusFilter);
 
   /* GRNs */
   const [showGRNForm, setShowGRNForm] = useState(false);
   const [grnForm, setGrnForm] = useState<any>(GRN_EMPTY);
   const [savingGRN, setSavingGRN] = useState(false);
-  const { data: grns, loading: grnLoading, refetch: refetchGRNs } = useApi<GRN[]>("/procurement/grn");
+  const { data: grns, loading: grnLoading, refetch: refetchGRNs } = useApi<GRN[]>("/procurement/grn", dr.params);
 
   /* Vendor save */
   async function saveVendor() {
@@ -138,6 +140,14 @@ export default function ProcurementPage() {
             </button>
           ))}
         </div>
+
+        {/* Date filter for the dated tabs (shared across them; kept in the URL) */}
+        {(tab === "po" || tab === "grn") && (
+          <div className="bg-white rounded-2xl border border-slate-200 p-3 shadow-sm flex flex-col gap-2">
+            <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError}
+              basisLabel={tab === "po" ? "PO raised" : tab === "grn" ? "Received" : ""} />
+          </div>
+        )}
 
         {/* ──── VENDORS ──── */}
         {tab === "vendors" && (
@@ -451,5 +461,14 @@ export default function ProcurementPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function ProcurementPage() {
+  return (
+    <Suspense fallback={null}>
+      <ProcurementPageInner />
+    </Suspense>
   );
 }

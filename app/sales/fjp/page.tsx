@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { api } from "@/lib/api-client";
 import { Plus, Trash2, Printer, Send, Loader2, ChevronDown } from "lucide-react";
 import { useToast } from "@/components/Toaster";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
 
 const MODES = ["Two Wheeler", "Four Wheeler", "Bus", "Train", "Flight", "Auto"];
 
@@ -11,7 +12,8 @@ function newRoute() {
   return { dayDate: "", fromPlace: "", toPlace: "", purpose: "", customerOrProspect: "", estimatedKm: "", modeOfTravel: "Two Wheeler" };
 }
 
-export default function FJPPage() {
+function FJPPageInner() {
+  const dr = useDateRangeQuery({ allowMonth: false });
   const toast = useToast();
   const [fjps, setFjps] = useState<any[]>([]);
   const [window_, setWindow_] = useState<any>(null);
@@ -22,12 +24,15 @@ export default function FJPPage() {
   const [selected, setSelected] = useState<any>(null);
   const printRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { fetchFJPs(); }, []);
+  useEffect(() => {
+    fetchFJPs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dr.range?.from, dr.range?.to]);
 
   const fetchFJPs = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/sales/fjp");
+      const res = await api.get("/sales/fjp", dr.params);
       if ((res as any)?.data) {
         setFjps((res as any).data.fjps);
         setWindow_((res as any).data.window);
@@ -282,6 +287,9 @@ export default function FJPPage() {
         {/* Past FJPs */}
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b">
+            <div className="mb-2">
+              <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError} basisLabel="Plan month" />
+            </div>
             <h2 className="font-semibold">My FJP History</h2>
           </div>
           {loading ? (
@@ -330,5 +338,14 @@ export default function FJPPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function FJPPage() {
+  return (
+    <Suspense fallback={null}>
+      <FJPPageInner />
+    </Suspense>
   );
 }

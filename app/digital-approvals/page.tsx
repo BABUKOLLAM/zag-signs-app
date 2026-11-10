@@ -1,10 +1,13 @@
 "use client";
+import { Suspense } from "react";
 import React, { useState } from "react";
 import TopBar from "@/components/TopBar";
 import { useApi } from "@/lib/use-api";
 import { api } from "@/lib/api-client";
 import { Plus, RefreshCw, Search, X, CheckCircle, XCircle, RotateCcw, Clock } from "lucide-react";
 import { useToast } from "@/components/Toaster";
+import { LoadingState } from "@/components/States";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
 
 const APPROVAL_TYPES = ["ARTWORK", "PRODUCTION", "SITE", "HANDOVER"];
 const APPROVAL_STATUSES = ["PENDING", "APPROVED", "REJECTED", "REVISION_REQUESTED"];
@@ -34,7 +37,8 @@ const EMPTY = {
   customerName: "", customerEmail: "", customerPhone: "", documentUrl: "",
 };
 
-export default function DigitalApprovalsPage() {
+function DigitalApprovalsPageInner() {
+  const dr = useDateRangeQuery();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -44,7 +48,7 @@ export default function DigitalApprovalsPage() {
   const [selected, setSelected] = useState<Approval | null>(null);
   const toast = useToast();
 
-  const { data: approvals, loading, refetch } = useApi<Approval[]>("/digital-approvals");
+  const { data: approvals, loading, refetch } = useApi<Approval[]>("/digital-approvals", dr.params);
   const filtered = (approvals ?? []).filter(a =>
     (!typeFilter || a.type === typeFilter) &&
     (!statusFilter || a.status === statusFilter) &&
@@ -112,6 +116,7 @@ export default function DigitalApprovalsPage() {
             <option value="">All Status</option>
             {APPROVAL_STATUSES.map(s => <option key={s}>{s.replace(/_/g, " ")}</option>)}
           </select>
+          <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError} basisLabel="Created" />
           <button onClick={refetch} className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50">
             <RefreshCw size={14} className={loading ? "animate-spin text-slate-400" : "text-slate-400"} />
           </button>
@@ -269,5 +274,14 @@ export default function DigitalApprovalsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function DigitalApprovalsPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <DigitalApprovalsPageInner />
+    </Suspense>
   );
 }

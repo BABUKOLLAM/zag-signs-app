@@ -1,11 +1,13 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import TopBar from "@/components/TopBar";
 import { useApi } from "@/lib/use-api";
 import { api } from "@/lib/api-client";
 import { fmt } from "@/lib/utils";
 import { Plus, RefreshCw, Search, X, CheckCircle, Clock, AlertTriangle } from "lucide-react";
 import { useToast } from "@/components/Toaster";
+import { LoadingState } from "@/components/States";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
 
 const BRANCHES = ["HO", "TVM", "KTYM", "EKM", "CLT"];
 const PROJECT_STATUSES = ["PLANNING", "PRODUCTION", "DISPATCH", "INSTALLATION", "COMPLETED", "ON_HOLD"];
@@ -43,7 +45,8 @@ const EMPTY = {
   milestones: [{ ...EMPTY_MILESTONE }] as Milestone[],
 };
 
-export default function ProjectsPage() {
+function ProjectsPageInner() {
+  const dr = useDateRangeQuery();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -52,7 +55,7 @@ export default function ProjectsPage() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const toast = useToast();
 
-  const { data: projects, loading, refetch } = useApi<Project[]>("/projects");
+  const { data: projects, loading, refetch } = useApi<Project[]>("/projects", dr.params);
   const { data: customers } = useApi<{ id: string; name: string; company: string }[]>("/customers?limit=200");
 
   const filtered = (projects ?? []).filter(p =>
@@ -126,6 +129,7 @@ export default function ProjectsPage() {
             <option value="">All Status</option>
             {PROJECT_STATUSES.map(s => <option key={s}>{s}</option>)}
           </select>
+          <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError} basisLabel="Created" />
           <button onClick={refetch} className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50">
             <RefreshCw size={14} className={loading ? "animate-spin text-slate-400" : "text-slate-400"} />
           </button>
@@ -310,5 +314,14 @@ export default function ProjectsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function ProjectsPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <ProjectsPageInner />
+    </Suspense>
   );
 }

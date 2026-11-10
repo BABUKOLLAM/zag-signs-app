@@ -1,11 +1,13 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import TopBar from "@/components/TopBar";
 import { useApi } from "@/lib/use-api";
 import { api } from "@/lib/api-client";
 import { fmt } from "@/lib/utils";
 import { Plus, RefreshCw, X, Truck, Fuel, Wrench, MapPin } from "lucide-react";
 import { useToast } from "@/components/Toaster";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
+import { ListCapNote } from "@/components/States";
 
 const BRANCHES = ["HO", "TVM", "KTYM", "EKM", "CLT"];
 
@@ -23,13 +25,14 @@ const STATUS_COLOR: Record<string, string> = {
   MAINTENANCE: "bg-amber-100 text-amber-700",
 };
 
-export default function FleetPage() {
+function FleetPageInner() {
+  const dr = useDateRangeQuery();
   const [tab, setTab] = useState<"vehicles" | "trips" | "fuel">("vehicles");
   const toast = useToast();
 
   const { data: vehicles, loading: vLoading, refetch: refetchV } = useApi<Vehicle[]>("/fleet/vehicles");
-  const { data: trips, loading: tLoading, refetch: refetchT } = useApi<Trip[]>("/fleet/trips");
-  const { data: fuelLogs, loading: fLoading, refetch: refetchF } = useApi<FuelLog[]>("/fleet/fuel");
+  const { data: trips, meta: tripMeta, loading: tLoading, refetch: refetchT } = useApi<Trip[]>("/fleet/trips", dr.params);
+  const { data: fuelLogs, meta: fuelMeta, loading: fLoading, refetch: refetchF } = useApi<FuelLog[]>("/fleet/fuel", dr.params);
 
   const [showVehForm, setShowVehForm] = useState(false);
   const [vehForm, setVehForm] = useState<any>(VEH_EMPTY);
@@ -76,8 +79,11 @@ export default function FleetPage() {
     setSavingFuel(false);
   }
 
-  const totalKm = (trips ?? []).reduce((s, t) => s + (t.endKm != null ? t.endKm - t.startKm : 0), 0);
-  const totalFuelCost = (fuelLogs ?? []).reduce((s, f) => s + f.totalCost, 0);
+  // Totals from the server over all matching rows (lists are capped); rows as fallback.
+  const totalKm = typeof tripMeta?.totalKm === "number" ? tripMeta.totalKm
+    : (trips ?? []).reduce((s, t) => s + (t.endKm != null ? t.endKm - t.startKm : 0), 0);
+  const totalFuelCost = typeof fuelMeta?.totalCost === "number" ? fuelMeta.totalCost
+    : (fuelLogs ?? []).reduce((s, f) => s + f.totalCost, 0);
 
   const TABS = [
     { key: "vehicles", label: "Vehicles", icon: <Truck size={14} /> },
@@ -117,6 +123,16 @@ export default function FleetPage() {
             </button>
           ))}
         </div>
+
+        {/* Date filter for the dated tabs (shared across them; kept in the URL) */}
+        {(tab === "trips" || tab === "fuel") && (
+          <div className="bg-white rounded-2xl border border-slate-200 p-3 shadow-sm flex flex-col gap-2">
+            <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError}
+              basisLabel={tab === "trips" ? "Trip start" : tab === "fuel" ? "Fuel date" : ""} />
+            {tab === "trips" && <ListCapNote shown={(trips ?? []).length} total={tripMeta?.total} inline />}
+            {tab === "fuel" && <ListCapNote shown={(fuelLogs ?? []).length} total={fuelMeta?.total} inline />}
+          </div>
+        )}
 
         {/* ──── VEHICLES ──── */}
         {tab === "vehicles" && (
@@ -405,5 +421,14 @@ export default function FleetPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function FleetPage() {
+  return (
+    <Suspense fallback={null}>
+      <FleetPageInner />
+    </Suspense>
   );
 }

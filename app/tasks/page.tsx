@@ -1,12 +1,13 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import TopBar from "@/components/TopBar";
 import { useApi } from "@/lib/use-api";
 import { api } from "@/lib/api-client";
-import { ErrorState, EmptyState } from "@/components/States";
+import { ErrorState, EmptyState, LoadingState, ListCapNote } from "@/components/States";
 import { useToast } from "@/components/Toaster";
 import { taskSchema, parseErrors, type FormErrors } from "@/lib/schemas";
 import { Plus, X, CheckCircle, Circle, Clock, AlertTriangle, RefreshCw } from "lucide-react";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
 
 type Priority = "HIGH" | "MEDIUM" | "LOW";
 type TaskStatus = "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
@@ -34,7 +35,8 @@ const today = new Date().toISOString().split("T")[0];
 
 const blank = { title: "", description: "", priority: "MEDIUM", dueDate: "", relatedTo: "" };
 
-export default function TasksPage() {
+function TasksPageInner() {
+  const dr = useDateRangeQuery();
   const toast = useToast();
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(blank);
@@ -43,10 +45,11 @@ export default function TasksPage() {
   const [filterPriority, setFilterPriority] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const { data, loading, error, refetch } = useApi<Task[]>("/tasks", {
+  const { data, meta: listMeta, loading, error, refetch } = useApi<Task[]>("/tasks", {
     status: filterStatus || undefined,
     priority: filterPriority || undefined,
     limit: 100,
+    ...dr.params,
   });
 
   const tasks = data ?? [];
@@ -152,6 +155,8 @@ export default function TasksPage() {
               <option value="MEDIUM">Medium</option>
               <option value="LOW">Low</option>
             </select>
+            <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError} basisLabel="Due date" />
+            <ListCapNote shown={(data ?? []).length} total={listMeta?.total} inline />
             <button onClick={refetch} title="Refresh"
               className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">
               <RefreshCw size={14} />
@@ -276,5 +281,14 @@ export default function TasksPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function TasksPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <TasksPageInner />
+    </Suspense>
   );
 }

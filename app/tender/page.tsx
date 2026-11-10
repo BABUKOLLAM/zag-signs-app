@@ -1,11 +1,13 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import TopBar from "@/components/TopBar";
 import { useApi } from "@/lib/use-api";
 import { api } from "@/lib/api-client";
 import { fmt } from "@/lib/utils";
 import { Plus, RefreshCw, Search, Trophy, FileText, TrendingUp, AlertCircle, X } from "lucide-react";
 import { useToast } from "@/components/Toaster";
+import { LoadingState } from "@/components/States";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
 
 type Tender = {
   id: string; tenderNo: string; title: string; client: string; branch: string;
@@ -30,7 +32,8 @@ const EMPTY: Partial<Tender> & { competitors: string } = {
   bidValue: 0, rfpDate: "", submitDeadline: "", openingDate: "", notes: "", competitors: "",
 };
 
-export default function TenderPage() {
+function TenderPageInner() {
+  const dr = useDateRangeQuery();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -39,7 +42,7 @@ export default function TenderPage() {
   const [saving, setSaving] = useState(false);
   const toast = useToast();
 
-  const { data: raw, loading, refetch } = useApi<Tender[]>("/tender");
+  const { data: raw, loading, refetch } = useApi<Tender[]>("/tender", dr.params);
   const tenders = (raw ?? []).filter(t =>
     (!statusFilter || t.status === statusFilter) &&
     (!search || t.title.toLowerCase().includes(search.toLowerCase()) || t.client.toLowerCase().includes(search.toLowerCase()))
@@ -110,6 +113,7 @@ export default function TenderPage() {
             <option value="">All Status</option>
             {STATUSES.map(s => <option key={s}>{s}</option>)}
           </select>
+          <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError} basisLabel="Created" />
           <button onClick={refetch} className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50">
             <RefreshCw size={14} className={loading ? "animate-spin text-slate-400" : "text-slate-400"} />
           </button>
@@ -253,5 +257,14 @@ export default function TenderPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function TenderPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <TenderPageInner />
+    </Suspense>
   );
 }

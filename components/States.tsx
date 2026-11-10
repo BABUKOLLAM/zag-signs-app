@@ -65,10 +65,12 @@ export function TableSkeleton({ rows = 6, cols = 5 }: { rows?: number; cols?: nu
 }
 
 /** "Showing first N of M" note for lists the server caps. Renders nothing when everything is shown. */
-export function ListCapNote({ shown, total }: { shown: number; total?: number | null }) {
+export function ListCapNote({ shown, total, inline = false }: { shown: number; total?: number | null; inline?: boolean }) {
   if (total == null || total <= shown) return null;
   return (
-    <p className="px-4 py-2 text-xs text-amber-700 bg-amber-50 border-t border-amber-100" role="status">
+    <p className={inline
+      ? "w-full text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-1.5"
+      : "px-4 py-2 text-xs text-amber-700 bg-amber-50 border-t border-amber-100"} role="status">
       Showing the first {shown} of {total} records — narrow the date range or filters to see the rest.
     </p>
   );

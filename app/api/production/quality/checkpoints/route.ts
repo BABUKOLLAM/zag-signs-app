@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     if (rangeError) return rangeError;
     const where = checkpointWhere({ workOrderId, stage, status, range });
 
-    const [checkpoints, total] = await Promise.all([prisma.qualityCheckpoint.findMany({
+    const [checkpoints, total, defectCount, criticalCount] = await Promise.all([prisma.qualityCheckpoint.findMany({
       where,
       include: {
         workOrder: true,
@@ -28,9 +28,12 @@ export async function GET(req: NextRequest) {
       },
       orderBy: { createdAt: "desc" },
       take: 300,
-    }), prisma.qualityCheckpoint.count({ where })]);
+    }), prisma.qualityCheckpoint.count({ where }),
+      // defect totals over ALL matching checkpoints, not just the 300 returned
+      prisma.qualityDefect.count({ where: { checkpoint: where } }),
+      prisma.qualityDefect.count({ where: { checkpoint: where, severity: "CRITICAL" } })]);
 
-    return okList(checkpoints, { total, limit: 300 });
+    return okList(checkpoints, { total, limit: 300, defectCount, criticalCount });
   } catch (error: any) {
     return err(error.message, 500);
   }

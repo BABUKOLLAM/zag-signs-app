@@ -1,15 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { api } from "@/lib/api-client";
 import { MATERIAL_CONSUMPTION_COLUMNS } from "@/lib/import-specs";
 import BatchImportModal from "@/components/BatchImportModal";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/components/Toaster";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
+import { ListCapNote } from "@/components/States";
 
-export default function MaterialsPage() {
+function MaterialsPageInner() {
+  const dr = useDateRangeQuery();
   const toast = useToast();
   const [consumptions, setConsumptions] = useState<any[]>([]);
+  const [consTotal, setConsTotal] = useState<number | null>(null);
   const [workOrders, setWorkOrders] = useState<any[]>([]);
   const [materials, setMaterials] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("plan");
@@ -22,18 +26,20 @@ export default function MaterialsPage() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dr.range?.from, dr.range?.to]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
       const [consResponse, woResponse, matResponse] = await Promise.all([
-        api.get("/production/materials/consumption"),
+        api.get("/production/materials/consumption", dr.params),
         api.get("/work-orders"),
         api.get("/inventory"),
       ]) as any[];
 
       if ((consResponse as any)?.data) setConsumptions((consResponse as any).data);
+      setConsTotal((consResponse as { meta?: { total?: number } } | null)?.meta?.total ?? null);
       if ((woResponse as any)?.data) setWorkOrders((woResponse as any).data);
       if ((matResponse as any)?.data) setMaterials((matResponse as any).data);
     } catch (error) {
@@ -231,6 +237,10 @@ export default function MaterialsPage() {
       {activeTab === "report" && (
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
           <div className="px-4 py-3 border-b border-gray-100">
+            <div className="flex flex-col gap-2 mb-2">
+              <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError} basisLabel="Recorded" />
+              <ListCapNote shown={consumptions.length} total={consTotal} inline />
+            </div>
             <h2 className="font-semibold text-gray-900">Material Consumption Report</h2>
           </div>
           <div className="p-4">
@@ -289,5 +299,14 @@ export default function MaterialsPage() {
         />
       )}
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function MaterialsPage() {
+  return (
+    <Suspense fallback={null}>
+      <MaterialsPageInner />
+    </Suspense>
   );
 }

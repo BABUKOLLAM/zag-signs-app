@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { api as apiClient } from "@/lib/api-client";
 import { MACHINE_COLUMNS } from "@/lib/import-specs";
 import BatchImportModal from "@/components/BatchImportModal";
 import TopBar from "@/components/TopBar";
 import { Loader2, Plus, X, Trash2 } from "lucide-react";
 import { useToast } from "@/components/Toaster";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
+import { ListCapNote } from "@/components/States";
 
 const BRANCHES = [
   { id: "ALL", label: "All Branches" },
@@ -28,12 +30,14 @@ const STATUS_STYLE: Record<string, string> = {
 
 const BLANK_MACHINE = { name: "", type: "", branch: "TVM", printType: "", model: "", location: "", hourlyRate: "", capacityPerHour: "", notes: "" };
 
-export default function MachinesPage() {
+function MachinesPageInner() {
+  const dr = useDateRangeQuery();
   const toast = useToast();
   const api = apiClient;
 
   const [machines,   setMachines]   = useState<any[]>([]);
   const [schedules,  setSchedules]  = useState<any[]>([]);
+  const [schedTotal, setSchedTotal] = useState<number | null>(null);
   const [workOrders, setWorkOrders] = useState<any[]>([]);
   const [activeTab,  setActiveTab]  = useState("master");
   const [branchFilter, setBranchFilter] = useState("ALL");
@@ -46,18 +50,22 @@ export default function MachinesPage() {
   const [deletingId,      setDeletingId]      = useState<string|null>(null);
   const [statusSavingId,  setStatusSavingId]  = useState<string|null>(null);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dr.range?.from, dr.range?.to]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
       const [machRes, schedRes, woRes] = await Promise.all([
         api.get("/production/machines"),
-        api.get("/production/schedules"),
+        api.get("/production/schedules", dr.params),
         api.get("/work-orders"),
       ]) as any[];
       if (machRes?.data)  setMachines(machRes.data);
       if (schedRes?.data) setSchedules(schedRes.data);
+      setSchedTotal((schedRes as { meta?: { total?: number } } | null)?.meta?.total ?? null);
       if (woRes?.data)    setWorkOrders(woRes.data);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -339,6 +347,10 @@ export default function MachinesPage() {
         {/* ─── SCHEDULE BOARD ─── */}
         {activeTab === "schedule" && (
           <div className="space-y-4">
+            <div className="flex flex-col gap-2">
+              <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError} basisLabel="Scheduled start" />
+              <ListCapNote shown={schedules.length} total={schedTotal} inline />
+            </div>
             <button onClick={() => setShowScheduleForm(!showScheduleForm)}
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white"
               style={{ background: "linear-gradient(135deg,#4F46E5,#6366F1)" }}>
@@ -441,5 +453,14 @@ export default function MachinesPage() {
         />
       )}
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function MachinesPage() {
+  return (
+    <Suspense fallback={null}>
+      <MachinesPageInner />
+    </Suspense>
   );
 }

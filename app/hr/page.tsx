@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import TopBar from "@/components/TopBar";
 import { useApi } from "@/lib/use-api";
 import {
@@ -10,6 +10,9 @@ import { exportExcel } from "@/lib/export";
 import BatchImportModal from "@/components/BatchImportModal";
 import { EMPLOYEE_COLUMNS } from "@/lib/import-specs";
 import { useToast } from "@/components/Toaster";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
+import { ListCapNote } from "@/components/States";
+import { formatRange, todayIst } from "@/lib/date-range";
 
 type Employee = {
   id: string; employeeNo: string; name: string; designation: string;
@@ -40,7 +43,10 @@ const STATUS_COLORS: Record<string,string> = {
   HOLIDAY:  "bg-purple-100 text-purple-700",
 };
 
-export default function HRPage() {
+function HRPageInner() {
+  // One range in the URL for both dated tabs. With none set, Attendance shows
+  // today (as before) and Leave Requests show all dates (as before).
+  const dr = useDateRangeQuery();
   const toast = useToast();
   const [tab, setTab] = useState<"employees"|"attendance"|"leaves">("employees");
   const [search, setSearch] = useState("");
@@ -55,13 +61,14 @@ export default function HRPage() {
   const [showImportEmp, setShowImportEmp] = useState(false);
   const [showAddLeave, setShowAddLeave] = useState(false);
   const [showAttend,   setShowAttend]   = useState(false);
-  const today = new Date().toISOString().split("T")[0];
-  const [attDate, setAttDate] = useState(today);
+  const today = todayIst();
+  const attRange = dr.range ?? { from: today, to: today };
+  const [attDate, setAttDate] = useState(today); // date used when marking attendance
 
   const empParams = new URLSearchParams({ ...(search ? { search } : {}), ...(dept ? { department: dept } : {}) });
   const { data: employees, loading: loadEmp, refetch: refetchEmp } = useApi<Employee[]>(`/employees?${empParams}`);
-  const { data: leaves, loading: loadLeave, refetch: refetchLeave } = useApi<LeaveReq[]>(`/leave-requests?${leaveStatus ? `status=${leaveStatus}` : ""}`);
-  const { data: attendance, loading: loadAtt, refetch: refetchAtt } = useApi<Attendance[]>(`/attendance?date=${attDate}`);
+  const { data: leaves, meta: leaveMeta, loading: loadLeave, refetch: refetchLeave } = useApi<LeaveReq[]>("/leave-requests", { status: leaveStatus || undefined, ...dr.params });
+  const { data: attendance, meta: attMeta, loading: loadAtt, refetch: refetchAtt } = useApi<Attendance[]>("/attendance", { from: attRange.from, to: attRange.to });
 
   const empList  = employees  ?? [];
   const leaveList = leaves    ?? [];
@@ -293,8 +300,9 @@ export default function HRPage() {
         {tab === "attendance" && (
           <>
             <div className="flex gap-3 mb-4 flex-wrap">
-              <input type="date" value={attDate} onChange={e => setAttDate(e.target.value)}
-                className="px-3 py-2 rounded-xl border border-slate-200 text-sm" />
+              <DateRangeFilter value={attRange} onChange={dr.setRange} urlError={dr.urlError}
+                basisLabel="Attendance date" allowAll={false} />
+              <ListCapNote shown={attList.length} total={attMeta?.total} inline />
               <button onClick={refetchAtt} className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500">
                 <RefreshCw size={14} className={loadAtt ? "animate-spin" : ""} />
               </button>
@@ -307,14 +315,15 @@ export default function HRPage() {
             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
               <table className="w-full text-sm">
                 <thead><tr className="bg-slate-50 border-b border-slate-100">
-                  {["Employee","Dept","Status","Check In","Check Out"].map(h => (
+                  {["Date","Employee","Dept","Status","Check In","Check Out"].map(h => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">{h}</th>
                   ))}
                 </tr></thead>
                 <tbody className="divide-y divide-slate-50">
-                  {loadAtt && <tr><td colSpan={5} className="text-center py-8"><Loader2 size={18} className="animate-spin mx-auto text-slate-400" /></td></tr>}
+                  {loadAtt && <tr><td colSpan={6} className="text-center py-8"><Loader2 size={18} className="animate-spin mx-auto text-slate-400" /></td></tr>}
                   {!loadAtt && attList.map(a => (
                     <tr key={a.id} className="hover:bg-slate-50/50">
+                      <td className="px-4 py-3 text-slate-500 text-xs whitespace-nowrap">{a.date}</td>
                       <td className="px-4 py-3"><p className="font-medium text-slate-800">{a.employeeName}</p><p className="text-xs text-slate-400">{a.employeeNo}</p></td>
                       <td className="px-4 py-3 text-slate-500 text-xs">{a.department}</td>
                       <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[a.status] ?? "bg-slate-100 text-slate-500"}`}>{a.status.replace("_"," ")}</span></td>
@@ -322,7 +331,7 @@ export default function HRPage() {
                       <td className="px-4 py-3 text-slate-500 text-xs">{a.checkOut ? new Date(a.checkOut).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"}) : "—"}</td>
                     </tr>
                   ))}
-                  {!loadAtt && attList.length === 0 && <tr><td colSpan={5} className="text-center py-8 text-slate-400">No attendance for {attDate}</td></tr>}
+                  {!loadAtt && attList.length === 0 && <tr><td colSpan={6} className="text-center py-8 text-slate-400">No attendance for {formatRange(attRange)}</td></tr>}
                 </tbody>
               </table>
             </div>
@@ -337,6 +346,8 @@ export default function HRPage() {
                 <option value="">All Statuses</option>
                 {["PENDING","APPROVED","REJECTED"].map(s => <option key={s}>{s}</option>)}
               </select>
+              <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError} basisLabel="Leave overlaps" />
+              <ListCapNote shown={leaveList.length} total={leaveMeta?.total} inline />
               <button onClick={() => setShowAddLeave(true)}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-semibold ml-auto"
                 style={{ background:"linear-gradient(135deg,#4F46E5,#7C3AED)" }}>
@@ -469,8 +480,13 @@ export default function HRPage() {
       {showAttend && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-            <h3 className="text-lg font-bold mb-4">Mark Attendance — {attDate}</h3>
+            <h3 className="text-lg font-bold mb-4">Mark Attendance</h3>
             <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Date *</label>
+                <input type="date" value={attDate} onChange={e => setAttDate(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm" />
+              </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">Employee *</label>
                 <select value={attForm.employeeId} onChange={e => setAttForm(f=>({...f,employeeId:e.target.value}))} className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm">
@@ -662,5 +678,14 @@ function StaffProfileDrawer({ employee, onClose, onEdit }: { employee: Employee;
         </div>
       </div>
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function HRPage() {
+  return (
+    <Suspense fallback={null}>
+      <HRPageInner />
+    </Suspense>
   );
 }

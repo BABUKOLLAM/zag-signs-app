@@ -1,12 +1,13 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import TopBar from "@/components/TopBar";
 import { useApi } from "@/lib/use-api";
 import { api } from "@/lib/api-client";
-import { ErrorState, EmptyState, TableSkeleton } from "@/components/States";
+import { ErrorState, EmptyState, TableSkeleton, LoadingState, ListCapNote } from "@/components/States";
 import { useToast } from "@/components/Toaster";
 import { complaintSchema, parseErrors, type FormErrors } from "@/lib/schemas";
 import { Plus, RefreshCw } from "lucide-react";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
 
 const PRIORITY_COLORS: Record<string, string> = {
   LOW: "bg-gray-100 text-gray-700",
@@ -33,7 +34,8 @@ const emptyForm = { subject: "", description: "", priority: "MEDIUM", customerNa
 const ic = (err?: string) =>
   `border rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 ${err ? "border-red-400 focus:ring-red-300" : "border-gray-200 focus:ring-indigo-500"}`;
 
-export default function ComplaintsPage() {
+function ComplaintsPageInner() {
+  const dr = useDateRangeQuery();
   const toast = useToast();
   const [statusFilter, setStatusFilter] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("");
@@ -43,10 +45,11 @@ export default function ComplaintsPage() {
   const [saving, setSaving] = useState(false);
   const [assigning, setAssigning] = useState<string | null>(null);
 
-  const { data, loading, error, refetch } = useApi<Complaint[]>("/complaints", {
+  const { data, meta: listMeta, loading, error, refetch } = useApi<Complaint[]>("/complaints", {
     status: statusFilter || undefined,
     priority: priorityFilter || undefined,
     limit: 100,
+    ...dr.params,
   });
   const { data: teamData } = useApi<{ id: string; name: string }[]>("/team-members");
   const teamMembers = teamData ?? [];
@@ -135,6 +138,8 @@ export default function ComplaintsPage() {
               <option value="HIGH">High</option>
               <option value="CRITICAL">Critical</option>
             </select>
+            <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError} basisLabel="Raised" />
+            <ListCapNote shown={(data ?? []).length} total={listMeta?.total} inline />
             <button onClick={refetch} title="Refresh"
               className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">
               <RefreshCw size={14} />
@@ -252,5 +257,14 @@ export default function ComplaintsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function ComplaintsPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <ComplaintsPageInner />
+    </Suspense>
   );
 }

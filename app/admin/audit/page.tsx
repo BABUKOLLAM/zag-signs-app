@@ -1,8 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import TopBar from "@/components/TopBar";
 import { useApi } from "@/lib/use-api";
 import { RefreshCw, Loader2, Shield } from "lucide-react";
+import { LoadingState } from "@/components/States";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
 
 type AuditLog = {
   id: string; action: string; tableName: string; recordId: string;
@@ -19,11 +21,15 @@ const ACTION_COLORS: Record<string,string> = {
   REJECT: "bg-rose-100 text-rose-700",
 };
 
-export default function AuditPage() {
+function AuditPageInner() {
+  const dr = useDateRangeQuery();
   const [page, setPage]   = useState(1);
   const [table, setTable] = useState("");
 
-  const params = new URLSearchParams({ page: String(page), ...(table ? { table } : {}) });
+  const params = new URLSearchParams({
+    page: String(page), ...(table ? { table } : {}),
+    ...(dr.range ? { from: dr.range.from, to: dr.range.to } : {}),
+  });
   const { data: raw, loading, refetch } = useApi<AuditLog[]>(`/audit-logs?${params}`);
   const logs = raw ?? [];
 
@@ -42,6 +48,7 @@ export default function AuditPage() {
             <p className="text-sm font-semibold text-slate-800">System Audit Log</p>
             <p className="text-xs text-slate-400">All create/update/delete actions across the ERP (most recent 100 per page)</p>
           </div>
+          <DateRangeFilter value={dr.range} onChange={(r) => { setPage(1); dr.setRange(r); }} urlError={dr.urlError} basisLabel="When" />
           <button onClick={refetch} className="ml-auto p-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500">
             <RefreshCw size={14} className={loading?"animate-spin":""} />
           </button>
@@ -103,5 +110,14 @@ export default function AuditPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function AuditPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <AuditPageInner />
+    </Suspense>
   );
 }

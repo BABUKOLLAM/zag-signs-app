@@ -1,24 +1,27 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import TopBar from "@/components/TopBar";
 import { useApi } from "@/lib/use-api";
 import { api } from "@/lib/api-client";
 import { useToast } from "@/components/Toaster";
 import { RefreshCw, Loader2, AlertTriangle, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { LoadingState } from "@/components/States";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
 
 type ErrorLogEntry = {
   id: string; message: string; digest: string; stack: string;
   path: string; method: string; routeType: string; createdAt: string;
 };
 
-export default function ErrorLogPage() {
+function ErrorLogPageInner() {
+  const dr = useDateRangeQuery();
   const toast = useToast();
   const [page, setPage] = useState(1);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [clearing, setClearing] = useState(false);
 
   const { data, loading, refetch } = useApi<{ logs: ErrorLogEntry[]; total: number }>(
-    `/admin/error-log?page=${page}`
+    `/admin/error-log?page=${page}${dr.range ? `&from=${dr.range.from}&to=${dr.range.to}` : ""}`
   );
   const logs = data?.logs ?? [];
   const total = data?.total ?? 0;
@@ -51,6 +54,7 @@ export default function ErrorLogPage() {
             <p className="text-sm font-semibold text-slate-800">Server Error Log</p>
             <p className="text-xs text-slate-400">Unhandled server errors caught automatically — {total} total logged</p>
           </div>
+          <DateRangeFilter value={dr.range} onChange={(r) => { setPage(1); dr.setRange(r); }} urlError={dr.urlError} basisLabel="When" />
           <button onClick={refetch} className="ml-auto p-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500">
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
           </button>
@@ -111,5 +115,14 @@ export default function ErrorLogPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function ErrorLogPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <ErrorLogPageInner />
+    </Suspense>
   );
 }

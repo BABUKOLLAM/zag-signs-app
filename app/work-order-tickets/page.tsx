@@ -1,16 +1,17 @@
 "use client";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import TopBar from "@/components/TopBar";
 import { useApi } from "@/lib/use-api";
 import { api } from "@/lib/api-client";
 import { useToast } from "@/components/Toaster";
-import { ErrorState, EmptyState, TableSkeleton } from "@/components/States";
+import { ErrorState, EmptyState, TableSkeleton, LoadingState, ListCapNote } from "@/components/States";
 import WorkOrderSlipTemplate, { type WorkOrderSlip, type SlipCompany } from "@/components/WorkOrderSlipTemplate";
 import {
   Plus, RefreshCw, Printer, UserPlus, CheckCircle, Clock, X,
   Trash2, Activity, AlertTriangle, Timer, Users as UsersIcon, Pencil,
 } from "lucide-react";
 import WhatsAppShare from "@/components/WhatsAppShare";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
 
 // ─── TYPES & CONSTANTS ────────────────────────────────────────────────────────
 interface Ticket {
@@ -129,14 +130,16 @@ function isOverdue(t: Ticket): boolean {
 }
 
 // ─── PAGE ─────────────────────────────────────────────────────────────────────
-export default function WorkOrderTicketsPage() {
+function WorkOrderTicketsPageInner() {
+  const dr = useDateRangeQuery();
   const toast = useToast();
   const [statusFilter, setStatusFilter] = useState("");
   const [search, setSearch] = useState("");
 
-  const { data, loading, error, refetch } = useApi<Ticket[]>("/work-order-tickets", {
+  const { data, meta: listMeta, loading, error, refetch } = useApi<Ticket[]>("/work-order-tickets", {
     status: statusFilter || undefined,
     search: search || undefined,
+    ...dr.params,
   });
   const tickets = useMemo(() => data ?? [], [data]);
 
@@ -394,6 +397,8 @@ export default function WorkOrderTicketsPage() {
             <input value={search} onChange={(e) => setSearch(e.target.value)}
               placeholder="Search ticket / customer…"
               className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError} basisLabel="Received" />
+            <ListCapNote shown={(data ?? []).length} total={listMeta?.total} inline />
             <button onClick={() => refetch()} className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50" title="Refresh">
               <RefreshCw size={14} className="text-gray-600" />
             </button>
@@ -769,5 +774,14 @@ function Modal({ children, onClose, title }: { children: React.ReactNode; onClos
         <div className="p-5">{children}</div>
       </div>
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function WorkOrderTicketsPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <WorkOrderTicketsPageInner />
+    </Suspense>
   );
 }

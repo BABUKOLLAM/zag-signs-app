@@ -1,11 +1,13 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import TopBar from "@/components/TopBar";
 import { useApi } from "@/lib/use-api";
 import { api } from "@/lib/api-client";
 import { fmt } from "@/lib/utils";
 import { RefreshCw, Search, MapPin, CheckCircle, Truck, Package, Hammer, X } from "lucide-react";
 import { useToast } from "@/components/Toaster";
+import { LoadingState, ListCapNote } from "@/components/States";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
 
 const INSTALL_STATUSES = ["DISPATCHED", "INSTALLATION", "INSTALLED", "DELIVERED"];
 const STATUS_COLOR: Record<string, string> = {
@@ -28,14 +30,15 @@ type Order = {
   totalAmount: number;
 };
 
-export default function InstallationPage() {
+function InstallationPageInner() {
+  const dr = useDateRangeQuery();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("INSTALLATION");
   const [selected, setSelected] = useState<Order | null>(null);
   const [updatingId, setUpdatingId] = useState("");
   const toast = useToast();
 
-  const { data: orders, loading, refetch } = useApi<Order[]>("/sales-orders?limit=200");
+  const { data: orders, meta: listMeta, loading, refetch } = useApi<Order[]>("/sales-orders", { limit: 200, ...dr.params });
 
   const filtered = (orders ?? [])
     .filter(o => INSTALL_STATUSES.includes(o.status))
@@ -113,6 +116,8 @@ export default function InstallationPage() {
               </button>
             ))}
           </div>
+          <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError} basisLabel="Order date" />
+          <ListCapNote shown={(orders ?? []).length} total={listMeta?.total} inline />
           <button onClick={refetch} className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50">
             <RefreshCw size={14} className={loading ? "animate-spin text-slate-400" : "text-slate-400"} />
           </button>
@@ -244,5 +249,14 @@ export default function InstallationPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function InstallationPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <InstallationPageInner />
+    </Suspense>
   );
 }

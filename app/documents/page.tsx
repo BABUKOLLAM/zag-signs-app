@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import TopBar from "@/components/TopBar";
 import { useApi } from "@/lib/use-api";
 import { api } from "@/lib/api-client";
@@ -8,6 +8,8 @@ import {
   FolderOpen, Search, ExternalLink, FileText, File, Image, Table,
   Trash2, RefreshCw, Link, Plus, X,
 } from "lucide-react";
+import { LoadingState, ListCapNote } from "@/components/States";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
 
 const CATEGORIES = [
   "Quotations", "Sales Orders", "Invoices", "Contracts",
@@ -64,7 +66,8 @@ const ic = "border border-slate-200 rounded-xl px-3 py-2 text-sm w-full focus:ou
 
 const blankLink = { name: "", url: "", category: "Other", relatedTo: "", relatedType: "" };
 
-export default function DocumentsPage() {
+function DocumentsPageInner() {
+  const dr = useDateRangeQuery();
   const toast = useToast();
   const [search, setSearch]         = useState("");
   const [filterCat, setFilterCat]   = useState("");
@@ -72,9 +75,10 @@ export default function DocumentsPage() {
   const [showLink, setShowLink]     = useState(false);
   const [linkForm, setLinkForm]     = useState(blankLink);
 
-  const { data, loading, refetch } = useApi<DocRecord[]>("/documents", {
+  const { data, meta: listMeta, loading, refetch } = useApi<DocRecord[]>("/documents", {
     category: filterCat || undefined,
     search:   search    || undefined,
+    ...dr.params,
   });
 
   const docs = (data ?? []).filter((d) =>
@@ -171,6 +175,8 @@ export default function DocumentsPage() {
               <option value="">All Record Types</option>
               {RECORD_TYPES.map((t) => <option key={t}>{t}</option>)}
             </select>
+            <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError} basisLabel="Uploaded" />
+            <ListCapNote shown={(data ?? []).length} total={listMeta?.total} inline />
             <button
               onClick={refetch}
               className="p-1.5 border border-slate-200 rounded-xl text-slate-500 hover:bg-slate-50"
@@ -372,5 +378,14 @@ export default function DocumentsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function DocumentsPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <DocumentsPageInner />
+    </Suspense>
   );
 }

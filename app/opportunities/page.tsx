@@ -1,13 +1,14 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import TopBar from "@/components/TopBar";
 import { fmt } from "@/lib/utils";
 import { useApi } from "@/lib/use-api";
 import { api } from "@/lib/api-client";
-import { LoadingState, ErrorState, EmptyState, TableSkeleton } from "@/components/States";
+import { LoadingState, ErrorState, EmptyState, TableSkeleton, ListCapNote } from "@/components/States";
 import { useToast } from "@/components/Toaster";
 import { Plus, X, Eye, TrendingUp, UserCheck, FileText, RefreshCw } from "lucide-react";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
 
 const BRANCHES = ["HO", "TVM", "KTYM", "EKM", "CLT"];
 
@@ -49,7 +50,8 @@ const BLANK = {
 const ic = "border border-gray-200 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500";
 const lc = "block text-xs font-medium text-gray-600 mb-1";
 
-export default function OpportunitiesPage() {
+function OpportunitiesPageInner() {
+  const dr = useDateRangeQuery();
   const toast = useToast();
   const router = useRouter();
   const [filterStage, setFilterStage] = useState("");
@@ -64,15 +66,19 @@ export default function OpportunitiesPage() {
   // from this same result set, so filtering it server-side by the selected
   // stage would collapse every other stage's count to 0. The table applies
   // the stage filter client-side instead (see the .filter() before .map()).
-  const { data, loading, error, refetch } = useApi<Opportunity[]>("/opportunities", {
+  const { data, meta: listMeta, loading, error, refetch } = useApi<Opportunity[]>("/opportunities", {
     branch: filterBranch || undefined,
     limit: 100,
+    ...dr.params,
   });
   const opps = data ?? [];
 
+  // Header figures come from the server (all matching rows); fall back to the rows shown.
+  const serverSummary = listMeta?.summary as { openCount: number; weightedPipeline: number; wonValue: number; totalValue: number } | undefined;
   const active    = opps.filter((o) => o.stage !== "CLOSED_WON" && o.stage !== "CLOSED_LOST");
-  const pipeline  = active.reduce((s, o) => s + (o.value * o.probability / 100), 0);
-  const wonValue  = opps.filter((o) => o.stage === "CLOSED_WON").reduce((s, o) => s + o.value, 0);
+  const openCount = serverSummary?.openCount ?? active.length;
+  const pipeline  = serverSummary?.weightedPipeline ?? active.reduce((s, o) => s + (o.value * o.probability / 100), 0);
+  const wonValue  = serverSummary?.wonValue ?? opps.filter((o) => o.stage === "CLOSED_WON").reduce((s, o) => s + o.value, 0);
 
   const set = (f: keyof typeof BLANK) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
@@ -141,9 +147,9 @@ export default function OpportunitiesPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: "Open Opportunities", value: active.length },
+            { label: "Open Opportunities", value: openCount },
             { label: "Weighted Pipeline",  value: fmt(Math.round(pipeline)) },
-            { label: "Total Value",        value: fmt(opps.reduce((s, o) => s + o.value, 0)) },
+            { label: "Total Value",        value: fmt(serverSummary?.totalValue ?? opps.reduce((s, o) => s + o.value, 0)) },
             { label: "Closed Won",         value: fmt(wonValue) },
           ].map((s) => (
             <div key={s.label} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
@@ -186,6 +192,8 @@ export default function OpportunitiesPage() {
               <option value="">All Branches</option>
               {BRANCHES.map((b) => <option key={b}>{b}</option>)}
             </select>
+            <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError} basisLabel="Created" />
+            <ListCapNote shown={(data ?? []).length} total={listMeta?.total} inline />
             <button onClick={refetch} title="Refresh"
               className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">
               <RefreshCw size={14} />
@@ -376,5 +384,14 @@ export default function OpportunitiesPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function OpportunitiesPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <OpportunitiesPageInner />
+    </Suspense>
   );
 }

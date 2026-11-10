@@ -67,10 +67,19 @@ export async function GET(request: NextRequest) {
     }),
     prisma.opportunity.count({ where }),
   ]);
+  // Header figures over ALL matching opportunities, not just this page of rows.
+  const all = await prisma.opportunity.findMany({ where, select: { value: true, probability: true, stage: true } });
+  const isOpen = (st: string) => st !== "CLOSED_WON" && st !== "CLOSED_LOST";
+  const summary = {
+    openCount: all.filter((o) => isOpen(o.stage)).length,
+    weightedPipeline: all.filter((o) => isOpen(o.stage)).reduce((s, o) => s + (o.value * o.probability) / 100, 0),
+    wonValue: all.filter((o) => o.stage === "CLOSED_WON").reduce((s, o) => s + o.value, 0),
+    totalValue: all.reduce((s, o) => s + o.value, 0),
+  };
 
   return NextResponse.json({
     data: opps.map((o) => shape(o)),
-    pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+    pagination: { page, limit, total, pages: Math.ceil(total / limit), summary },
   });
 }
 

@@ -1,13 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { api } from "@/lib/api-client";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/components/Toaster";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
+import { ListCapNote } from "@/components/States";
 
-export default function QualityPage() {
+function QualityPageInner() {
+  const dr = useDateRangeQuery();
   const toast = useToast();
   const [checkpoints, setCheckpoints] = useState<any[]>([]);
+  const [cpMeta, setCpMeta] = useState<{ total?: number; defectCount?: number; criticalCount?: number } | null>(null);
   const [workOrders, setWorkOrders] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("checkpoints");
   const [loading, setLoading] = useState(false);
@@ -25,17 +29,19 @@ export default function QualityPage() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dr.range?.from, dr.range?.to]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
       const [cpResponse, woResponse] = await Promise.all([
-        api.get("/production/quality/checkpoints"),
+        api.get("/production/quality/checkpoints", dr.params),
         api.get("/work-orders"),
       ]) as any[];
 
       if ((cpResponse as any)?.data) setCheckpoints((cpResponse as any).data);
+      setCpMeta((cpResponse as { meta?: typeof cpMeta } | null)?.meta ?? null);
       if ((woResponse as any)?.data) setWorkOrders((woResponse as any).data);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -105,6 +111,11 @@ export default function QualityPage() {
           <h1 className="text-3xl font-bold">Quality Control</h1>
           <p className="text-gray-600 mt-2">Manage QC checkpoints and defects</p>
         </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError} basisLabel="Checked" />
+        <ListCapNote shown={checkpoints.length} total={cpMeta?.total} inline />
       </div>
 
       <div className="flex gap-4 border-b">
@@ -268,11 +279,11 @@ export default function QualityPage() {
                 <div className="grid grid-cols-3 gap-4 mb-6">
                   <div className="text-center p-4 bg-blue-50 rounded">
                     <p className="text-sm text-gray-600">Total Defects</p>
-                    <p className="text-3xl font-bold">{checkpoints.reduce((sum, cp) => sum + (cp.defects?.length || 0), 0)}</p>
+                    <p className="text-3xl font-bold">{cpMeta?.defectCount ?? checkpoints.reduce((sum, cp) => sum + (cp.defects?.length || 0), 0)}</p>
                   </div>
                   <div className="text-center p-4 bg-red-50 rounded">
                     <p className="text-sm text-gray-600">Critical</p>
-                    <p className="text-3xl font-bold">{checkpoints.reduce((sum, cp) => sum + (cp.defects?.filter((d: any) => d.severity === "CRITICAL").length || 0), 0)}</p>
+                    <p className="text-3xl font-bold">{cpMeta?.criticalCount ?? checkpoints.reduce((sum, cp) => sum + (cp.defects?.filter((d: any) => d.severity === "CRITICAL").length || 0), 0)}</p>
                   </div>
                   <div className="text-center p-4 bg-yellow-50 rounded">
                     <p className="text-sm text-gray-600">Pass Rate</p>
@@ -304,5 +315,14 @@ export default function QualityPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function QualityPage() {
+  return (
+    <Suspense fallback={null}>
+      <QualityPageInner />
+    </Suspense>
   );
 }

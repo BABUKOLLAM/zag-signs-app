@@ -1,11 +1,12 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import TopBar from "@/components/TopBar";
 import { useApi } from "@/lib/use-api";
 import { api } from "@/lib/api-client";
 import { fmt } from "@/lib/utils";
 import { Plus, RefreshCw, X, ShieldCheck, Wrench, AlertTriangle } from "lucide-react";
 import { useToast } from "@/components/Toaster";
+import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
 
 const AMC_STATUSES = ["ACTIVE", "EXPIRED", "CANCELLED", "RENEWED"];
 const VISIT_FREQS = ["MONTHLY", "QUARTERLY", "HALF_YEARLY", "ANNUALLY"];
@@ -49,12 +50,13 @@ type Ticket = {
 const AMC_EMPTY = { customerId: "", description: "", startDate: "", endDate: "", annualValue: 0, visitFrequency: "QUARTERLY", status: "ACTIVE" };
 const TICKET_EMPTY = { customerId: "", amcId: "", type: "AMC", priority: "MEDIUM", description: "", slaHours: 24, assignedToId: "" };
 
-export default function AMCPage() {
+function AMCPageInner() {
+  const dr = useDateRangeQuery();
   const [tab, setTab] = useState<"contracts" | "tickets">("contracts");
   const toast = useToast();
 
-  const { data: contracts, loading: amcLoading, refetch: refetchAMC } = useApi<AMC[]>("/amc");
-  const { data: tickets, loading: ticketLoading, refetch: refetchTickets } = useApi<Ticket[]>("/service-tickets");
+  const { data: contracts, loading: amcLoading, refetch: refetchAMC } = useApi<AMC[]>("/amc", dr.params);
+  const { data: tickets, loading: ticketLoading, refetch: refetchTickets } = useApi<Ticket[]>("/service-tickets", dr.params);
   const { data: customers } = useApi<{ id: string; name: string; company: string }[]>("/customers?limit=200");
   const { data: users } = useApi<{ id: string; name: string }[]>("/employees?limit=100");
 
@@ -138,6 +140,14 @@ export default function AMCPage() {
             </button>
           ))}
         </div>
+
+        {/* Date filter for the dated tabs (shared across them; kept in the URL) */}
+        {(tab === "contracts" || tab === "tickets") && (
+          <div className="bg-white rounded-2xl border border-slate-200 p-3 shadow-sm flex flex-col gap-2">
+            <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError}
+              basisLabel={tab === "contracts" ? "Contract active" : tab === "tickets" ? "Raised" : ""} />
+          </div>
+        )}
 
         {/* ──── AMC CONTRACTS ──── */}
         {tab === "contracts" && (
@@ -373,5 +383,14 @@ export default function AMCPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// useSearchParams (date range in the URL) needs a Suspense boundary.
+export default function AMCPage() {
+  return (
+    <Suspense fallback={null}>
+      <AMCPageInner />
+    </Suspense>
   );
 }
