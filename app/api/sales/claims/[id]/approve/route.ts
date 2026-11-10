@@ -1,7 +1,10 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requirePathAccess, ok, err } from "@/lib/api-helpers";
+import { claimApprovalCheck, nextClaimStatus, CLAIM_STAGE_PENDING, type ClaimStage, type ClaimAction } from "@/lib/claim-approval";
 
+/** Thrown inside the transaction when the claim moved on before we got to it. */
+class StaleStatus extends Error {}
 
 export async function POST(
   req: NextRequest,
@@ -13,53 +16,64 @@ export async function POST(
   try {
     const { id } = await params;
     const body = await req.json();
-    const { stage, action, notes, approvedAmount } = body;
-
-    // Validate user role can approve at this stage
-    const validStages: Record<string, string[]> = {
-      MANAGER: ["AVP", "Business Manager", "MD"],
-      AVP: ["AVP", "MD"],
-      MD: ["MD"],
+    const { stage, action, notes, approvedAmount } = body as {
+      stage?: unknown; action?: unknown; notes?: string; approvedAmount?: unknown;
     };
 
-    // Record approval
-    const approval = await prisma.claimApprovalHistory.create({
-      data: {
-        claimId: id,
-        stage,
-        approvedBy: (session.user as any).id,
-        action, // APPROVED or REJECTED
-        notes: notes || null,
-      },
-      include: { approver: true },
-    });
+    const claim = await prisma.salesClaim.findUnique({ where: { id } });
+    if (!claim) return err("Claim not found", 404);
 
-    // Update claim status
-    let newStatus = "DRAFT";
-    if (action === "APPROVED") {
-      if (stage === "MANAGER") newStatus = "MANAGER_APPROVED";
-      else if (stage === "AVP") newStatus = "AVP_APPROVED";
-      else if (stage === "MD") newStatus = "APPROVED";
-    } else if (action === "REJECTED") {
-      newStatus = "REJECTED";
-    }
+    const user = session.user as { id?: string; role?: string };
+    const userId = user.id ?? "";
+    // Previously validStages was declared but never checked: any /sales user
+    // could approve any claim at any stage, including their own.
+    const problem = claimApprovalCheck({ role: user.role, myId: userId, stage, action, approvedAmount, claim });
+    if (problem) return err(problem.error, problem.status);
 
-    const updatedClaim = await prisma.salesClaim.update({
-      where: { id },
-      data: {
-        status: newStatus,
-        approvedAmount: action === "APPROVED" && approvedAmount ? approvedAmount : undefined,
-        rejectionReason: action === "REJECTED" ? notes : undefined,
-        resubmissionAllowed: action === "REJECTED",
-      },
-      include: {
-        approvalHistory: true,
-        submittedBy: true,
-      },
+    const st = stage as ClaimStage;
+    const act = action as ClaimAction;
+    const newStatus = nextClaimStatus(st, act);
+    const amount = act === "APPROVED" && approvedAmount !== undefined && approvedAmount !== null && approvedAmount !== ""
+      ? Number(approvedAmount)
+      : undefined;
+
+    const updatedClaim = await prisma.$transaction(async (tx) => {
+      // Compare-and-set on the current status: enforces MANAGER → AVP → MD,
+      // never reopens APPROVED/REJECTED, and a double-click records one action.
+      const moved = await tx.salesClaim.updateMany({
+        where: { id, status: { in: CLAIM_STAGE_PENDING[st] } },
+        data: {
+          status: newStatus,
+          approvedAmount: amount,
+          rejectionReason: act === "REJECTED" ? notes || null : undefined,
+          resubmissionAllowed: act === "REJECTED",
+        },
+      });
+      if (moved.count !== 1) throw new StaleStatus();
+
+      await tx.claimApprovalHistory.create({
+        data: { claimId: id, stage: st, approvedBy: userId, action: act, notes: notes || null },
+      });
+      await tx.auditLog.create({
+        data: {
+          action: `CLAIM_${st}_${act}`,
+          tableName: "SalesClaim",
+          recordId: id,
+          oldValues: { status: claim.status, approvedAmount: claim.approvedAmount },
+          newValues: { status: newStatus, stage: st, action: act, approvedAmount: amount ?? null, notes: notes || null },
+          userId: userId || null,
+        },
+      });
+
+      return tx.salesClaim.findUniqueOrThrow({
+        where: { id },
+        include: { approvalHistory: true, submittedBy: { select: { id: true, name: true } } },
+      });
     });
 
     return ok(updatedClaim, 200);
-  } catch (error: any) {
-    return err(error.message, 500);
+  } catch (error: unknown) {
+    if (error instanceof StaleStatus) return err("This claim was already actioned — refresh and try again", 409);
+    return err(error instanceof Error ? error.message : "Failed", 500);
   }
 }

@@ -121,7 +121,7 @@ function ApprovalsPageInner() {
       setPendingAction("");
       setReason("");
       fetchExpenses();
-    } catch { toast.error("Action failed. Please try again."); }
+    } catch (e) { toast.error(e instanceof Error && e.message ? e.message : "Action failed. Please try again."); }
     finally { setSubmitting(false); }
   };
 

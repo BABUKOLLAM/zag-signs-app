@@ -11,6 +11,43 @@ import { formatRange, monthToRange, todayIst } from "@/lib/date-range";
 // Default (as before): the current month. Old ?month=YYYY-MM links open that month.
 const thisMonth = () => monthToRange(todayIst().slice(0, 7))!;
 
+function progressColor(percentage: number) {
+  if (percentage >= 100) return "bg-green-500";
+  if (percentage >= 80) return "bg-amber-500";
+  if (percentage >= 50) return "bg-orange-500";
+  return "bg-red-500";
+}
+
+function achievementColor(percentage: number) {
+  if (percentage >= 100) return "text-green-600 bg-green-50";
+  if (percentage >= 80) return "text-amber-600 bg-amber-50";
+  return "text-red-600 bg-red-50";
+}
+
+/** One actual-vs-target cell; `target` null = the rep has no target ("No target"). */
+function MetricCell({ actual, target, pctValue, label }: {
+  actual: number; target: number | null; pctValue: number | null; label?: string;
+}) {
+  const ratio = target ? (actual / target) * 100 : 0;
+  return (
+    <td className="px-4 py-4 text-center">
+      <div className="space-y-1">
+        <p className="font-semibold text-sm">{label ?? actual}{!label && target !== null ? `/${target}` : ""}</p>
+        {target === null || pctValue === null ? (
+          <p className="text-xs text-gray-500">No target</p>
+        ) : (
+          <>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className={`h-2 rounded-full ${progressColor(ratio)}`} style={{ width: `${Math.min(ratio, 100)}%` }} />
+            </div>
+            <p className={`text-xs font-medium ${achievementColor(pctValue)}`}>{pctValue}%</p>
+          </>
+        )}
+      </div>
+    </td>
+  );
+}
+
 function TeamPerformancePageInner() {
   const [teamData, setTeamData] = useState<any[]>([]);
   const [meta, setMeta] = useState<{ monthCoverage?: Record<string, number>; unattributedCollected?: number } | null>(null);
@@ -37,18 +74,7 @@ function TeamPerformancePageInner() {
     }
   };
 
-  const getAchievementColor = (percentage: number) => {
-    if (percentage >= 100) return "text-green-600 bg-green-50";
-    if (percentage >= 80) return "text-amber-600 bg-amber-50";
-    return "text-red-600 bg-red-50";
-  };
 
-  const getProgressColor = (percentage: number) => {
-    if (percentage >= 100) return "bg-green-500";
-    if (percentage >= 80) return "bg-amber-500";
-    if (percentage >= 50) return "bg-orange-500";
-    return "bg-red-500";
-  };
 
   return (
     <div className="p-6 space-y-6">
@@ -75,7 +101,9 @@ function TeamPerformancePageInner() {
             {teamData.reduce((sum, t) => sum + t.metrics.calls, 0)}
           </p>
           <p className="text-xs text-gray-500 mt-2">
-            Target: {teamData.reduce((sum, t) => sum + t.metrics.callsTarget, 0)}
+            Target: {teamData.some((t) => t.hasTarget)
+              ? Math.round(teamData.reduce((sum, t) => sum + (t.metrics.callsTarget ?? 0), 0) * 100) / 100
+              : "no targets set"}
           </p>
         </div>
 
@@ -123,13 +151,15 @@ function TeamPerformancePageInner() {
               </thead>
               <tbody className="divide-y">
                 {teamData.map((member) => {
-                  const overallAchievement = Math.round(
-                    (member.achievements.callAchievement +
-                      member.achievements.visitAchievement +
-                      member.achievements.orderAchievement +
-                      member.achievements.revenueAchievement) /
-                      4
-                  );
+                  // null = the rep has no targets set for this range ("no target").
+                  const overallAchievement: number | null = member.hasTarget
+                    ? Math.round(
+                        (member.achievements.callAchievement +
+                          member.achievements.visitAchievement +
+                          member.achievements.orderAchievement +
+                          member.achievements.revenueAchievement) / 4,
+                      )
+                    : null;
 
                   return (
                     <tr key={member.userId} className="hover:bg-gray-50">
@@ -140,106 +170,28 @@ function TeamPerformancePageInner() {
                         </div>
                       </td>
 
-                      {/* Calls */}
-                      <td className="px-4 py-4 text-center">
-                        <div className="space-y-1">
-                          <p className="font-semibold text-sm">{member.metrics.calls}/{member.metrics.callsTarget}</p>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div
-                              className={`h-2 rounded-full ${getProgressColor(
-                                (member.metrics.calls / member.metrics.callsTarget) * 100
-                              )}`}
-                              style={{
-                                width: `${Math.min(
-                                  (member.metrics.calls / member.metrics.callsTarget) * 100,
-                                  100
-                                )}%`,
-                              }}
-                            ></div>
-                          </div>
-                          <p className={`text-xs font-medium ${getAchievementColor(member.achievements.callAchievement)}`}>
-                            {member.achievements.callAchievement}%
-                          </p>
-                        </div>
-                      </td>
-
-                      {/* Visits */}
-                      <td className="px-4 py-4 text-center">
-                        <div className="space-y-1">
-                          <p className="font-semibold text-sm">{member.metrics.visits}/{member.metrics.visitsTarget}</p>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div
-                              className={`h-2 rounded-full ${getProgressColor(
-                                (member.metrics.visits / member.metrics.visitsTarget) * 100
-                              )}`}
-                              style={{
-                                width: `${Math.min(
-                                  (member.metrics.visits / member.metrics.visitsTarget) * 100,
-                                  100
-                                )}%`,
-                              }}
-                            ></div>
-                          </div>
-                          <p className={`text-xs font-medium ${getAchievementColor(member.achievements.visitAchievement)}`}>
-                            {member.achievements.visitAchievement}%
-                          </p>
-                        </div>
-                      </td>
-
-                      {/* Orders */}
-                      <td className="px-4 py-4 text-center">
-                        <div className="space-y-1">
-                          <p className="font-semibold text-sm">{member.metrics.confirmedOrders}/{member.metrics.ordersTarget}</p>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div
-                              className={`h-2 rounded-full ${getProgressColor(
-                                (member.metrics.confirmedOrders / member.metrics.ordersTarget) * 100
-                              )}`}
-                              style={{
-                                width: `${Math.min(
-                                  (member.metrics.confirmedOrders / member.metrics.ordersTarget) * 100,
-                                  100
-                                )}%`,
-                              }}
-                            ></div>
-                          </div>
-                          <p className={`text-xs font-medium ${getAchievementColor(member.achievements.orderAchievement)}`}>
-                            {member.achievements.orderAchievement}%
-                          </p>
-                        </div>
-                      </td>
-
-                      {/* Collections */}
-                      <td className="px-4 py-4 text-center">
-                        <div className="space-y-1">
-                          <p className="font-semibold text-sm">₹{(member.metrics.totalCollected / 100000).toFixed(1)}L</p>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div
-                              className={`h-2 rounded-full ${getProgressColor(
-                                (member.metrics.totalCollected / member.metrics.collectionTarget) * 100
-                              )}`}
-                              style={{
-                                width: `${Math.min(
-                                  (member.metrics.totalCollected / member.metrics.collectionTarget) * 100,
-                                  100
-                                )}%`,
-                              }}
-                            ></div>
-                          </div>
-                          <p className={`text-xs font-medium ${getAchievementColor(member.achievements.revenueAchievement)}`}>
-                            {member.achievements.revenueAchievement}%
-                          </p>
-                        </div>
-                      </td>
+                      <MetricCell actual={member.metrics.calls} target={member.metrics.callsTarget}
+                        pctValue={member.achievements.callAchievement} />
+                      <MetricCell actual={member.metrics.visits} target={member.metrics.visitsTarget}
+                        pctValue={member.achievements.visitAchievement} />
+                      <MetricCell actual={member.metrics.confirmedOrders} target={member.metrics.ordersTarget}
+                        pctValue={member.achievements.orderAchievement} />
+                      <MetricCell actual={member.metrics.totalCollected} target={member.metrics.collectionTarget}
+                        pctValue={member.achievements.revenueAchievement}
+                        label={`₹${(member.metrics.totalCollected / 100000).toFixed(1)}L`} />
 
                       {/* Overall Score */}
                       <td className="px-4 py-4 text-center">
-                        <div className="inline-block px-3 py-2 rounded-lg font-bold text-lg" style={{
-                          backgroundColor: overallAchievement >= 100 ? '#dcfce7' : overallAchievement >= 80 ? '#fef3c7' : '#fee2e2',
-                          color: overallAchievement >= 100 ? '#166534' : overallAchievement >= 80 ? '#92400e' : '#991b1b'
-                        }}>
-                          {overallAchievement}%
-                        </div>
+                        {overallAchievement === null ? (
+                          <span className="text-xs text-gray-500">No target</span>
+                        ) : (
+                          <div className="inline-block px-3 py-2 rounded-lg font-bold text-lg" style={{
+                            backgroundColor: overallAchievement >= 100 ? '#dcfce7' : overallAchievement >= 80 ? '#fef3c7' : '#fee2e2',
+                            color: overallAchievement >= 100 ? '#166534' : overallAchievement >= 80 ? '#92400e' : '#991b1b'
+                          }}>
+                            {overallAchievement}%
+                          </div>
+                        )}
                       </td>
                     </tr>
                   );
@@ -257,7 +209,7 @@ function TeamPerformancePageInner() {
           <li>• Targets are monthly targets pro-rated by the days of each month in the range
             {meta?.monthCoverage && (
               <> ({Object.entries(meta.monthCoverage).map(([m, f]) => `${m}: ${Math.round(f * 100)}%`).join(", ")})</>
-            )}; months without a target use the default.</li>
+            )}. A blank field in a rep&apos;s target uses the default; reps with no targets show &quot;No target&quot;.</li>
           <li>• Orders = orders dated in the range from the rep&apos;s quotations; opportunities = created in the range on the rep&apos;s leads;
             collections = collected in the range against the rep&apos;s quotation (order or invoice)
             {meta?.unattributedCollected ? <> — ₹{meta.unattributedCollected.toLocaleString("en-IN")} could not be attributed to a rep</> : null}.</li>

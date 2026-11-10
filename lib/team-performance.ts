@@ -40,6 +40,24 @@ export function proratedTargets(rows: MonthlyTarget[], range: DateRange): Record
   return sum;
 }
 
+/**
+ * One row per month for pro-rating. A blank/zero field falls back to the
+ * default (as the old `target?.x || default` did); a month without a row uses
+ * the defaults. Callers decide separately what "no rows at all" means.
+ */
+export function buildTargetRows(
+  months: string[],
+  rows: MonthlyTarget[],
+  defaults: Record<TargetKey, number>,
+): MonthlyTarget[] {
+  return months.map((m) => {
+    const r = rows.find((t) => t.month === m);
+    const out: MonthlyTarget = { month: m };
+    for (const k of TARGET_KEYS) out[k] = (r && Number(r[k])) || defaults[k];
+    return out;
+  });
+}
+
 type Q = { proposedById: string | null } | null | undefined;
 type SO = { quotation?: Q } | null | undefined;
 

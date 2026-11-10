@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { monthCoverage, proratedTargets, collectionOwner, pct } from "../team-performance";
+import { monthCoverage, proratedTargets, collectionOwner, pct, buildTargetRows } from "../team-performance";
 
 const T = { callsTarget: 30, visitsTarget: 10, followUpsTarget: 20, ordersTarget: 3, revenueTarget: 300000, collectionTarget: 90000 };
 
@@ -49,5 +49,18 @@ describe("pct", () => {
     expect(pct(5, 10)).toBe(50);
     expect(pct(5, 0)).toBe(0);
     expect(pct(5, null)).toBe(0);
+  });
+});
+
+describe("buildTargetRows", () => {
+  const D = { callsTarget: 15, visitsTarget: 5, followUpsTarget: 10, ordersTarget: 3, revenueTarget: 500000, collectionTarget: 200000 };
+  it("blank/zero fields fall back to the default, set fields are kept", () => {
+    const rows = buildTargetRows(["2026-11"], [{ month: "2026-11", callsTarget: 40, visitsTarget: 0, followUpsTarget: null }], D);
+    expect(rows[0]).toMatchObject({ month: "2026-11", callsTarget: 40, visitsTarget: 5, followUpsTarget: 10, ordersTarget: 3 });
+  });
+  it("a month without a row uses the defaults", () => {
+    const rows = buildTargetRows(["2026-10", "2026-11"], [{ month: "2026-11", ...D, callsTarget: 40 }], D);
+    expect(rows[0].callsTarget).toBe(15);
+    expect(rows[1].callsTarget).toBe(40);
   });
 });

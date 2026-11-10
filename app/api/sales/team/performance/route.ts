@@ -3,11 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { requirePathAccess, okWithMeta, err, rangeFromQuery } from "@/lib/api-helpers";
 import { monthToRange, monthsInRange, rangeToWhere, todayIst } from "@/lib/date-range";
 import { isSalesManager } from "@/lib/list-filters";
-import { collectionOwner, monthCoverage, pct, proratedTargets, type MonthlyTarget } from "@/lib/team-performance";
+import { buildTargetRows, collectionOwner, monthCoverage, pct, proratedTargets } from "@/lib/team-performance";
 
 const TEAM_ROLES = ["SALES_EXECUTIVE", "CRES", "BUSINESS_MANAGER"] as const;
 
-// Used for a month with no SalesTarget row (same numbers as before, per month).
+// Per-field fallback for a blank target field or a month without a row (same numbers as before).
 const DEFAULT_MONTHLY = {
   callsTarget: 15, visitsTarget: 5, followUpsTarget: 10,
   ordersTarget: 3, revenueTarget: 500000, collectionTarget: 200000,
@@ -91,32 +91,36 @@ export async function GET(req: NextRequest) {
 
       const totalCollected = collectedBy.get(user.id) ?? 0;
 
-      // Monthly targets (or the default) for each month, pro-rated by days in range.
-      const rows: MonthlyTarget[] = months.map((m) =>
-        targets.find((t) => t.userId === user.id && t.month === m) ?? { month: m, ...DEFAULT_MONTHLY },
-      );
-      const target = proratedTargets(rows, range)!;
-      const targetsSet = targets.filter((t) => t.userId === user.id).length;
+      // Monthly targets pro-rated by days in range. A rep with no target rows
+      // in the range gets null ("No target") instead of placeholder defaults;
+      // a blank field in a row (or a month without a row) uses the default.
+      const myTargets = targets.filter((t) => t.userId === user.id);
+      const targetsSet = myTargets.length;
+      const target = targetsSet ? proratedTargets(buildTargetRows(months, myTargets, DEFAULT_MONTHLY), range) : null;
+      const hasTarget = !!target;
 
       return {
         userId: user.id,
         name: user.name,
         branch: user.branch,
         role: user.role,
+        hasTarget,
         metrics: {
-          calls, callsTarget: target.callsTarget,
-          visits, visitsTarget: target.visitsTarget,
-          followUps, followUpsTarget: target.followUpsTarget,
-          confirmedOrders, ordersTarget: target.ordersTarget, totalOrderValue,
-          opportunityValue, revenueTarget: target.revenueTarget, wonCount,
-          totalCollected, collectionTarget: target.collectionTarget,
+          calls, callsTarget: target?.callsTarget ?? null,
+          visits, visitsTarget: target?.visitsTarget ?? null,
+          followUps, followUpsTarget: target?.followUpsTarget ?? null,
+          confirmedOrders, ordersTarget: target?.ordersTarget ?? null, totalOrderValue,
+          opportunityValue, revenueTarget: target?.revenueTarget ?? null, wonCount,
+          totalCollected, collectionTarget: target?.collectionTarget ?? null,
         },
-        achievements: {
-          callAchievement: pct(calls, target.callsTarget),
-          visitAchievement: pct(visits, target.visitsTarget),
-          orderAchievement: pct(confirmedOrders, target.ordersTarget),
-          revenueAchievement: pct(totalCollected, target.revenueTarget),
-        },
+        achievements: target
+          ? {
+              callAchievement: pct(calls, target.callsTarget),
+              visitAchievement: pct(visits, target.visitsTarget),
+              orderAchievement: pct(confirmedOrders, target.ordersTarget),
+              revenueAchievement: pct(totalCollected, target.revenueTarget),
+            }
+          : { callAchievement: null, visitAchievement: null, orderAchievement: null, revenueAchievement: null },
         targetBasis: { monthsWithTargetSet: targetsSet, monthsInRange: months.length },
       };
     });
