@@ -17,17 +17,20 @@ function DARPageInner() {
   const range = dr.range ?? todayRange();
   const date = range.from;
   const singleDay = range.from === range.to;
-  const [darData, setDarData] = useState<any>(null);
+  // The summary is tied to the range it was generated for, so any range change
+  // (picker, preset, back/forward, edited link) hides a stale summary.
+  const rangeKey = `${range.from}|${range.to}`;
+  const [darState, setDarState] = useState<{ key: string; data: any; submitted: boolean } | null>(null);
+  const darData = darState?.key === rangeKey ? darState.data : null;
+  const submitted = darState?.key === rangeKey && darState.submitted;
   const [loading, setLoading] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
 
   const handleGenerateDAR = async () => {
     setLoading(true);
     try {
       const res = await api.get(`/sales/dar/generate`, { from: range.from, to: range.to });
       if ((res as any)?.data) {
-        setDarData((res as any).data);
-        setSubmitted(false);
+        setDarState({ key: rangeKey, data: (res as any).data, submitted: false });
       }
     } catch (error) {
       console.error("Error generating DAR:", error);
@@ -45,7 +48,7 @@ function DARPageInner() {
       await api.post("/sales/dar/generate", {
         date,
       });
-      setSubmitted(true);
+      setDarState((s) => (s && s.key === rangeKey ? { ...s, submitted: true } : s));
       setTimeout(() => toast.success("DAR submitted successfully!"), 500);
     } catch (error) {
       console.error("Error submitting DAR:", error);
@@ -107,7 +110,7 @@ CHALLENGES/NOTES:
             <label className="text-sm font-medium block mb-2">Date range</label>
             <DateRangeFilter
               value={range}
-              onChange={(r) => { dr.setRange(r); setDarData(null); }}
+              onChange={dr.setRange}
               urlError={dr.urlError}
               basisLabel="Activity date"
               allowAll={false}

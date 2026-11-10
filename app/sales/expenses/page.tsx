@@ -31,7 +31,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }>
 };
 
 function ExpensesPageInner() {
-  const dr = useDateRangeQuery();
+  const dr = useDateRangeQuery({ allowMonth: false }); // ?month= means expense month here, not a date range
   const toast = useToast();
   const [expenses, setExpenses] = useState<any[]>([]);
   const [fjps, setFjps] = useState<any[]>([]);

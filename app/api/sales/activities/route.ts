@@ -1,8 +1,10 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requirePathAccess, ok, err, autoNo, rangeFromQuery } from "@/lib/api-helpers";
+import { requirePathAccess, ok, err, autoNo, rangeFromQuery, okList } from "@/lib/api-helpers";
 import { activityWhere } from "@/lib/list-filters";
 
+
+const ACTIVITY_CAP = 100;
 
 export async function GET(req: NextRequest) {
   const session = await requirePathAccess("/sales/activities");
@@ -22,9 +24,13 @@ export async function GET(req: NextRequest) {
       { allowMonth: false },
     );
     if (rangeError) return rangeError;
-    const where = activityWhere({ userId, customerId, leadId, type, range });
+    const where = activityWhere({
+      role: (session.user as { role?: string }).role,
+      myId: (session.user as { id?: string }).id,
+      userId, customerId, leadId, type, range,
+    });
 
-    const activities = await prisma.activityLog.findMany({
+    const [activities, total] = await Promise.all([prisma.activityLog.findMany({
       where,
       include: {
         customer: { select: { id: true, name: true, phone: true } },
@@ -34,10 +40,10 @@ export async function GET(req: NextRequest) {
         reminders: { select: { id: true, reminderDate: true, isDone: true } },
       },
       orderBy: { startTime: "desc" },
-      take: 100,
-    });
+      take: ACTIVITY_CAP,
+    }), prisma.activityLog.count({ where })]);
 
-    return ok(activities, 200);
+    return okList(activities, { total, limit: ACTIVITY_CAP });
   } catch (error: any) {
     return err(error.message, 500);
   }

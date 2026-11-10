@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, err, requirePathAccess, rangeFromQuery } from "@/lib/api-helpers";
+import { ok, err, requirePathAccess, rangeFromQuery, okList } from "@/lib/api-helpers";
 import { invoiceWhere } from "@/lib/list-filters";
 
 const BRANCH_MAP: Record<string, string> = {
@@ -58,6 +58,8 @@ const INCLUDE = {
   salesOrder: { select: { orderNo: true } },
 };
 
+const LIST_CAP = 200;
+
 export async function GET(request: NextRequest) {
   const session = await requirePathAccess("/accounts");
   if (!session) return err("Forbidden", 403);
@@ -68,14 +70,15 @@ export async function GET(request: NextRequest) {
   const { range, error: rangeError } = rangeFromQuery(searchParams, { allowMonth: false });
   if (rangeError) return rangeError;
 
-  const invoices = await prisma.invoice.findMany({
-    where: invoiceWhere({ status, search, range }),
+  const where = invoiceWhere({ status, search, range });
+  const [invoices, total] = await Promise.all([prisma.invoice.findMany({
+    where,
     orderBy: { createdAt: "desc" },
-    take: 200,
+    take: LIST_CAP,
     include: INCLUDE,
-  });
+  }), prisma.invoice.count({ where })]);
 
-  return ok(invoices.map((inv) => shape(inv as InvoiceRow)));
+  return okList(invoices.map((inv) => shape(inv as InvoiceRow)), { total, limit: LIST_CAP });
 }
 
 export async function POST(request: NextRequest) {

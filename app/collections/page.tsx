@@ -4,7 +4,7 @@ import TopBar from "@/components/TopBar";
 import { useApi } from "@/lib/use-api";
 import { fmt } from "@/lib/utils";
 import { Plus, RefreshCw, Wallet, Loader2 } from "lucide-react";
-import { LoadingState } from "@/components/States";
+import { LoadingState, ListCapNote } from "@/components/States";
 import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
 import { formatRange, monthToRange, todayIst } from "@/lib/date-range";
 
@@ -29,7 +29,7 @@ function CollectionsPageInner() {
   const [showCreate, setShowCreate] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const { data: raw, loading, refetch } = useApi<Collection[]>(`/collections?from=${dr.range?.from ?? ""}&to=${dr.range?.to ?? ""}`);
+  const { data: raw, meta: listMeta, loading, refetch } = useApi<Collection[]>(`/collections?from=${dr.range?.from ?? ""}&to=${dr.range?.to ?? ""}`);
   const collections = raw ?? [];
 
   const { data: customers } = useApi<{ id:string; name:string; company:string }[]>("/customers");
@@ -45,9 +45,15 @@ function CollectionsPageInner() {
     collectionDate: new Date().toISOString().split("T")[0], notes:"",
   });
 
-  const totalMonth = collections.reduce((s,c) => s + c.amount, 0);
+  // Totals come from the server (all matching collections), not just the rows shown.
+  const serverByMode = (listMeta?.byMode ?? null) as Record<string, number> | null;
+  const totalMonth = typeof listMeta?.totalAmount === "number"
+    ? listMeta.totalAmount
+    : collections.reduce((s,c) => s + c.amount, 0);
   const byMode     = PAYMENT_MODES.map(m => ({
-    mode: m, total: collections.filter(c => c.paymentMode === m).reduce((s,c) => s + c.amount, 0),
+    mode: m,
+    total: serverByMode ? (serverByMode[m] ?? 0)
+      : collections.filter(c => c.paymentMode === m).reduce((s,c) => s + c.amount, 0),
   })).filter(m => m.total > 0);
 
   async function createCollection() {
@@ -122,6 +128,7 @@ function CollectionsPageInner() {
               {!loading && collections.length === 0 && <tr><td colSpan={6} className="text-center py-8 text-slate-400">No collections for {formatRange(dr.range)}</td></tr>}
             </tbody>
           </table>
+          <ListCapNote shown={collections.length} total={listMeta?.total} />
         </div>
       </div>
 

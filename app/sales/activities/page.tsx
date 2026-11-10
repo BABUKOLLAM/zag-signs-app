@@ -5,6 +5,7 @@ import { api } from "@/lib/api-client";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/components/Toaster";
 import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
+import { ListCapNote } from "@/components/States";
 import { formatRange, todayIst } from "@/lib/date-range";
 
 const todayRange = () => ({ from: todayIst(), to: todayIst() });
@@ -16,6 +17,7 @@ function ActivitiesPageInner() {
   const range = dr.range ?? todayRange();
   const isToday = range.from === range.to && range.from === todayIst();
   const [activities, setActivities] = useState<any[]>([]);
+  const [activityTotal, setActivityTotal] = useState<number | null>(null);
   const [customers, setCustomers] = useState<any[]>([]);
   const [leads, setLeads] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -51,6 +53,7 @@ function ActivitiesPageInner() {
       ]) as any[];
 
       if ((actRes as any)?.data) setActivities((actRes as any).data);
+      setActivityTotal((actRes as any)?.meta?.total ?? null);
       if ((custRes as any)?.data) setCustomers((custRes as any).data);
       if ((leadsRes as any)?.data) setLeads((leadsRes as any).data);
     } catch (error) {
@@ -275,6 +278,7 @@ function ActivitiesPageInner() {
           </h2>
           <DateRangeFilter value={range} onChange={dr.setRange} urlError={dr.urlError} basisLabel="Activity date" allowAll={false} />
         </div>
+        <ListCapNote shown={activities.length} total={activityTotal} />
         <div className="p-4 space-y-3 max-h-96 overflow-y-auto">
           {loading ? (
             <div className="flex justify-center py-8">

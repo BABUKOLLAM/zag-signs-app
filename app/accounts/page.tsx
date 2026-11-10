@@ -4,7 +4,7 @@ import TopBar from "@/components/TopBar";
 import { useApi } from "@/lib/use-api";
 import { fmt } from "@/lib/utils";
 import { Plus, Search, RefreshCw, FileText, Loader2 } from "lucide-react";
-import { LoadingState } from "@/components/States";
+import { LoadingState, ListCapNote } from "@/components/States";
 import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
 
 type Invoice = {
@@ -31,7 +31,7 @@ function AccountsPageInner() {
     ...(status?{status}:{}), ...(search?{search}:{}),
     ...(dr.range ? { from: dr.range.from, to: dr.range.to } : {}),
   });
-  const { data: raw, loading, refetch } = useApi<Invoice[]>(`/invoices?${params}`);
+  const { data: raw, meta: listMeta, loading, refetch } = useApi<Invoice[]>(`/invoices?${params}`);
   const invoices = raw ?? [];
 
   const { data: salesOrders } = useApi<{ id:string; orderNo:string; customer:{name:string}|null }[]>("/sales-orders");
@@ -138,6 +138,7 @@ function AccountsPageInner() {
               {!loading && invoices.length === 0 && <tr><td colSpan={9} className="text-center py-8 text-slate-400">No invoices yet</td></tr>}
             </tbody>
           </table>
+          <ListCapNote shown={invoices.length} total={listMeta?.total} />
         </div>
       </div>
 

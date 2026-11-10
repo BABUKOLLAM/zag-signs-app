@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, err, requireSession, toDate, autoNo, rangeFromQuery } from "@/lib/api-helpers";
+import { ok, err, requireSession, toDate, autoNo, rangeFromQuery, okList } from "@/lib/api-helpers";
 import { workOrderWhere } from "@/lib/list-filters";
 
 type WOWithRelations = {
@@ -28,6 +28,8 @@ function shape(w: WOWithRelations) {
   };
 }
 
+const LIST_CAP = 200;
+
 export async function GET(request: NextRequest) {
   const session = await requireSession();
   if (!session) return err("Unauthorized", 401);
@@ -40,10 +42,11 @@ export async function GET(request: NextRequest) {
   const { range, error: rangeError } = rangeFromQuery(searchParams, { allowMonth: false });
   if (rangeError) return rangeError;
 
-  const items = await prisma.workOrder.findMany({
-    where: workOrderWhere({ status, priority, search, range }),
+  const where = workOrderWhere({ status, priority, search, range });
+  const [items, total] = await Promise.all([prisma.workOrder.findMany({
+    where,
     orderBy: { createdAt: "desc" },
-    take: 200,
+    take: LIST_CAP,
     include: {
       salesOrder: {
         select: {
@@ -52,9 +55,9 @@ export async function GET(request: NextRequest) {
         },
       },
     },
-  });
+  }), prisma.workOrder.count({ where })]);
 
-  return ok(items.map(shape));
+  return okList(items.map(shape), { total, limit: LIST_CAP });
 }
 
 export async function POST(request: NextRequest) {

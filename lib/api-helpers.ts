@@ -92,3 +92,18 @@ export function rangeFromQuery(
   if (!r.ok) return { range: null, error: err(r.error, 400) };
   return { range: r.range, error: null };
 }
+
+/** Metadata sent with capped lists so the UI can say "showing first N of M". */
+export interface ListMeta {
+  total: number;
+  limit: number;
+  [k: string]: unknown;
+}
+
+/** Like ok(), plus `meta` (total matching rows, the cap, any server-side totals). */
+export const okList = (data: unknown, meta: ListMeta, status = 200) =>
+  NextResponse.json({ data, meta }, { status });
+
+/** Like ok(), plus free-form `meta`. */
+export const okWithMeta = (data: unknown, meta: Record<string, unknown>, status = 200) =>
+  NextResponse.json({ data, meta }, { status });

@@ -3,7 +3,7 @@ import { useState, Suspense } from "react";
 import TopBar from "@/components/TopBar";
 import { useApi } from "@/lib/use-api";
 import { api } from "@/lib/api-client";
-import { ErrorState, EmptyState, TableSkeleton, LoadingState } from "@/components/States";
+import { ErrorState, EmptyState, TableSkeleton, LoadingState, ListCapNote } from "@/components/States";
 import { useToast } from "@/components/Toaster";
 import { fieldVisitSchema, parseErrors, type FormErrors } from "@/lib/schemas";
 import { exportExcel } from "@/lib/export";
@@ -72,7 +72,7 @@ function FieldVisitsPageInner() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [saving, setSaving] = useState(false);
 
-  const { data, loading, error, refetch } = useApi<FieldVisit[]>("/field-visits", { limit: 100, ...dr.params });
+  const { data, meta: listMeta, loading, error, refetch } = useApi<FieldVisit[]>("/field-visits", { limit: 100, ...dr.params });
   const visits = data ?? [];
 
   const set = (f: keyof typeof blank) =>
@@ -259,6 +259,7 @@ function FieldVisitsPageInner() {
                   })}
                 </tbody>
               </table>
+              <ListCapNote shown={visits.length} total={listMeta?.total} />
             </div>
           )}
         </div>

@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requirePathAccess, ok, err, autoNo, rangeFromQuery } from "@/lib/api-helpers";
+import { requirePathAccess, ok, err, autoNo, rangeFromQuery, okList } from "@/lib/api-helpers";
 import { claimWhere } from "@/lib/list-filters";
 
 
@@ -17,6 +17,8 @@ function getClaimSubmissionWindow() {
   return { currentMonth, isWindowOpen, closesOn, daysLeft };
 }
 
+const CLAIMS_CAP = 200;
+
 export async function GET(req: NextRequest) {
   const session = await requirePathAccess("/sales/claims");
   if (!session) return err("Forbidden", 403);
@@ -32,7 +34,7 @@ export async function GET(req: NextRequest) {
     if (rangeError) return rangeError;
     const where = claimWhere({ month, submittedByUserId, status, range });
 
-    const claims = await prisma.salesClaim.findMany({
+    const [claims, total] = await Promise.all([prisma.salesClaim.findMany({
       where,
       include: {
         submittedBy: { select: { id: true, name: true } },
@@ -40,10 +42,10 @@ export async function GET(req: NextRequest) {
         attachments: true,
       },
       orderBy: { submittedDate: "desc" },
-      take: 200,
-    });
+      take: CLAIMS_CAP,
+    }), prisma.salesClaim.count({ where })]);
 
-    return ok(claims, 200);
+    return okList(claims, { total, limit: CLAIMS_CAP });
   } catch (error: any) {
     return err(error.message, 500);
   }

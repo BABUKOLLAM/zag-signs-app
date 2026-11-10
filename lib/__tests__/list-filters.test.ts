@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   leadWhere, fieldVisitWhere, quotationWhere, salesOrderWhere, workOrderWhere, invoiceWhere,
   collectionWhere, expenseWhere, claimWhere, activityWhere, darActivityWhere,
-  teamDarWhere, teamWwrWhere, teamMwrWhere,
+  teamDarWhere, teamWwrWhere, teamMwrWhere, isSalesManager,
 } from "../list-filters";
 import { parseRange } from "../date-range";
 
@@ -15,7 +15,7 @@ describe("date basis per list", () => {
     expect(leadWhere({ range: R }).createdAt).toEqual(TS);
     expect(quotationWhere({ range: R }).createdAt).toEqual(TS);
     expect(workOrderWhere({ range: R }).createdAt).toEqual(TS);
-    expect(activityWhere({ range: R }).startTime).toEqual(TS);
+    expect(activityWhere({ role: "MD", myId: "m", range: R }).startTime).toEqual(TS);
     expect(claimWhere({ range: R }).submittedDate).toEqual(TS);
     expect(expenseWhere({ role: "MD", myId: "u1", range: R }).createdAt).toEqual(TS);
   });
@@ -81,10 +81,14 @@ describe("expense scoping is unchanged by the date filter", () => {
       expect(expenseWhere({ role, myId: "me", userId: "u9", range: R }).userId).toBe("u9");
     }
   });
-  it("explicit ?userId= behaves exactly as before (date filter does not alter it)", () => {
-    const before = expenseWhere({ role: "Sales Executive", myId: "me", userId: "u9", range: null });
-    const after = expenseWhere({ role: "Sales Executive", myId: "me", userId: "u9", range: R });
-    expect(after.userId).toBe(before.userId);
+  it("a non-approver's ?userId= can NOT widen own-only scoping", () => {
+    for (const role of ["Sales Executive", "CRES", "Production", "Designer", undefined]) {
+      expect(expenseWhere({ role, myId: "me", userId: "u9", range: R }).userId).toBe("me");
+      expect(expenseWhere({ role, myId: "me", userId: "u9", range: null }).userId).toBe("me");
+    }
+  });
+  it("a session without an id never matches everyone", () => {
+    expect(expenseWhere({ role: "Sales Executive", myId: undefined, range: null }).userId).toBe("__none__");
   });
   it("month keeps its forMonth meaning and combines with status + range", () => {
     expect(expenseWhere({ role: "Sales Executive", myId: "me", status: "SUBMITTED", month: "2026-11", range: R }))
@@ -97,9 +101,23 @@ describe("claims / activities / DAR scoping", () => {
     expect(claimWhere({ month: "2026-11", submittedByUserId: "u1", status: "SUBMITTED", range: R }))
       .toEqual({ submissionWindow: "2026-11", submittedByUserId: "u1", status: "SUBMITTED", submittedDate: TS });
   });
-  it("activities keep userId/customer/lead/type", () => {
-    expect(activityWhere({ userId: "u1", customerId: "c1", leadId: "l1", type: "CALL", range: R }))
+  it("activities keep userId/customer/lead/type for managers", () => {
+    expect(activityWhere({ role: "Business Manager", myId: "m", userId: "u1", customerId: "c1", leadId: "l1", type: "CALL", range: R }))
       .toEqual({ userId: "u1", customerId: "c1", leadId: "l1", type: "CALL", startTime: TS });
+  });
+  it.each(["MD", "AVP", "Business Manager"])("%s sees everyone's activities unless filtering", (role) => {
+    expect(activityWhere({ role, myId: "m", range: R }).userId).toBeUndefined();
+    expect(activityWhere({ role, myId: "m", userId: "u7", range: R }).userId).toBe("u7");
+  });
+  it.each(["Sales Executive", "CRES", "Accounts", "Production", "IT Admin", "Consultant", undefined])(
+    "%s only ever sees their own activities, even with ?userId=", (role) => {
+      expect(activityWhere({ role, myId: "me", range: R }).userId).toBe("me");
+      expect(activityWhere({ role, myId: "me", userId: "u7", range: null }).userId).toBe("me");
+      expect(activityWhere({ role, myId: undefined, range: null }).userId).toBe("__none__");
+    });
+  it("isSalesManager", () => {
+    expect(["MD", "AVP", "Business Manager"].every(isSalesManager)).toBe(true);
+    expect(["Sales Executive", "CRES", "Accounts", "BUSINESS_MANAGER", "", null, undefined].some(isSalesManager)).toBe(false);
   });
   it("DAR is always the signed-in user's own activity", () => {
     expect(darActivityWhere({ myId: "me", range: R })).toEqual({ userId: "me", startTime: TS });

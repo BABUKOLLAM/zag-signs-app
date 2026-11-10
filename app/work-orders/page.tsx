@@ -3,7 +3,7 @@ import { useState, Suspense } from "react";
 import TopBar from "@/components/TopBar";
 import { useApi } from "@/lib/use-api";
 import { api } from "@/lib/api-client";
-import { LoadingState, ErrorState, EmptyState, TableSkeleton } from "@/components/States";
+import { LoadingState, ErrorState, EmptyState, TableSkeleton, ListCapNote } from "@/components/States";
 import { useToast } from "@/components/Toaster";
 import { Plus, RefreshCw, Wrench, ChevronRight, X, Calendar } from "lucide-react";
 import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
@@ -59,7 +59,7 @@ function WorkOrdersPageInner() {
   const [saving, setSaving]               = useState(false);
   const [advancing, setAdvancing]         = useState<string | null>(null);
 
-  const { data, loading, error, refetch } = useApi<WorkOrder[]>("/work-orders", {
+  const { data, meta: listMeta, loading, error, refetch } = useApi<WorkOrder[]>("/work-orders", {
     status:   statusFilter   || undefined,
     priority: priorityFilter || undefined,
     ...dr.params,
@@ -275,6 +275,7 @@ function WorkOrdersPageInner() {
                   })}
                 </tbody>
               </table>
+              <ListCapNote shown={orders.length} total={listMeta?.total} />
             </div>
           )}
         </div>

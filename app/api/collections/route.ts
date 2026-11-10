@@ -1,7 +1,9 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, err, requirePathAccess, rangeFromQuery } from "@/lib/api-helpers";
+import { ok, err, requirePathAccess, rangeFromQuery, okList } from "@/lib/api-helpers";
 import { collectionWhere } from "@/lib/list-filters";
+
+const LIST_CAP = 200;
 
 export async function GET(request: NextRequest) {
   const session = await requirePathAccess("/collections");
@@ -12,18 +14,21 @@ export async function GET(request: NextRequest) {
   const { range, error: rangeError } = rangeFromQuery(searchParams);
   if (rangeError) return rangeError;
 
-  const collections = await prisma.collection.findMany({
-    where: collectionWhere({ customerId, range }),
+  const where = collectionWhere({ customerId, range });
+  const [collections, agg, modes] = await Promise.all([prisma.collection.findMany({
+    where,
     orderBy: { collectionDate: "desc" },
-    take: 200,
+    take: LIST_CAP,
     include: {
       customer:   { select: { name: true, company: true } },
       salesOrder: { select: { orderNo: true } },
       invoice:    { select: { invoiceNo: true } },
     },
-  });
+  }), prisma.collection.aggregate({ where, _count: { _all: true }, _sum: { amount: true } }),
+  prisma.collection.groupBy({ by: ["paymentMode"], where, _sum: { amount: true } })]);
 
-  return ok(collections.map(c => ({
+  // totalAmount is over ALL matching collections, not just the rows returned.
+  return okList(collections.map(c => ({
     id: c.id,
     collectionDate: c.collectionDate.toISOString().split("T")[0],
     amount: c.amount, paymentMode: c.paymentMode, reference: c.reference ?? "",
@@ -31,7 +36,8 @@ export async function GET(request: NextRequest) {
     customerId: c.customerId ?? "", customerName: c.customer?.name ?? "",
     company: c.customer?.company ?? "", orderNo: c.salesOrder?.orderNo ?? "",
     invoiceNo: c.invoice?.invoiceNo ?? "",
-  })));
+  })), { total: agg._count._all, limit: LIST_CAP, totalAmount: agg._sum.amount ?? 0,
+    byMode: Object.fromEntries(modes.map((m) => [m.paymentMode, m._sum.amount ?? 0])) });
 }
 
 export async function POST(request: NextRequest) {

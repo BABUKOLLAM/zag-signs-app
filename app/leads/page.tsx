@@ -5,7 +5,7 @@ import TopBar from "@/components/TopBar";
 import { fmt } from "@/lib/utils";
 import { useApi } from "@/lib/use-api";
 import { api } from "@/lib/api-client";
-import { LoadingState, ErrorState, EmptyState, TableSkeleton } from "@/components/States";
+import { LoadingState, ErrorState, EmptyState, TableSkeleton, ListCapNote } from "@/components/States";
 import { useToast } from "@/components/Toaster";
 import { leadSchema, parseErrors, type FormErrors } from "@/lib/schemas";
 import { exportExcel } from "@/lib/export";
@@ -66,7 +66,7 @@ function LeadsPageInner() {
   const [docsFor, setDocsFor] = useState<Lead | null>(null);
   const [converting, setConverting] = useState<string | null>(null); // leadId being converted
 
-  const { data, loading, error, refetch } = useApi<Lead[]>("/leads", {
+  const { data, meta: listMeta, loading, error, refetch } = useApi<Lead[]>("/leads", {
     branch: branchFilter || undefined,
     status: statusFilter || undefined,
     search: search || undefined,
@@ -300,6 +300,7 @@ function LeadsPageInner() {
                   ))}
                 </tbody>
               </table>
+              <ListCapNote shown={leads.length} total={listMeta?.total} />
             </div>
           )}
         </div>

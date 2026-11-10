@@ -16,6 +16,9 @@ import {
 interface QueryOptions {
   /** Range used when the URL carries none. Omit (or return null) for "All dates". */
   defaultRange?: () => DateRange | null;
+  /** Map a legacy ?month=YYYY-MM in the page URL to that month (default true).
+   *  Pages whose API gives `month` a different meaning pass false. */
+  allowMonth?: boolean;
 }
 
 /** Reads/writes the from–to range in the page URL. */
@@ -25,8 +28,8 @@ export function useDateRangeQuery(opts: QueryOptions = {}) {
   const pathname = usePathname();
   const from = sp.get("from");
   const to = sp.get("to");
-  const month = sp.get("month");
-  const { defaultRange } = opts;
+  const { defaultRange, allowMonth = true } = opts;
+  const month = allowMonth ? sp.get("month") : null;
 
   const parsed = useMemo(() => parseRange({ from, to, month }), [from, to, month]);
   const range: DateRange | null = useMemo(() => {

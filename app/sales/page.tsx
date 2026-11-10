@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { api } from "@/lib/api-client";
 import { Loader2, Plus, TrendingUp } from "lucide-react";
 import Link from "next/link";
+import { todayIst } from "@/lib/date-range";
 
 export default function SalesDashboard() {
   const [activities, setActivities] = useState<any[]>([]);
@@ -20,10 +21,10 @@ export default function SalesDashboard() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const today = new Date().toISOString().split("T")[0];
+      const today = todayIst(); // India date, not UTC
 
       const [actRes, claimsRes, leadsRes, oppRes, soRes] = await Promise.all([
-        api.get(`/api/sales/activities?date=${today}`),
+        api.get("/sales/activities", { from: today, to: today }), // was /api/api/... (404) — api.get prefixes /api
         api.get("/sales/claims"),
         api.get("/leads?status=NEW"),
         api.get("/opportunities"),

@@ -2,7 +2,7 @@
 import TopBar from "@/components/TopBar";
 import { fmt } from "@/lib/utils";
 import { useApi } from "@/lib/use-api";
-import { LoadingState, ErrorState, EmptyState, TableSkeleton } from "@/components/States";
+import { LoadingState, ErrorState, EmptyState, TableSkeleton, ListCapNote } from "@/components/States";
 import { exportExcel } from "@/lib/export";
 import DriveButton from "@/components/DriveButton";
 import { useState, Suspense } from "react";
@@ -33,7 +33,7 @@ function SalesOrdersPageInner() {
   const [statusFilter, setStatusFilter] = useState("");
   const [docsFor, setDocsFor] = useState<SalesOrder | null>(null);
 
-  const { data, loading, error, refetch } = useApi<SalesOrder[]>("/sales-orders", {
+  const { data, meta: listMeta, loading, error, refetch } = useApi<SalesOrder[]>("/sales-orders", {
     status: statusFilter || undefined,
     limit: 100,
     ...dr.params,
@@ -166,6 +166,7 @@ function SalesOrdersPageInner() {
                   })}
                 </tbody>
               </table>
+              <ListCapNote shown={orders.length} total={listMeta?.total} />
             </div>
           )}
         </div>

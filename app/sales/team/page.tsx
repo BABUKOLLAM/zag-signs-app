@@ -4,6 +4,8 @@ import { useState, useEffect, Suspense } from "react";
 import { api } from "@/lib/api-client";
 import { Loader2, TrendingUp } from "lucide-react";
 import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
+import { useSession } from "next-auth/react";
+import { isSalesManager } from "@/lib/list-filters";
 import { formatRange, monthToRange, todayIst } from "@/lib/date-range";
 
 // Default (as before): the current month. Old ?month=YYYY-MM links open that month.
@@ -11,6 +13,7 @@ const thisMonth = () => monthToRange(todayIst().slice(0, 7))!;
 
 function TeamPerformancePageInner() {
   const [teamData, setTeamData] = useState<any[]>([]);
+  const [meta, setMeta] = useState<{ monthCoverage?: Record<string, number>; unattributedCollected?: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const dr = useDateRangeQuery({ defaultRange: thisMonth });
   const range = dr.range ?? thisMonth();
@@ -26,6 +29,7 @@ function TeamPerformancePageInner() {
       // (was "/api/sales/team/performance" — api.get already prefixes /api, so it 404'd)
       const res = await api.get("/sales/team/performance", { from: range.from, to: range.to });
       if ((res as any)?.data) setTeamData((res as any).data);
+      setMeta((res as { meta?: typeof meta } | null)?.meta ?? null);
     } catch (error) {
       console.error("Error fetching team data:", error);
     } finally {
@@ -90,7 +94,7 @@ function TeamPerformancePageInner() {
           <p className="text-3xl font-bold text-green-600 mt-2">
             ₹{(teamData.reduce((sum, t) => sum + t.metrics.totalCollected, 0) / 100000).toFixed(1)}L
           </p>
-          <p className="text-xs text-gray-500 mt-2">Received {formatRange(range)}</p>
+          <p className="text-xs text-gray-500 mt-2">Attributed to reps, {formatRange(range)}</p>
         </div>
       </div>
 
@@ -250,7 +254,13 @@ function TeamPerformancePageInner() {
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
         <p className="font-semibold text-blue-900">💡 Manager Tips</p>
         <ul className="text-sm text-blue-800 mt-2 space-y-1">
-          <li>• Target achievement % shows how much of the target is completed (monthly targets are summed over every month the range touches)</li>
+          <li>• Targets are monthly targets pro-rated by the days of each month in the range
+            {meta?.monthCoverage && (
+              <> ({Object.entries(meta.monthCoverage).map(([m, f]) => `${m}: ${Math.round(f * 100)}%`).join(", ")})</>
+            )}; months without a target use the default.</li>
+          <li>• Orders = orders dated in the range from the rep&apos;s quotations; opportunities = created in the range on the rep&apos;s leads;
+            collections = collected in the range against the rep&apos;s quotation (order or invoice)
+            {meta?.unattributedCollected ? <> — ₹{meta.unattributedCollected.toLocaleString("en-IN")} could not be attributed to a rep</> : null}.</li>
           <li>• Green = on track (100%+), Amber = at risk (80–99%), Red = behind (&lt; 80%)</li>
           <li>• Click team member names to see detailed activity logs</li>
           <li>• Review collections regularly to ensure cash flow targets are met</li>
@@ -262,6 +272,18 @@ function TeamPerformancePageInner() {
 
 // useSearchParams (date range in the URL) needs a Suspense boundary.
 export default function TeamPerformancePage() {
+  const { data: session, status } = useSession();
+  if (status === "loading") return null;
+  // Everyone's numbers: managers only (the API enforces the same rule).
+  if (!isSalesManager((session?.user as { role?: string } | undefined)?.role)) {
+    return (
+      <div className="p-6">
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 text-sm text-gray-600">
+          Team performance is available to MD, AVP and Business Managers only.
+        </div>
+      </div>
+    );
+  }
   return (
     <Suspense fallback={null}>
       <TeamPerformancePageInner />

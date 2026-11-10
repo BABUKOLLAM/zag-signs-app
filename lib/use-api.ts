@@ -2,8 +2,17 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "./api-client";
 
+/** Server-side list info: `meta` from okList(), or the older `pagination` shape. */
+export interface ListInfo {
+  total?: number;
+  limit?: number;
+  [k: string]: unknown;
+}
+
 interface UseApiState<T> {
   data: T | null;
+  /** Totals for capped lists (null when the endpoint sends none). */
+  meta: ListInfo | null;
   loading: boolean;
   error: string | null;
   refetch: () => void;
@@ -15,6 +24,7 @@ export function useApi<T>(
   params?: Record<string, string | number | undefined | null>
 ): UseApiState<T> {
   const [data, setData] = useState<T | null>(null);
+  const [meta, setMeta] = useState<ListInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,8 +35,9 @@ export function useApi<T>(
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get<{ data: T }>(path, params ? JSON.parse(key) : undefined);
+      const res = await api.get<{ data: T; meta?: ListInfo; pagination?: ListInfo }>(path, params ? JSON.parse(key) : undefined);
       setData(res.data);
+      setMeta(res.meta ?? res.pagination ?? null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
     } finally {
@@ -39,5 +50,5 @@ export function useApi<T>(
     load();
   }, [load]);
 
-  return { data, loading, error, refetch: load };
+  return { data, meta, loading, error, refetch: load };
 }

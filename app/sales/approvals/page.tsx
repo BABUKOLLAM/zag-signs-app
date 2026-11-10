@@ -55,7 +55,7 @@ function getStageForRole(role: string): Stage | null {
 }
 
 function ApprovalsPageInner() {
-  const dr = useDateRangeQuery();
+  const dr = useDateRangeQuery({ allowMonth: false }); // ?month= means expense month here, not a date range
   const toast = useToast();
   const { data: session } = useSession();
   const [expenses, setExpenses] = useState<any[]>([]);
@@ -111,7 +111,7 @@ function ApprovalsPageInner() {
     setSubmitting(true);
     try {
       const actualStage = isCEO && actionModal.stage === "HOD" ? "CEO" : actionModal.stage;
-      await api.post(`/api/sales/expenses/${actionModal.expenseId}/approve`, {
+      await api.post(`/sales/expenses/${actionModal.expenseId}/approve`, { // api.post already prefixes /api
         stage: actualStage,
         action: pendingAction,
         reason: reason || undefined,

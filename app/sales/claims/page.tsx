@@ -5,11 +5,13 @@ import { api } from "@/lib/api-client";
 import { Loader2, Plus, Download } from "lucide-react";
 import { useToast } from "@/components/Toaster";
 import DateRangeFilter, { useDateRangeQuery } from "@/components/DateRangeFilter";
+import { ListCapNote } from "@/components/States";
 
 function ClaimsPageInner() {
-  const dr = useDateRangeQuery();
+  const dr = useDateRangeQuery({ allowMonth: false }); // ?month= means submission window here, not a date range
   const toast = useToast();
   const [claims, setClaims] = useState<any[]>([]);
+  const [claimsTotal, setClaimsTotal] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [activeTab, setActiveTab] = useState("my-claims");
@@ -31,6 +33,7 @@ function ClaimsPageInner() {
     try {
       const res = await api.get("/sales/claims", dr.params);
       if ((res as any)?.data) setClaims((res as any).data);
+      setClaimsTotal((res as { meta?: { total?: number } } | null)?.meta?.total ?? null);
     } catch (error) {
       console.error("Error fetching claims:", error);
     } finally {
@@ -219,6 +222,7 @@ function ClaimsPageInner() {
       {/* Date filter (submitted date) */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
         <DateRangeFilter value={dr.range} onChange={dr.setRange} urlError={dr.urlError} basisLabel="Submitted" />
+        <ListCapNote shown={claims.length} total={claimsTotal} />
       </div>
 
       {/* Tabs */}

@@ -104,10 +104,20 @@ export function collectionWhere(o: { customerId?: string | null; range: Range })
 
 export const EXPENSE_APPROVER_ROLES = ["MD", "AVP", "Business Manager", "Accounts"];
 
+/** Roles that may see other sales people's activity and the team-performance view.
+ *  Spelled as session.user.role carries them (ROLE_DISPLAY labels, see lib/permissions.ts). */
+export const SALES_MANAGER_ROLES = ["MD", "AVP", "Business Manager"];
+
+export function isSalesManager(role: string | undefined | null): boolean {
+  return SALES_MANAGER_ROLES.includes(role ?? "");
+}
+
 /**
- * Expenses: approvers see everyone's (optionally one user's); everyone else is
- * pinned to their own — unchanged from before. `month` keeps its old meaning
- * (exact forMonth match); from/to filters on when the report was raised.
+ * Expenses: approvers see everyone's and may narrow to one user with ?userId=.
+ * Everyone else is ALWAYS pinned to their own reports — a non-approver's
+ * ?userId= is ignored (it used to override the own-only rule).
+ * `month` keeps its old meaning (exact forMonth match); from/to filters on
+ * when the report was raised.
  */
 export function expenseWhere(o: {
   role: string | undefined; myId: string | undefined;
@@ -115,8 +125,8 @@ export function expenseWhere(o: {
 }): Prisma.ExpenseReportWhereInput {
   const isApprover = EXPENSE_APPROVER_ROLES.includes(o.role ?? "");
   const where: Prisma.ExpenseReportWhereInput = {};
-  if (o.userId) where.userId = o.userId;
-  else if (!isApprover) where.userId = o.myId;
+  if (!isApprover) where.userId = o.myId ?? "__none__";
+  else if (o.userId) where.userId = o.userId;
   if (o.status) where.status = o.status as Prisma.ExpenseReportWhereInput["status"];
   if (o.month) where.forMonth = o.month;
   if (o.range) where.createdAt = rangeToWhere(o.range, "timestamp");
@@ -133,11 +143,17 @@ export function claimWhere(o: { month?: string | null; submittedByUserId?: strin
   return where;
 }
 
+/**
+ * Activities: sales managers (MD/AVP/Business Manager) see everyone's and may
+ * narrow with ?userId=; everyone else only ever sees their own.
+ */
 export function activityWhere(o: {
+  role: string | undefined; myId: string | undefined;
   userId?: string | null; customerId?: string | null; leadId?: string | null; type?: string | null; range: Range;
 }): Prisma.ActivityLogWhereInput {
+  const scopedUserId = isSalesManager(o.role) ? o.userId || null : o.myId ?? "__none__";
   return {
-    ...(o.userId ? { userId: o.userId } : {}),
+    ...(scopedUserId ? { userId: scopedUserId } : {}),
     ...(o.customerId ? { customerId: o.customerId } : {}),
     ...(o.leadId ? { leadId: o.leadId } : {}),
     ...(o.type ? { type: o.type as Prisma.ActivityLogWhereInput["type"] } : {}),

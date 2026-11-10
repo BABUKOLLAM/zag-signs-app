@@ -4,7 +4,7 @@ import TopBar from "@/components/TopBar";
 import { fmt } from "@/lib/utils";
 import { useApi } from "@/lib/use-api";
 import { api } from "@/lib/api-client";
-import { LoadingState, ErrorState, EmptyState, TableSkeleton } from "@/components/States";
+import { LoadingState, ErrorState, EmptyState, TableSkeleton, ListCapNote } from "@/components/States";
 import { useToast } from "@/components/Toaster";
 import { exportExcel } from "@/lib/export";
 import InvoicePrintTemplate, { type InvoiceData } from "@/components/InvoicePrintTemplate";
@@ -47,7 +47,7 @@ function InvoicesPageInner() {
   const [tallyId, setTallyId]         = useState<string | null>(null);
   const printZoneRef = useRef<HTMLDivElement>(null);
 
-  const { data, loading, error, refetch } = useApi<Invoice[]>("/invoices", {
+  const { data, meta: listMeta, loading, error, refetch } = useApi<Invoice[]>("/invoices", {
     status: statusFilter || undefined,
     search: search || undefined,
     ...dr.params,
@@ -348,6 +348,7 @@ function InvoicesPageInner() {
                   ))}
                 </tbody>
               </table>
+              <ListCapNote shown={invoices.length} total={listMeta?.total} />
             </div>
           )}
         </div>

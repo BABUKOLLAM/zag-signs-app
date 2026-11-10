@@ -4,7 +4,7 @@ import TopBar from "@/components/TopBar";
 import { fmt } from "@/lib/utils";
 import { useApi } from "@/lib/use-api";
 import { api } from "@/lib/api-client";
-import { LoadingState, ErrorState, EmptyState, TableSkeleton } from "@/components/States";
+import { LoadingState, ErrorState, EmptyState, TableSkeleton, ListCapNote } from "@/components/States";
 import QuotationPrintTemplate, { type QuotationData, type CompanyConfig, type BankConfig } from "@/components/QuotationPrintTemplate";
 import DriveButton from "@/components/DriveButton";
 import DocumentsPanel from "@/components/DocumentsPanel";
@@ -99,7 +99,7 @@ function QuotationsPageInner() {
   const [fromLeadId, setFromLeadId] = useState<string | null>(null);
   const [fromLeadCompany, setFromLeadCompany] = useState("");
 
-  const { data, loading, error, refetch } = useApi<Quotation[]>("/quotations", {
+  const { data, meta: listMeta, loading, error, refetch } = useApi<Quotation[]>("/quotations", {
     status: statusFilter || undefined,
     limit: 100,
     ...dr.params,
@@ -555,6 +555,7 @@ function QuotationsPageInner() {
                   ))}
                 </tbody>
               </table>
+              <ListCapNote shown={quotations.length} total={listMeta?.total} />
             </div>
           )}
         </div>

@@ -1073,6 +1073,7 @@ model ActivityLog {
   reminders         FollowUpReminder[]
 
   @@index([userId, createdAt])
+  @@index([userId, startTime]) // date-range filters (activities, DAR, team performance)
   @@index([customerId])
   @@index([leadId])
   @@index([opportunityId])
