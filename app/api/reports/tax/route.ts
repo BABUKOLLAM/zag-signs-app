@@ -1,11 +1,12 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, requireSession, rangeFromQuery } from "@/lib/api-helpers";
+import { ok, err, requirePathAccess, rangeFromQuery } from "@/lib/api-helpers";
 import { rangeToWhere } from "@/lib/date-range";
 
 export async function GET(request: NextRequest) {
-  const session = await requireSession();
-  if (!session) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+  // Was any signed-in user; GST figures are for roles with the GST report page.
+  const session = await requirePathAccess("/reports/tax");
+  if (!session) return err("Forbidden", 403);
 
   const { searchParams } = new URL(request.url);
   const { range, error: rangeError } = rangeFromQuery(searchParams, { allowMonth: false });

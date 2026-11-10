@@ -13,6 +13,7 @@ import { requireAnyPathAccess } from "../api-helpers";
 import { ROUTE_ACCESS } from "../route-access";
 import { GET as attendanceGET } from "@/app/api/attendance/route";
 import { GET as leaveGET } from "@/app/api/leave-requests/route";
+import { GET as taxGET } from "@/app/api/reports/tax/route";
 import { NextRequest } from "next/server";
 
 const allowed = async (role: string, key: keyof typeof ROUTE_ACCESS) => {
@@ -56,5 +57,9 @@ describe("route-level 403", () => {
     state.role = "Designer";
     expect((await attendanceGET(req("?date=2026-11-10"))).status).toBe(403);
     expect((await leaveGET(req())).status).toBe(403);
+  });
+  it.each(["Sales Executive", "CRES", "Production", "Designer", "HR"])("%s can no longer read the GST tax report", async (role) => {
+    state.role = role;
+    expect((await taxGET(req("?from=2026-11-01&to=2026-11-10"))).status).toBe(403);
   });
 });
