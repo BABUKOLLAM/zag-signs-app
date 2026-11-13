@@ -66,6 +66,7 @@ const groups = [
       { href: "/accounts",    label: "Accounts & Billing", icon: Wallet },
       { href: "/collections", label: "Collections",        icon: Wallet },
       { href: "/job-costing", label: "Job Costing",        icon: DollarSign },
+      { href: "/budgets",     label: "Budgeting",          icon: Wallet },
     ],
   },
   {
